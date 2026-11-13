@@ -12,3 +12,8 @@ coverage/
 supabase/.temp/
 playwright-report/
 test-results/
+*.tsbuildinfo
+next-env.d.ts
+*.pem
+/blob-report/
+/playwright/.cache/
