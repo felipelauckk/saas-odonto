@@ -850,6 +850,118 @@ export type Database = {
           },
         ]
       }
+      receivables: {
+        Row: {
+          amount_cents: number
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string
+          fee_cents: number
+          id: string
+          installment_number: number
+          installment_total: number
+          paid_amount_cents: number | null
+          paid_at: string | null
+          patient_id: string
+          payment_method_id: string | null
+          plan_id: string | null
+          professional_id: string | null
+          received_by: string | null
+          status: Database["public"]["Enums"]["receivable_status"]
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date: string
+          fee_cents?: number
+          id?: string
+          installment_number?: number
+          installment_total?: number
+          paid_amount_cents?: number | null
+          paid_at?: string | null
+          patient_id: string
+          payment_method_id?: string | null
+          plan_id?: string | null
+          professional_id?: string | null
+          received_by?: string | null
+          status?: Database["public"]["Enums"]["receivable_status"]
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string
+          fee_cents?: number
+          id?: string
+          installment_number?: number
+          installment_total?: number
+          paid_amount_cents?: number | null
+          paid_at?: string | null
+          patient_id?: string
+          payment_method_id?: string | null
+          plan_id?: string | null
+          professional_id?: string | null
+          received_by?: string | null
+          status?: Database["public"]["Enums"]["receivable_status"]
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receivables_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivables_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "receivables_payment_method_id_clinic_id_fkey"
+            columns: ["payment_method_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "receivables_plan_id_clinic_id_fkey"
+            columns: ["plan_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_plans"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "receivables_professional_id_clinic_id_fkey"
+            columns: ["professional_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "receivables_unit_id_clinic_id_fkey"
+            columns: ["unit_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       schedule_blocks: {
         Row: {
           clinic_id: string
@@ -965,6 +1077,181 @@ export type Database = {
           },
         ]
       }
+      treatment_items: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          description: string
+          done_at: string | null
+          done_by: string | null
+          faces: string[]
+          id: string
+          plan_id: string
+          position: number
+          price_cents: number
+          procedure_id: string | null
+          status: Database["public"]["Enums"]["treatment_item_status"]
+          tooth: number | null
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          description: string
+          done_at?: string | null
+          done_by?: string | null
+          faces?: string[]
+          id?: string
+          plan_id: string
+          position?: number
+          price_cents: number
+          procedure_id?: string | null
+          status?: Database["public"]["Enums"]["treatment_item_status"]
+          tooth?: number | null
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          description?: string
+          done_at?: string | null
+          done_by?: string | null
+          faces?: string[]
+          id?: string
+          plan_id?: string
+          position?: number
+          price_cents?: number
+          procedure_id?: string | null
+          status?: Database["public"]["Enums"]["treatment_item_status"]
+          tooth?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_items_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_items_plan_id_clinic_id_fkey"
+            columns: ["plan_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_plans"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "treatment_items_procedure_id_clinic_id_fkey"
+            columns: ["procedure_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
+      treatment_plans: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          discount_cents: number
+          first_due_date: string | null
+          id: string
+          installments: number
+          notes: string | null
+          patient_id: string
+          payment_method_id: string | null
+          presented_at: string | null
+          professional_id: string
+          status: Database["public"]["Enums"]["treatment_plan_status"]
+          total_cents: number
+          unit_id: string
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          discount_cents?: number
+          first_due_date?: string | null
+          id?: string
+          installments?: number
+          notes?: string | null
+          patient_id: string
+          payment_method_id?: string | null
+          presented_at?: string | null
+          professional_id: string
+          status?: Database["public"]["Enums"]["treatment_plan_status"]
+          total_cents?: number
+          unit_id: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          discount_cents?: number
+          first_due_date?: string | null
+          id?: string
+          installments?: number
+          notes?: string | null
+          patient_id?: string
+          payment_method_id?: string | null
+          presented_at?: string | null
+          professional_id?: string
+          status?: Database["public"]["Enums"]["treatment_plan_status"]
+          total_cents?: number
+          unit_id?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_plans_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_plans_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "treatment_plans_payment_method_id_clinic_id_fkey"
+            columns: ["payment_method_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "treatment_plans_professional_id_clinic_id_fkey"
+            columns: ["professional_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "treatment_plans_unit_id_clinic_id_fkey"
+            columns: ["unit_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       units: {
         Row: {
           active: boolean
@@ -1014,6 +1301,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_treatment_plan: {
+        Args: {
+          _discount_cents: number
+          _first_due_date: string
+          _installments: number
+          _item_ids: string[]
+          _payment_method_id: string
+          _plan_id: string
+        }
+        Returns: undefined
+      }
       can_access_agenda: {
         Args: { _professional_id: string; _unit_id: string }
         Returns: boolean
@@ -1078,6 +1376,7 @@ export type Database = {
       patient_file_kind: "photo" | "xray" | "document" | "other"
       patient_gender: "female" | "male" | "other" | "not_informed"
       patient_source: "indicacao" | "instagram" | "google" | "site" | "outro"
+      receivable_status: "open" | "paid" | "overdue" | "canceled"
       subscription_status: "trialing" | "active" | "past_due" | "canceled"
       tooth_condition:
         | "healthy"
@@ -1088,6 +1387,14 @@ export type Database = {
         | "crown"
         | "root_canal"
         | "other"
+      treatment_item_status: "pending" | "approved" | "rejected" | "done"
+      treatment_plan_status:
+        | "draft"
+        | "presented"
+        | "approved"
+        | "partially_approved"
+        | "rejected"
+        | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1228,6 +1535,7 @@ export const Constants = {
       patient_file_kind: ["photo", "xray", "document", "other"],
       patient_gender: ["female", "male", "other", "not_informed"],
       patient_source: ["indicacao", "instagram", "google", "site", "outro"],
+      receivable_status: ["open", "paid", "overdue", "canceled"],
       subscription_status: ["trialing", "active", "past_due", "canceled"],
       tooth_condition: [
         "healthy",
@@ -1238,6 +1546,15 @@ export const Constants = {
         "crown",
         "root_canal",
         "other",
+      ],
+      treatment_item_status: ["pending", "approved", "rejected", "done"],
+      treatment_plan_status: [
+        "draft",
+        "presented",
+        "approved",
+        "partially_approved",
+        "rejected",
+        "completed",
       ],
     },
   },
