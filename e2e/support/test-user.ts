@@ -42,7 +42,9 @@ export async function createTestUser(): Promise<TestUser> {
     async cleanup() {
       const { data: members } = await client.from("clinic_members").select("clinic_id").eq("user_id", userId);
       const configTables = [
-        "professional_schedules",
+        "appointments",
+      "schedule_blocks",
+      "professional_schedules",
         "professionals",
         "chairs",
         "procedures",
