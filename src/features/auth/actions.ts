@@ -74,12 +74,17 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
+    if (error.code !== "invalid_credentials") console.error("Falha no login:", error.code, error.message);
     return {
       status: "error",
       message:
         error.code === "email_not_confirmed"
           ? "Confirme seu e-mail antes de entrar. Procure o link na sua caixa de entrada."
-          : "E-mail ou senha incorretos.",
+          : error.code === "invalid_credentials"
+            ? "E-mail ou senha incorretos."
+            : error.code === "over_request_rate_limit"
+              ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos."
+              : "Não foi possível conectar. Tente novamente em instantes.",
       values: { email: parsed.data.email },
     };
   }
