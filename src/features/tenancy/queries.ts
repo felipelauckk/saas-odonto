@@ -15,7 +15,14 @@ export type SessionContext = {
   user: { id: string; email: string; fullName: string | null };
   clinics: ClinicOption[];
   /** Null quando o usuário não é membro ativo de nenhuma clínica. */
-  clinic: (ClinicOption & { subscriptionStatus: string; trialEndsAt: string | null }) | null;
+  clinic:
+    | (ClinicOption & {
+        subscriptionStatus: string;
+        trialEndsAt: string | null;
+        /** ok | grace (atraso dentro da carência) | read_only */
+        accessState: "ok" | "grace" | "read_only";
+      })
+    | null;
   units: UnitOption[];
   activeUnit: UnitOption | null;
 };
@@ -56,11 +63,10 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
   if (!current) return { user, clinics, clinic: null, units: [], activeUnit: null };
 
   // A RLS já devolve só as unidades permitidas da clínica ativa.
-  const { data: unitRows } = await supabase
-    .from("units")
-    .select("id, name")
-    .eq("active", true)
-    .order("created_at");
+  const [{ data: unitRows }, { data: accessState }] = await Promise.all([
+    supabase.from("units").select("id, name").eq("active", true).order("created_at"),
+    supabase.rpc("clinic_access_state", { _clinic_id: current.id }),
+  ]);
   const units = unitRows ?? [];
 
   const cookieStore = await cookies();
@@ -76,6 +82,7 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
       role: roleByClinic.get(current.id)!,
       subscriptionStatus: current.subscription_status,
       trialEndsAt: current.trial_ends_at,
+      accessState: accessState === "read_only" || accessState === "grace" ? accessState : "ok",
     },
     units,
     activeUnit,

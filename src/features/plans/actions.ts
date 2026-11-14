@@ -4,6 +4,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { subscriptionErrorMessage } from "@/lib/db-errors";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/features/tenancy/queries";
 
@@ -29,6 +30,8 @@ const planSchema = z.object({
 export type PlanInput = z.input<typeof planSchema>;
 
 function planError(error: PostgrestError): string {
+  const blocked = subscriptionErrorMessage(error);
+  if (blocked) return blocked;
   if (error.code === "OT001") return "Este orçamento já foi aprovado ou fechado e não pode ser alterado.";
   if (error.code?.startsWith("OT") || error.code === "P0002") return error.message;
   if (error.code === "42501") return "Você não tem permissão para esta ação.";

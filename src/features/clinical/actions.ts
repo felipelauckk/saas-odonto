@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { subscriptionErrorMessage } from "@/lib/db-errors";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/features/tenancy/queries";
 import { canManageClinic } from "@/features/tenancy/roles";
@@ -47,7 +48,7 @@ export async function saveAnamnesis(input: { patientId: string; templateId: stri
     answers: parsed.data.answers,
     filled_by: ctx.session.user.id,
   });
-  if (error) return { error: error.code === "42501" ? NO_PERMISSION : "Não foi possível salvar a anamnese." };
+  if (error) return { error: error.code === "42501" ? NO_PERMISSION : subscriptionErrorMessage(error) ?? "Não foi possível salvar a anamnese." };
 
   revalidatePath(`/pacientes/${parsed.data.patientId}`, "layout");
   return {};
@@ -82,7 +83,7 @@ export async function addToothRecord(input: z.input<typeof toothRecordSchema>): 
     notes: notes || null,
     recorded_by: ctx.session.user.id,
   });
-  if (error) return { error: error.code === "42501" ? NO_PERMISSION : "Não foi possível registrar." };
+  if (error) return { error: error.code === "42501" ? NO_PERMISSION : subscriptionErrorMessage(error) ?? "Não foi possível registrar." };
 
   revalidatePath(patientPath(patientId, "odontograma"));
   return {};
@@ -112,7 +113,7 @@ export async function addClinicalNote(input: z.input<typeof noteSchema>): Promis
     complements_note_id: complementsNoteId ?? null,
     created_by: ctx.session.user.id,
   });
-  if (error) return { error: error.code === "42501" ? NO_PERMISSION : "Não foi possível salvar a evolução." };
+  if (error) return { error: error.code === "42501" ? NO_PERMISSION : subscriptionErrorMessage(error) ?? "Não foi possível salvar a evolução." };
 
   revalidatePath(patientPath(patientId, "evolucoes"));
   return {};
@@ -171,7 +172,7 @@ export async function registerPatientFile(input: z.input<typeof registerSchema>)
   if (error) {
     // Sem registro, o arquivo enviado ficaria órfão: remove (o app não tem DELETE no bucket).
     await createAdminClient().storage.from("clinic").remove([path]);
-    return { error: error.code === "42501" ? NO_PERMISSION : "Não foi possível salvar o arquivo." };
+    return { error: error.code === "42501" ? NO_PERMISSION : subscriptionErrorMessage(error) ?? "Não foi possível salvar o arquivo." };
   }
 
   revalidatePath(patientPath(patientId, "arquivos"));

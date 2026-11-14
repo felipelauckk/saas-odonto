@@ -4,6 +4,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { subscriptionErrorMessage } from "@/lib/db-errors";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/features/tenancy/queries";
 
@@ -12,6 +13,8 @@ type Result = { error?: string };
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida.");
 
 function financeError(error: PostgrestError): string {
+  const blocked = subscriptionErrorMessage(error);
+  if (blocked) return blocked;
   if (error.code === "42501") return error.message.includes("row-level") ? "Você não tem permissão para esta ação." : error.message;
   if (error.code?.startsWith("OF") || error.code === "P0002") return error.message;
   return "Não foi possível concluir. Tente novamente.";

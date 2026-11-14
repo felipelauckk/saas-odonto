@@ -26,3 +26,8 @@ export function formatIsoDate(value: string): string {
   const [y, m, d] = value.split("-");
   return `${d}/${m}/${y}`;
 }
+
+/** Dias (arredondados para cima) até um instante. Negativo se já passou. */
+export function daysUntil(iso: string, now: Date = new Date()): number {
+  return Math.ceil((new Date(iso).getTime() - now.getTime()) / 86_400_000);
+}

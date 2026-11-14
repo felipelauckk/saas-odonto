@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { SubscriptionBanner } from "@/features/billing/components/subscription-banner";
 import { Sidebar } from "@/components/layout/sidebar";
 import { NoClinicAccess } from "@/features/tenancy/components/no-clinic-access";
 import { UserMenu } from "@/features/auth/components/user-menu";
@@ -32,6 +33,12 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         canManage={canManage}
       />
       <main className="lg:pl-60">
+        <SubscriptionBanner
+          accessState={clinic.accessState}
+          subscriptionStatus={clinic.subscriptionStatus}
+          trialEndsAt={clinic.trialEndsAt}
+          canManage={canManage}
+        />
         {hasUnitSwitcher ? (
           <div className="hidden h-14 items-center justify-end border-b px-8 lg:flex">{unitSwitcher}</div>
         ) : null}

@@ -11,7 +11,7 @@
 | 7. Orçamentos | Concluída (14/11/2026) | Montagem com sugestões do odontograma, PDF com a identidade da clínica, aprovação total ou parcial gerando parcelas, itens realizados e conclusão automática. |
 | 8. Financeiro | Concluída (14/11/2026) | Contas a receber com filtros, baixa com taxa, estorno e cancelamento, cobranças avulsas, caixa do dia por unidade, recibo em PDF com valor por extenso, vencidos automáticos, aba Financeiro da ficha. |
 | 9. WhatsApp | Concluída (14/11/2026) | Camada `messaging` com provedor plugável (simulado e Meta), lembrete no dia anterior, confirmação pelo botão, aniversário, modelos editáveis e log de envios. Falta configurar o WhatsApp real. |
-| 10. Assinatura do SaaS | Não iniciada | |
+| 10. Assinatura do SaaS | Concluída (14/11/2026) | Planos, assinatura pelo Asaas (Pix/boleto/cartão), webhook, modo somente leitura com aviso fixo, limites do plano, painel do superadmin. Falta configurar o Asaas real. |
 | 11. Painel inicial e acabamento | Não iniciada | |
 
 ## Decisões técnicas
@@ -86,6 +86,12 @@
 - **Confirmação pelo botão**: o lembrete leva um botão com `CONFIRMAR:{id}`; o webhook `/api/whatsapp/webhook` (assinatura `X-Hub-Signature-256` com `WHATSAPP_APP_SECRET`) confirma a consulta e responde com o modelo de confirmação.
 - **Aniversário** na mesma rotina diária (29/02 comemora em 28/02 em ano não bissexto), uma vez por dia por paciente.
 - **Log** (`messages_log`): só o servidor grava (service role); owner/manager/recepção leem.
+- **Modo somente leitura imposto no banco** (gatilho `enforce_clinic_writable` em todas as tabelas da clínica, SQLSTATE `OS001`, e nas políticas de upload): teste vencido sem assinatura, atraso há mais de 7 dias (`past_due_since`) ou assinatura cancelada. Leitura continua. Vale para usuários logados; servidor, cron e webhooks (service role) passam. Aviso fixo no topo para todos; aviso de fim de teste nos últimos 5 dias.
+- **Limites do plano** (`max_units`, `max_professionals`) por gatilho (`OS002`), só quando a clínica tem plano. Na troca de plano, o sistema recusa um plano menor que o uso atual.
+- **Asaas**: cliente + assinatura mensal com `billingType UNDEFINED` (o paciente da fatura escolhe Pix, boleto ou cartão). Primeira cobrança no fim do teste. CNPJ/CPF da clínica é obrigatório para assinar. Só o owner assina, troca e cancela; campos de cobrança só o servidor grava.
+- **Webhook do Asaas** (`/api/asaas/webhook`, token no cabeçalho `asaas-access-token`): pagamento confirmado/recebido → ativa; atraso → `past_due` (marca a data uma vez); assinatura removida → cancelada. Idempotente por id do evento (`billing_events`).
+- **Superadmin** (`platform_admins`, só o servidor lê): painel `/admin` com clínicas, receita mensal, planos e ajustes manuais (estender teste, ativar, cancelar, trocar plano). Para os demais usuários a área responde 404. Nunca consulta tabelas de pacientes. Liberar: `npm run admin:add -- email`. A conta de teste `clinicateste@example.com` já é superadmin.
+- **Testes E2E longos**: algumas execuções travaram com todos os testes parando ao mesmo tempo (duração idêntica, e antes `ERR_NETWORK_IO_SUSPENDED`): sinal de rede suspensa/computador dormindo durante a execução. Repetidas, passaram. Não foi encontrado travamento no código nem no banco.
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1
@@ -107,3 +113,8 @@
 
 - **WhatsApp real**: criar o app na Meta (WhatsApp Business), aprovar os modelos `lembrete_consulta`, `consulta_confirmada` e `aniversario` (pt_BR), preencher `WHATSAPP_PROVIDER=meta`, `WHATSAPP_API_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET` na Vercel e apontar o webhook da Meta para `https://<domínio>/api/whatsapp/webhook`.
 - **`CRON_SECRET` na Vercel**: sem ele, a rotina diária responde 401 e nenhum lembrete sai.
+
+## Pendências da Etapa 10
+
+- **Asaas real**: criar conta, gerar a chave de API e preencher na Vercel `ASAAS_API_KEY`, `ASAAS_ENV` (`sandbox` para testar, `production` para valer) e `ASAAS_WEBHOOK_TOKEN`; cadastrar o webhook no painel do Asaas apontando para `https://<domínio>/api/asaas/webhook` com o mesmo token.
+- **Planos**: cadastrar os planos reais (nome, preço, limites) em `/admin/planos`.

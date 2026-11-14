@@ -4,6 +4,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { withoutSecrets, type ActionState } from "@/lib/action-state";
+import { subscriptionErrorMessage } from "@/lib/db-errors";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/features/tenancy/queries";
 import { canManageClinic } from "@/features/tenancy/roles";
@@ -35,6 +36,8 @@ export function invalidState(error: z.ZodError, values: Record<string, string>):
 
 /** Mensagem amigável para erros do banco. */
 export function dbErrorState(error: PostgrestError | null, values?: Record<string, string>): ActionState {
+  const blocked = subscriptionErrorMessage(error);
+  if (blocked) return { status: "error", message: blocked, values };
   const message =
     error?.code === "23P01"
       ? "Este horário se sobrepõe a outro período do mesmo profissional."

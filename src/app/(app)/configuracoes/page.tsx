@@ -8,6 +8,7 @@ import {
   CreditCard,
   MapPin,
   MessageCircle,
+  Receipt,
   Stethoscope,
   UserRound,
   Users,
@@ -32,6 +33,7 @@ export default async function Page() {
 
   const sections: Section[] = [
     { href: "/configuracoes/clinica", title: "Clínica", description: "Nome, documento, contato e logo.", icon: Building2 },
+    { href: "/configuracoes/assinatura", title: "Assinatura", description: "Plano, cobrança e situação da conta.", icon: Receipt },
     {
       href: "/configuracoes/unidades",
       title: "Unidades",

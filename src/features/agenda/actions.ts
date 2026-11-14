@@ -4,6 +4,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { subscriptionErrorMessage } from "@/lib/db-errors";
 import { createClient } from "@/lib/supabase/server";
 import { addDays, zonedToUtc } from "@/lib/timezone";
 import { getSessionContext } from "@/features/tenancy/queries";
@@ -16,6 +17,8 @@ const AGENDA_PATH = "/agenda";
 
 /** Mensagem clara para conflitos e bloqueios vindos do banco. */
 function agendaError(error: PostgrestError): string {
+  const blocked = subscriptionErrorMessage(error);
+  if (blocked) return blocked;
   if (error.code === "23P01") {
     return error.message.includes("chair")
       ? "A cadeira já está ocupada nesse horário."

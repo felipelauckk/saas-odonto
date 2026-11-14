@@ -5,6 +5,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import type { Database } from "@/lib/supabase/database.types";
 import { createTestEnv, hasSupabase, type Client } from "@/test/supabase";
 
 describe.skipIf(!hasSupabase)("assinatura (modo só leitura e limites)", () => {
@@ -15,7 +16,7 @@ describe.skipIf(!hasSupabase)("assinatura (modo só leitura e limites)", () => {
   let clinicId = "";
   let planId = "";
   const days = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString();
-  const setClinic = (values: Record<string, unknown>) => admin.from("clinics").update(values).eq("id", clinicId);
+  const setClinic = (values: Database["public"]["Tables"]["clinics"]["Update"]) => admin.from("clinics").update(values).eq("id", clinicId);
   const insertPatient = (name: string) => owner.from("patients").insert({ clinic_id: clinicId, full_name: name });
 
   beforeAll(async () => {

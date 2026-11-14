@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { formValues, type ActionState } from "@/lib/action-state";
+import { subscriptionErrorMessage } from "@/lib/db-errors";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/features/tenancy/queries";
 
@@ -71,7 +72,7 @@ export async function createPatient(_prev: ActionState, formData: FormData): Pro
     .single();
 
   if (error?.code === "23505" && parsed.data.cpf) return duplicateCpfState(parsed.data.cpf, values);
-  if (error) return { status: "error", message: "Não foi possível salvar o paciente. Tente novamente.", values };
+  if (error) return { status: "error", message: subscriptionErrorMessage(error) ?? "Não foi possível salvar o paciente. Tente novamente.", values };
 
   revalidatePath("/pacientes");
   redirect(`/pacientes/${data.id}`);
@@ -107,7 +108,7 @@ export async function updatePatient(_prev: ActionState, formData: FormData): Pro
     .select("id");
 
   if (error?.code === "23505" && parsed.data.cpf) return duplicateCpfState(parsed.data.cpf, values);
-  if (error || !data.length) return { status: "error", message: "Não foi possível salvar o paciente.", values };
+  if (error || !data.length) return { status: "error", message: subscriptionErrorMessage(error) ?? "Não foi possível salvar o paciente.", values };
 
   revalidatePath("/pacientes");
   revalidatePath(`/pacientes/${parsed.data.id}`);
@@ -123,7 +124,7 @@ export async function setPatientArchived(id: string, archived: boolean): Promise
     .update({ archived_at: archived ? new Date().toISOString() : null })
     .eq("id", id)
     .select("id");
-  if (error || !data.length) return { error: "Não foi possível alterar o paciente." };
+  if (error || !data.length) return { error: subscriptionErrorMessage(error) ?? "Não foi possível alterar o paciente." };
 
   revalidatePath("/pacientes");
   revalidatePath(`/pacientes/${id}`);
