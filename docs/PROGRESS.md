@@ -8,7 +8,7 @@
 | 4. Pacientes | Concluída (14/11/2026) | Lista com busca e filtros, cadastro com CPF/CEP/LGPD/responsável legal, ficha com abas (só Dados ativa), arquivar e reativar. |
 | 5. Agenda | Concluída (14/11/2026) | Dia e semana, por profissional ou cadeira, marcar clicando, arrastar para remarcar, status com um clique, bloqueios, conflitos no banco, tempo real, relatório de faltas, aba Agendamentos. Lembrete por WhatsApp fica na Etapa 9. |
 | 6. Prontuário | Concluída (14/11/2026) | Anamnese com versões e alertas, editor do modelo, odontograma por face (permanentes e decíduos), evoluções com complemento, arquivos com galeria. Auditoria de acesso fica na Etapa 11. |
-| 7. Orçamentos | Não iniciada | |
+| 7. Orçamentos | Concluída (14/11/2026) | Montagem com sugestões do odontograma, PDF com a identidade da clínica, aprovação total ou parcial gerando parcelas, itens realizados e conclusão automática. |
 | 8. Financeiro | Não iniciada | |
 | 9. WhatsApp | Não iniciada | |
 | 10. Assinatura do SaaS | Não iniciada | |
@@ -68,6 +68,12 @@
 - **Logo**: limite das Server Actions subiu para 2 MB (`next.config.ts`); antes, um logo perto de 1 MB falharia.
 - **Agenda "Ao vivo"**: o indicador só acende quando o banco confirma a assinatura das mudanças; ao voltar para a aba a agenda busca de novo.
 - **Testes Playwright rodam contra a build de produção** (`next build && next start`); com o `next dev` a primeira compilação de cada página estourava o tempo sob carga. `E2E_DEV=1` usa o dev server. Rodar a suíte inteira várias vezes seguidas esbarra no limite de logins do Supabase Auth (aparece "Muitas tentativas"); espere alguns minutos entre execuções ou ajuste em Authentication → Rate Limits.
+- **Orçamentos: permissões** — todos os papéis criam, editam (enquanto rascunho/apresentado), apresentam, recusam e aprovam (a aprovação costuma acontecer na recepção). Marcar item como realizado é clínico: dentista, owner ou manager.
+- **Itens travados depois da decisão** (gatilho `guard_treatment_items`, SQLSTATE `OT001`): só o status do item muda. O nome do procedimento é copiado para o item (a tabela de procedimentos pode mudar depois).
+- **Aprovação** pela função `approve_treatment_plan` (SECURITY DEFINER com checagens próprias): aprova os itens marcados e recusa os demais, aplica desconto e gera as parcelas em `receivables` numa transação. Centavos da divisão vão na 1ª parcela; vencimentos mensais presos no fim do mês (31/01 → 28/02). A mesma regra existe em `src/lib/installments.ts` para a prévia na tela (testada contra o banco).
+- **Recebíveis** guardam o profissional do orçamento: o dentista vê só os próprios (regra da especificação). O app não insere recebível direto; lançamentos manuais e baixa vêm na Etapa 8.
+- **PDF** com `@react-pdf/renderer` no servidor (`/orcamentos/[id]/pdf`), respeitando a RLS do usuário. Logo em PNG/JPG entra no PDF; WebP não é suportado pela biblioteca e fica de fora.
+- **Sugestões do odontograma** no orçamento só aparecem para quem lê o prontuário (a recepção monta sem elas).
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1

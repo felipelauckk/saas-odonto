@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Gera PDFs no servidor (orçamentos, recibos).
+  serverExternalPackages: ["@react-pdf/renderer"],
   experimental: {
     // Logo da clínica (até 1 MB) chega por Server Action; o padrão de 1 MB
     // não cabe o arquivo + o envelope do formulário. Arquivos clínicos maiores

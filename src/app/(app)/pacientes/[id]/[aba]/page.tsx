@@ -9,7 +9,6 @@ export const metadata: Metadata = { title: "Paciente" };
 
 /** Abas que ainda não têm conteúdo (cada uma ganha a própria rota na sua etapa). */
 const UPCOMING: Record<string, string> = {
-  orcamentos: "Os orçamentos e planos de tratamento chegam em uma próxima etapa.",
   financeiro: "Parcelas e pagamentos do paciente chegam com o módulo financeiro.",
 };
 
