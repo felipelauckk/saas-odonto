@@ -7,6 +7,7 @@ import {
   ClipboardList,
   CreditCard,
   MapPin,
+  MessageCircle,
   Stethoscope,
   UserRound,
   Users,
@@ -72,6 +73,12 @@ export default async function Page() {
       title: "Modelo de anamnese",
       description: "Perguntas da anamnese e quais viram alerta.",
       icon: ClipboardList,
+    },
+    {
+      href: "/configuracoes/mensagens",
+      title: "Mensagens",
+      description: "Lembretes e textos enviados pelo WhatsApp.",
+      icon: MessageCircle,
     },
     { href: "/configuracoes/membros", title: "Equipe", description: "Quem acessa a clínica e com qual papel.", icon: Users },
   ];

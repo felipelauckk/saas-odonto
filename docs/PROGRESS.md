@@ -10,7 +10,7 @@
 | 6. Prontuário | Concluída (14/11/2026) | Anamnese com versões e alertas, editor do modelo, odontograma por face (permanentes e decíduos), evoluções com complemento, arquivos com galeria. Auditoria de acesso fica na Etapa 11. |
 | 7. Orçamentos | Concluída (14/11/2026) | Montagem com sugestões do odontograma, PDF com a identidade da clínica, aprovação total ou parcial gerando parcelas, itens realizados e conclusão automática. |
 | 8. Financeiro | Concluída (14/11/2026) | Contas a receber com filtros, baixa com taxa, estorno e cancelamento, cobranças avulsas, caixa do dia por unidade, recibo em PDF com valor por extenso, vencidos automáticos, aba Financeiro da ficha. |
-| 9. WhatsApp | Não iniciada | |
+| 9. WhatsApp | Concluída (14/11/2026) | Camada `messaging` com provedor plugável (simulado e Meta), lembrete no dia anterior, confirmação pelo botão, aniversário, modelos editáveis e log de envios. Falta configurar o WhatsApp real. |
 | 10. Assinatura do SaaS | Não iniciada | |
 | 11. Painel inicial e acabamento | Não iniciada | |
 
@@ -80,6 +80,12 @@
 - **Vencidos**: gatilho marca `overdue` ao gravar com vencimento passado, e o `pg_cron` roda `mark_overdue_receivables()` todo dia às 00:05 de São Paulo (03:05 UTC).
 - **Recibo** em PDF (A5 paisagem) com valor por extenso (`src/lib/extenso.ts`, testado).
 - **Abas da ficha**: todas têm conteúdo agora; a rota genérica de "em breve" foi removida.
+- **Mensagens: camada `src/lib/messaging`** com interface única (`MessagingProvider`). Provedores: **simulado** (padrão; registra no log com status "simulada" e não envia nada) e **Meta** (WhatsApp Cloud API oficial). Escolhido por `WHATSAPP_PROVIDER`.
+- **Na Meta, mensagens iniciadas pela clínica exigem modelos aprovados** (lembrete, confirmação, aniversário). Os textos editáveis em Configurações → Mensagens valem para o simulado e para o log; na Meta, os parâmetros {{1}}, {{2}}... seguem a ordem definida em `providers/meta.ts`. Respostas dentro da conversa aberta pelo paciente vão como texto livre.
+- **Lembrete uma vez por dia, para as consultas do dia seguinte** (Vercel Cron em `vercel.json`, 10h de São Paulo, rota `/api/cron/lembretes` protegida por `CRON_SECRET`). O plano gratuito da Vercel só permite cron diário; por isso é "véspera", não exatamente 24h antes. Não reenvia (`reminder_sent_at`). Também há o botão "Enviar lembrete" na consulta.
+- **Confirmação pelo botão**: o lembrete leva um botão com `CONFIRMAR:{id}`; o webhook `/api/whatsapp/webhook` (assinatura `X-Hub-Signature-256` com `WHATSAPP_APP_SECRET`) confirma a consulta e responde com o modelo de confirmação.
+- **Aniversário** na mesma rotina diária (29/02 comemora em 28/02 em ano não bissexto), uma vez por dia por paciente.
+- **Log** (`messages_log`): só o servidor grava (service role); owner/manager/recepção leem.
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1
@@ -96,3 +102,8 @@
 - **Modelos de e-mail em português:** os e-mails de confirmação, convite e nova senha ainda saem com o texto padrão do Supabase, em inglês.
 - **Unidades permitidas por membro** (`unit_ids`): o banco já suporta, mas a tela para editar entra na Etapa 3, junto com o cadastro de unidades.
 - **2 fatores para owners** (opcional, previsto na especificação): não implementado nesta etapa.
+
+## Pendências da Etapa 9
+
+- **WhatsApp real**: criar o app na Meta (WhatsApp Business), aprovar os modelos `lembrete_consulta`, `consulta_confirmada` e `aniversario` (pt_BR), preencher `WHATSAPP_PROVIDER=meta`, `WHATSAPP_API_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET` na Vercel e apontar o webhook da Meta para `https://<domínio>/api/whatsapp/webhook`.
+- **`CRON_SECRET` na Vercel**: sem ele, a rotina diária responde 401 e nenhum lembrete sai.

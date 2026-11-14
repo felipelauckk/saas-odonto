@@ -457,6 +457,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
                 chairName={dialog.appointment.chairId ? (chairName.get(dialog.appointment.chairId) ?? null) : null}
                 onEdit={() => setDialog({ kind: "edit", appointment: dialog.appointment })}
                 onDone={closeDialog}
+                canSendReminder={!isDentist}
               />
             </>
           ) : null}

@@ -2,13 +2,15 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { MessageCircle, Pencil } from "lucide-react";
+import { BellRing, MessageCircle, Pencil } from "lucide-react";
 import { cn } from "cn";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { formatPhone } from "@/lib/documents";
 import { formatLongDate, minutesToTime, utcToZoned } from "@/lib/timezone";
+
+import { sendReminderNow } from "@/features/messaging/actions";
 
 import { setAppointmentStatus } from "../actions";
 import { statusLabels, type AppointmentStatus } from "../labels";
@@ -23,11 +25,13 @@ type Props = {
   chairName: string | null;
   onEdit: () => void;
   onDone: () => void;
+  canSendReminder?: boolean;
 };
 
-export function AppointmentDetails({ appointment: a, professionalName, chairName, onEdit, onDone }: Props) {
+export function AppointmentDetails({ appointment: a, professionalName, chairName, onEdit, onDone, canSendReminder = false }: Props) {
   const [status, setStatus] = useState(a.status);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const start = utcToZoned(a.startsAt);
   const end = utcToZoned(a.endsAt);
@@ -64,6 +68,7 @@ export function AppointmentDetails({ appointment: a, professionalName, chairName
       </div>
 
       {error ? <FormMessage state={{ status: "error", message: error }} /> : null}
+      {notice ? <FormMessage state={{ status: "success", message: notice }} /> : null}
 
       <div className="space-y-2">
         <p className="text-sm font-medium" id="status-label">
@@ -97,6 +102,24 @@ export function AppointmentDetails({ appointment: a, professionalName, chairName
           <Pencil aria-hidden />
           Editar ou remarcar
         </Button>
+        {canSendReminder && (status === "scheduled" || status === "confirmed") ? (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                setError(null);
+                const result = await sendReminderNow(a.id);
+                if (result.error) setError(result.error);
+                else setNotice(result.message ?? "Lembrete enviado.");
+              })
+            }
+          >
+            <BellRing aria-hidden />
+            Enviar lembrete
+          </Button>
+        ) : null}
         {a.patientPhone ? (
           <a
             href={`https://wa.me/55${a.patientPhone}`}

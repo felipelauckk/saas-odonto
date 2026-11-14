@@ -510,6 +510,120 @@ export type Database = {
           },
         ]
       }
+      message_templates: {
+        Row: {
+          active: boolean
+          body: string
+          clinic_id: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["message_kind"]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          clinic_id: string
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["message_kind"]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["message_kind"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages_log: {
+        Row: {
+          appointment_id: string | null
+          body: string | null
+          channel: string
+          clinic_id: string
+          created_at: string
+          error: string | null
+          id: string
+          patient_id: string | null
+          provider: string
+          provider_id: string | null
+          sent_at: string
+          status: Database["public"]["Enums"]["message_status"]
+          template_kind: Database["public"]["Enums"]["message_kind"] | null
+          to_phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          body?: string | null
+          channel?: string
+          clinic_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          patient_id?: string | null
+          provider: string
+          provider_id?: string | null
+          sent_at?: string
+          status: Database["public"]["Enums"]["message_status"]
+          template_kind?: Database["public"]["Enums"]["message_kind"] | null
+          to_phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          body?: string | null
+          channel?: string
+          clinic_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          patient_id?: string | null
+          provider?: string
+          provider_id?: string | null
+          sent_at?: string
+          status?: Database["public"]["Enums"]["message_status"]
+          template_kind?: Database["public"]["Enums"]["message_kind"] | null
+          to_phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_log_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_log_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_log_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       patient_files: {
         Row: {
           clinic_id: string
@@ -1449,6 +1563,10 @@ export type Database = {
         }[]
       }
       seed_clinic_defaults: { Args: { _clinic_id: string }; Returns: undefined }
+      seed_message_templates: {
+        Args: { _clinic_id: string }
+        Returns: undefined
+      }
       set_active_clinic: { Args: { _clinic_id: string }; Returns: undefined }
       timemultirange: { Args: never; Returns: unknown }
       today_sp: { Args: never; Returns: string }
@@ -1465,6 +1583,11 @@ export type Database = {
         | "canceled"
       cash_movement_type: "in" | "out"
       member_role: "owner" | "manager" | "dentist" | "receptionist"
+      message_kind:
+        | "appointment_reminder"
+        | "appointment_confirmation"
+        | "birthday"
+      message_status: "sent" | "simulated" | "failed" | "received"
       patient_file_kind: "photo" | "xray" | "document" | "other"
       patient_gender: "female" | "male" | "other" | "not_informed"
       patient_source: "indicacao" | "instagram" | "google" | "site" | "outro"
@@ -1625,6 +1748,12 @@ export const Constants = {
       ],
       cash_movement_type: ["in", "out"],
       member_role: ["owner", "manager", "dentist", "receptionist"],
+      message_kind: [
+        "appointment_reminder",
+        "appointment_confirmation",
+        "birthday",
+      ],
+      message_status: ["sent", "simulated", "failed", "received"],
       patient_file_kind: ["photo", "xray", "document", "other"],
       patient_gender: ["female", "male", "other", "not_informed"],
       patient_source: ["indicacao", "instagram", "google", "site", "outro"],
