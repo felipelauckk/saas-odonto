@@ -46,6 +46,7 @@
 
 ## Pendências da Etapa 2
 
+- **Adiado até haver domínio definitivo** (decisão de 14/11/2026: por enquanto o sistema é só para testes do Felipe). Conta de teste criada direto no banco, já confirmada: `clinicateste@example.com`, clínica "Clínica Teste". Enquanto isso, cadastro público e convites (que dependem de e-mail) não funcionam de ponta a ponta no endereço da Vercel.
 - **Supabase → Authentication → URL Configuration:** colocar o endereço da Vercel como Site URL e adicionar `https://<endereço>.vercel.app/**` e `http://localhost:3000/**` em Redirect URLs. Sem isso, os links dos e-mails apontam para o lugar errado.
 - **Envio de e-mail para produção:** o envio padrão do Supabase tem limite baixo (poucos e-mails por hora) e serve só para desenvolvimento. Configurar um SMTP próprio (Resend, SES etc.) antes de abrir para clientes.
 - **Modelos de e-mail em português:** os e-mails de confirmação, convite e nova senha ainda saem com o texto padrão do Supabase, em inglês.
