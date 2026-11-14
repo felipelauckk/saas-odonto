@@ -28,5 +28,6 @@
 
 ## Pendências da Etapa 1
 
-- Preencher o `.env.local` com as chaves do projeto Supabase e rodar `npx supabase link` (necessário antes da Etapa 2).
+- ~~Preencher o `.env.local` e rodar `npx supabase link`~~ — feito em 13/11/2026 (projeto `ofgmapiholeqbgkjgoch`). Chaves no formato novo (`sb_publishable_...` / `sb_secret_...`).
+- Trocar a chave secreta (`sb_secret_...`) antes de entrar dado real: ela foi compartilhada por chat durante a configuração.
 - `database.types.ts` é um placeholder até existir a primeira migration.
