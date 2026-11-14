@@ -216,6 +216,80 @@ export type Database = {
           },
         ]
       }
+      cash_movements: {
+        Row: {
+          amount_cents: number
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          occurred_at: string
+          payment_method_id: string | null
+          receivable_id: string | null
+          type: Database["public"]["Enums"]["cash_movement_type"]
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          occurred_at?: string
+          payment_method_id?: string | null
+          receivable_id?: string | null
+          type: Database["public"]["Enums"]["cash_movement_type"]
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          occurred_at?: string
+          payment_method_id?: string | null
+          receivable_id?: string | null
+          type?: Database["public"]["Enums"]["cash_movement_type"]
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_movements_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_movements_payment_method_id_clinic_id_fkey"
+            columns: ["payment_method_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "cash_movements_receivable_id_clinic_id_fkey"
+            columns: ["receivable_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "receivables"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "cash_movements_unit_id_clinic_id_fkey"
+            columns: ["unit_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       chairs: {
         Row: {
           active: boolean
@@ -1317,8 +1391,13 @@ export type Database = {
         Returns: boolean
       }
       can_access_unit: { Args: { _unit_id: string }; Returns: boolean }
+      can_operate_finance: { Args: never; Returns: boolean }
       can_read_clinical: { Args: never; Returns: boolean }
       can_write_clinical: { Args: never; Returns: boolean }
+      cancel_receivable: {
+        Args: { _receivable_id: string }
+        Returns: undefined
+      }
       current_clinic_id: { Args: never; Returns: string }
       current_professional_ids: { Args: never; Returns: string[] }
       find_user_id_by_email: { Args: { _email: string }; Returns: string }
@@ -1327,6 +1406,7 @@ export type Database = {
         Returns: boolean
       }
       immutable_unaccent: { Args: { "": string }; Returns: string }
+      mark_overdue_receivables: { Args: never; Returns: number }
       patient_alerts: {
         Args: { _patient_id: string }
         Returns: {
@@ -1334,10 +1414,20 @@ export type Database = {
           label: string
         }[]
       }
+      receive_payment: {
+        Args: {
+          _paid_amount_cents: number
+          _paid_on: string
+          _payment_method_id: string
+          _receivable_id: string
+        }
+        Returns: undefined
+      }
       replace_professional_schedule: {
         Args: { _entries: Json; _professional_id: string }
         Returns: undefined
       }
+      reverse_payment: { Args: { _receivable_id: string }; Returns: undefined }
       search_patients: {
         Args: {
           _limit?: number
@@ -1361,6 +1451,7 @@ export type Database = {
       seed_clinic_defaults: { Args: { _clinic_id: string }; Returns: undefined }
       set_active_clinic: { Args: { _clinic_id: string }; Returns: undefined }
       timemultirange: { Args: never; Returns: unknown }
+      today_sp: { Args: never; Returns: string }
       user_clinic_ids: { Args: never; Returns: string[] }
     }
     Enums: {
@@ -1372,6 +1463,7 @@ export type Database = {
         | "done"
         | "no_show"
         | "canceled"
+      cash_movement_type: "in" | "out"
       member_role: "owner" | "manager" | "dentist" | "receptionist"
       patient_file_kind: "photo" | "xray" | "document" | "other"
       patient_gender: "female" | "male" | "other" | "not_informed"
@@ -1531,6 +1623,7 @@ export const Constants = {
         "no_show",
         "canceled",
       ],
+      cash_movement_type: ["in", "out"],
       member_role: ["owner", "manager", "dentist", "receptionist"],
       patient_file_kind: ["photo", "xray", "document", "other"],
       patient_gender: ["female", "male", "other", "not_informed"],

@@ -80,6 +80,7 @@ export function createTestEnv(prefix: string) {
 
   async function cleanup() {
     const tables = [
+      "cash_movements",
       "receivables",
       "treatment_plans",
       "clinical_notes",
