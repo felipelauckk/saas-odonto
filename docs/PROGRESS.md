@@ -139,4 +139,4 @@
 5. `CRON_SECRET` na Vercel (lembretes diários).
 6. Asaas real: chave, ambiente, token e webhook; cadastrar os planos em `/admin/planos`.
 7. 2FA para owners; Content-Security-Policy; backups.
-8. Rodar a suíte Playwright completa com o computador acordado (a última execução foi interrompida por suspensões da máquina; cada etapa passou isolada) e apagar as 26 clínicas "Clínica E2E …" que essa execução interrompida deixou no banco (precisa da sua autorização).
+8. ~~Suíte Playwright completa e limpeza das clínicas de teste~~ — feito em 14/11/2026: 79 de 80 passaram (2 pulados por regra de toque/mouse); o único erro (arquivar paciente não atualizava o cabeçalho às vezes) foi corrigido e passou 12 de 12 vezes. Rodar com `caffeinate -i npx playwright test` para o Mac não dormir no meio.

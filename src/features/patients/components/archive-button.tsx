@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Archive, ArchiveRestore } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -21,13 +22,18 @@ export function ArchiveButton({ patientId, archived, name }: { patientId: string
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   function run(next: boolean) {
     setError(null);
     startTransition(async () => {
       const result = await setPatientArchived(patientId, next);
       if (result.error) setError(result.error);
-      else setOpen(false);
+      else {
+        setOpen(false);
+        // Garante a tela atualizada mesmo se outra navegação estava em andamento.
+        router.refresh();
+      }
     });
   }
 

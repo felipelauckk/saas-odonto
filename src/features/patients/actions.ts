@@ -127,6 +127,7 @@ export async function setPatientArchived(id: string, archived: boolean): Promise
   if (error || !data.length) return { error: subscriptionErrorMessage(error) ?? "Não foi possível alterar o paciente." };
 
   revalidatePath("/pacientes");
-  revalidatePath(`/pacientes/${id}`);
+  // O cabeçalho (com o selo "Arquivado") fica no layout da ficha: recarrega o layout inteiro.
+  revalidatePath(`/pacientes/${id}`, "layout");
   return {};
 }
