@@ -6,33 +6,14 @@
  * Só roda com NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY e
  * SUPABASE_SERVICE_ROLE_KEY no .env.local.
  */
-import { randomUUID } from "node:crypto";
-
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import type { Database } from "@/lib/supabase/database.types";
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const hasSupabase = Boolean(url && anonKey && serviceKey);
-
-type Client = SupabaseClient<Database>;
-
-const noSession = { auth: { autoRefreshToken: false, persistSession: false } };
-const password = `Teste-${randomUUID()}`;
-const runId = randomUUID().slice(0, 8);
-
-function email(label: string) {
-  return `isolamento-${label}-${runId}@example.com`;
-}
+import { anonClient, createTestEnv, hasSupabase, type Client } from "@/test/supabase";
 
 describe.skipIf(!hasSupabase)("isolamento entre clínicas (RLS)", () => {
-  let admin: Client;
-  let anon: Client;
-  const userIds: string[] = [];
-  const clinicIds: string[] = [];
+  const env = createTestEnv("isolamento");
+  const admin = env.admin;
+  const anon = anonClient();
 
   let a: Client;
   let b: Client;
@@ -42,47 +23,17 @@ describe.skipIf(!hasSupabase)("isolamento entre clínicas (RLS)", () => {
   let unitB = "";
   let userB = "";
   let userReception = "";
-
-  async function createUser(label: string, clinicName?: string) {
-    const { data, error } = await admin.auth.admin.createUser({
-      email: email(label),
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: `Teste ${label}`, ...(clinicName ? { clinic_name: clinicName } : {}) },
-    });
-    if (error) throw error;
-    userIds.push(data.user.id);
-    return data.user.id;
-  }
-
-  async function signIn(label: string) {
-    const client = createClient<Database>(url!, anonKey!, noSession);
-    const { error } = await client.auth.signInWithPassword({ email: email(label), password });
-    if (error) throw error;
-    return client;
-  }
-
-  async function clinicOf(userId: string) {
-    const { data, error } = await admin
-      .from("clinic_members")
-      .select("clinic_id")
-      .eq("user_id", userId)
-      .single();
-    if (error) throw error;
-    clinicIds.push(data.clinic_id);
-    return data.clinic_id;
-  }
+  let clinicBName = "";
 
   beforeAll(async () => {
-    admin = createClient<Database>(url!, serviceKey!, noSession);
-    anon = createClient<Database>(url!, anonKey!, noSession);
+    const a0 = await env.createUser("a", "Clínica A");
+    const b0 = await env.createUser("b", "Clínica B");
+    userB = b0.userId;
+    userReception = (await env.createUser("recepcao")).userId;
 
-    const userA = await createUser("a", `Clínica A ${runId}`);
-    userB = await createUser("b", `Clínica B ${runId}`);
-    userReception = await createUser("recepcao");
-
-    clinicA = await clinicOf(userA);
-    clinicB = await clinicOf(userB);
+    clinicA = a0.clinicId!;
+    clinicB = b0.clinicId!;
+    clinicBName = b0.clinicName!;
 
     const { data: unit, error } = await admin
       .from("units")
@@ -92,22 +43,13 @@ describe.skipIf(!hasSupabase)("isolamento entre clínicas (RLS)", () => {
     if (error) throw error;
     unitB = unit.id;
 
-    a = await signIn("a");
-    b = await signIn("b");
-    reception = await signIn("recepcao");
+    a = await env.signIn("a");
+    b = await env.signIn("b");
+    reception = await env.signIn("recepcao");
   });
 
   afterAll(async () => {
-    if (!admin) return;
-    for (const id of clinicIds) {
-      await admin.from("clinic_members").delete().eq("clinic_id", id);
-      await admin.from("profiles").update({ active_clinic_id: null }).eq("active_clinic_id", id);
-      await admin.from("units").delete().eq("clinic_id", id);
-      await admin.from("clinics").delete().eq("id", id);
-    }
-    for (const id of userIds) {
-      await admin.auth.admin.deleteUser(id);
-    }
+    await env.cleanup();
   });
 
   it("o cadastro cria clínica em teste, unidade principal e owner", async () => {
@@ -161,7 +103,7 @@ describe.skipIf(!hasSupabase)("isolamento entre clínicas (RLS)", () => {
     expect(unit).toEqual([]);
 
     const { data: check } = await admin.from("clinics").select("name").eq("id", clinicB).single();
-    expect(check?.name).toBe(`Clínica B ${runId}`);
+    expect(check?.name).toBe(clinicBName);
   });
 
   it("não cria unidade nem membro em outra clínica", async () => {

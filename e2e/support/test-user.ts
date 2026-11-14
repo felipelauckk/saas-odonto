@@ -41,7 +41,16 @@ export async function createTestUser(): Promise<TestUser> {
     clinicName,
     async cleanup() {
       const { data: members } = await client.from("clinic_members").select("clinic_id").eq("user_id", userId);
+      const configTables = [
+        "professional_schedules",
+        "professionals",
+        "chairs",
+        "procedures",
+        "payment_methods",
+        "anamnesis_templates",
+      ];
       for (const { clinic_id } of members ?? []) {
+        for (const table of configTables) await client.from(table).delete().eq("clinic_id", clinic_id);
         await client.from("clinic_members").delete().eq("clinic_id", clinic_id);
         await client.from("profiles").update({ active_clinic_id: null }).eq("active_clinic_id", clinic_id);
         await client.from("units").delete().eq("clinic_id", clinic_id);
