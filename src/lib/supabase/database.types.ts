@@ -14,6 +14,64 @@ export type Database = {
   }
   public: {
     Tables: {
+      anamneses: {
+        Row: {
+          answers: Json
+          clinic_id: string
+          created_at: string
+          filled_by: string | null
+          id: string
+          patient_id: string
+          signed_at: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          answers: Json
+          clinic_id: string
+          created_at?: string
+          filled_by?: string | null
+          id?: string
+          patient_id: string
+          signed_at?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          clinic_id?: string
+          created_at?: string
+          filled_by?: string | null
+          id?: string
+          patient_id?: string
+          signed_at?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamneses_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamneses_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "anamneses_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "anamnesis_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       anamnesis_templates: {
         Row: {
           active: boolean
@@ -244,6 +302,81 @@ export type Database = {
           },
         ]
       }
+      clinical_notes: {
+        Row: {
+          appointment_id: string | null
+          body: string
+          clinic_id: string
+          complements_note_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          patient_id: string
+          professional_id: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          body: string
+          clinic_id: string
+          complements_note_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          patient_id: string
+          professional_id: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          body?: string
+          clinic_id?: string
+          complements_note_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          patient_id?: string
+          professional_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinical_notes_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinical_notes_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinical_notes_complements_note_id_fkey"
+            columns: ["complements_note_id"]
+            isOneToOne: false
+            referencedRelation: "clinical_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinical_notes_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "clinical_notes_professional_id_clinic_id_fkey"
+            columns: ["professional_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       clinics: {
         Row: {
           asaas_customer_id: string | null
@@ -300,6 +433,63 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "plans"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_files: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          description: string | null
+          id: string
+          kind: Database["public"]["Enums"]["patient_file_kind"]
+          mime_type: string | null
+          patient_id: string
+          size_bytes: number | null
+          storage_path: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["patient_file_kind"]
+          mime_type?: string | null
+          patient_id: string
+          size_bytes?: number | null
+          storage_path: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["patient_file_kind"]
+          mime_type?: string | null
+          patient_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_files_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_files_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
           },
         ]
       }
@@ -721,6 +911,60 @@ export type Database = {
           },
         ]
       }
+      tooth_records: {
+        Row: {
+          clinic_id: string
+          condition: Database["public"]["Enums"]["tooth_condition"]
+          created_at: string
+          faces: string[]
+          id: string
+          notes: string | null
+          patient_id: string
+          recorded_by: string | null
+          tooth: number
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          condition: Database["public"]["Enums"]["tooth_condition"]
+          created_at?: string
+          faces?: string[]
+          id?: string
+          notes?: string | null
+          patient_id: string
+          recorded_by?: string | null
+          tooth: number
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          condition?: Database["public"]["Enums"]["tooth_condition"]
+          created_at?: string
+          faces?: string[]
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          recorded_by?: string | null
+          tooth?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tooth_records_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tooth_records_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       units: {
         Row: {
           active: boolean
@@ -775,6 +1019,8 @@ export type Database = {
         Returns: boolean
       }
       can_access_unit: { Args: { _unit_id: string }; Returns: boolean }
+      can_read_clinical: { Args: never; Returns: boolean }
+      can_write_clinical: { Args: never; Returns: boolean }
       current_clinic_id: { Args: never; Returns: string }
       current_professional_ids: { Args: never; Returns: string[] }
       find_user_id_by_email: { Args: { _email: string }; Returns: string }
@@ -783,6 +1029,13 @@ export type Database = {
         Returns: boolean
       }
       immutable_unaccent: { Args: { "": string }; Returns: string }
+      patient_alerts: {
+        Args: { _patient_id: string }
+        Returns: {
+          details: string
+          label: string
+        }[]
+      }
       replace_professional_schedule: {
         Args: { _entries: Json; _professional_id: string }
         Returns: undefined
@@ -822,9 +1075,19 @@ export type Database = {
         | "no_show"
         | "canceled"
       member_role: "owner" | "manager" | "dentist" | "receptionist"
+      patient_file_kind: "photo" | "xray" | "document" | "other"
       patient_gender: "female" | "male" | "other" | "not_informed"
       patient_source: "indicacao" | "instagram" | "google" | "site" | "outro"
       subscription_status: "trialing" | "active" | "past_due" | "canceled"
+      tooth_condition:
+        | "healthy"
+        | "caries"
+        | "restored"
+        | "missing"
+        | "implant"
+        | "crown"
+        | "root_canal"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -962,9 +1225,20 @@ export const Constants = {
         "canceled",
       ],
       member_role: ["owner", "manager", "dentist", "receptionist"],
+      patient_file_kind: ["photo", "xray", "document", "other"],
       patient_gender: ["female", "male", "other", "not_informed"],
       patient_source: ["indicacao", "instagram", "google", "site", "outro"],
       subscription_status: ["trialing", "active", "past_due", "canceled"],
+      tooth_condition: [
+        "healthy",
+        "caries",
+        "restored",
+        "missing",
+        "implant",
+        "crown",
+        "root_canal",
+        "other",
+      ],
     },
   },
 } as const

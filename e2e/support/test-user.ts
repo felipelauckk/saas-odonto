@@ -55,7 +55,11 @@ export async function createTestUser(): Promise<TestUser> {
     async cleanup() {
       const { data: members } = await client.from("clinic_members").select("clinic_id").eq("user_id", userId);
       const configTables = [
-        "appointments",
+        "clinical_notes",
+      "anamneses",
+      "tooth_records",
+      "patient_files",
+      "appointments",
       "schedule_blocks",
       "professional_schedules",
         "professionals",
@@ -66,6 +70,8 @@ export async function createTestUser(): Promise<TestUser> {
       "patients",
       ];
       for (const { clinic_id } of members ?? []) {
+        const { data: files } = await client.from("patient_files").select("storage_path").eq("clinic_id", clinic_id);
+        if (files?.length) await client.storage.from("clinic").remove(files.map((f) => f.storage_path));
         for (const table of configTables) await client.from(table).delete().eq("clinic_id", clinic_id);
         await client.from("clinic_members").delete().eq("clinic_id", clinic_id);
         await client.from("profiles").update({ active_clinic_id: null }).eq("active_clinic_id", clinic_id);
