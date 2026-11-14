@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,15 @@ import {
 import { Brand } from "./brand";
 import { NavLinks } from "./nav-links";
 
-export function MobileNav() {
+type MobileNavProps = {
+  top?: ReactNode;
+  bottom?: ReactNode;
+  /** Ações à direita da barra (ex.: seletor de unidade). */
+  actions?: ReactNode;
+  canManage?: boolean;
+};
+
+export function MobileNav({ top, bottom, actions, canManage }: MobileNavProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -28,10 +36,13 @@ export function MobileNav() {
         <SheetContent side="left" className="w-72 gap-6 bg-sidebar px-3 py-5">
           <SheetTitle className="sr-only">Menu</SheetTitle>
           <Brand />
-          <NavLinks onNavigate={() => setOpen(false)} />
+          {top}
+          <NavLinks canManage={canManage} onNavigate={() => setOpen(false)} />
+          {bottom ? <div className="mt-auto">{bottom}</div> : null}
         </SheetContent>
       </Sheet>
       <Brand />
+      {actions ? <div className="ml-auto">{actions}</div> : null}
     </header>
   );
 }

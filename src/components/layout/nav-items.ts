@@ -12,6 +12,8 @@ export type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** Só para quem administra a clínica (owner e manager). */
+  managersOnly?: boolean;
 };
 
 export const navItems: readonly NavItem[] = [
@@ -20,5 +22,5 @@ export const navItems: readonly NavItem[] = [
   { href: "/pacientes", label: "Pacientes", icon: Users },
   { href: "/orcamentos", label: "Orçamentos", icon: FileText },
   { href: "/financeiro", label: "Financeiro", icon: Wallet },
-  { href: "/configuracoes", label: "Configurações", icon: Settings },
+  { href: "/configuracoes", label: "Configurações", icon: Settings, managersOnly: true },
 ];

@@ -1,5 +1,20 @@
 import { expect, test } from "@playwright/test";
 
+import { createTestUser, hasSupabase, signIn, type TestUser } from "./support/test-user";
+
+test.skip(!hasSupabase, "Precisa do Supabase configurado no .env.local");
+
+let user: TestUser;
+
+test.beforeEach(async ({ page }) => {
+  user = await createTestUser();
+  await signIn(page, user);
+});
+
+test.afterEach(async () => {
+  await user.cleanup();
+});
+
 test("a raiz redireciona para o painel", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/painel$/);
@@ -7,8 +22,6 @@ test("a raiz redireciona para o painel", async ({ page }) => {
 });
 
 test("navega pelo menu até Pacientes", async ({ page, isMobile }) => {
-  await page.goto("/painel");
-
   if (isMobile) {
     await page.getByRole("button", { name: "Abrir menu" }).click();
   }
@@ -23,7 +36,6 @@ test("navega pelo menu até Pacientes", async ({ page, isMobile }) => {
 
 test("botões têm pelo menos 44px no toque", async ({ page, isMobile }) => {
   test.skip(!isMobile, "Regra só para dispositivos de toque");
-  await page.goto("/painel");
   const box = await page.getByRole("button", { name: "Abrir menu" }).boundingBox();
   expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);

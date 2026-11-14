@@ -7,15 +7,16 @@ import { cn } from "cn";
 import { navItems } from "./nav-items";
 
 type NavLinksProps = {
+  canManage?: boolean;
   onNavigate?: () => void;
 };
 
-export function NavLinks({ onNavigate }: NavLinksProps) {
+export function NavLinks({ canManage = false, onNavigate }: NavLinksProps) {
   const pathname = usePathname();
 
   return (
     <nav aria-label="Menu principal" className="flex flex-col gap-0.5">
-      {navItems.map(({ href, label, icon: Icon }) => {
+      {navItems.filter((item) => canManage || !item.managersOnly).map(({ href, label, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link
