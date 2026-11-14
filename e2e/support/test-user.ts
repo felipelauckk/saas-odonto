@@ -10,13 +10,19 @@ export const hasSupabase = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
-function admin() {
+export function admin() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
 
-export type TestUser = { email: string; password: string; clinicName: string; cleanup: () => Promise<void> };
+export type TestUser = {
+  email: string;
+  password: string;
+  clinicName: string;
+  clinicId: string;
+  cleanup: () => Promise<void>;
+};
 
 /** Cria um usuário confirmado com a própria clínica (como no cadastro público). */
 export async function createTestUser(): Promise<TestUser> {
@@ -34,11 +40,18 @@ export async function createTestUser(): Promise<TestUser> {
   });
   if (error) throw error;
   const userId = data.user.id;
+  const { data: member, error: memberError } = await client
+    .from("clinic_members")
+    .select("clinic_id")
+    .eq("user_id", userId)
+    .single();
+  if (memberError) throw memberError;
 
   return {
     email,
     password,
     clinicName,
+    clinicId: member.clinic_id,
     async cleanup() {
       const { data: members } = await client.from("clinic_members").select("clinic_id").eq("user_id", userId);
       const configTables = [
@@ -70,4 +83,31 @@ export async function signIn(page: Page, user: TestUser) {
   await page.getByLabel("Senha").fill(user.password);
   await page.getByRole("button", { name: "Entrar" }).click();
   await page.waitForURL(/\/painel$/);
+}
+
+/** Profissional com expediente de segunda a sexta (8h–18h) e um paciente, para testar a agenda. */
+export async function seedAgenda(user: TestUser) {
+  const client = admin();
+  const { data: unit } = await client.from("units").select("id").eq("clinic_id", user.clinicId).single();
+  const { data: pro } = await client
+    .from("professionals")
+    .insert({ clinic_id: user.clinicId, name: "Dra. Ana", color: "#2563eb" })
+    .select("id")
+    .single();
+  await client.from("professional_schedules").insert(
+    [1, 2, 3, 4, 5].map((weekday) => ({
+      clinic_id: user.clinicId,
+      unit_id: unit!.id,
+      professional_id: pro!.id,
+      weekday,
+      start_time: "08:00",
+      end_time: "18:00",
+    })),
+  );
+  const { data: patient } = await client
+    .from("patients")
+    .insert({ clinic_id: user.clinicId, full_name: "Paciente Agenda", phone: "11988887777", whatsapp: "11988887777" })
+    .select("id")
+    .single();
+  return { unitId: unit!.id, professionalId: pro!.id, patientId: patient!.id };
 }

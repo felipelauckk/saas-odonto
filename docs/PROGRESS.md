@@ -6,7 +6,7 @@
 | 2. Multi-tenant e login | Concluída (14/11/2026) | Banco com RLS, cadastro, login, senha, convites, troca de clínica/unidade. Teste de isolamento passando. |
 | 3. Configurações | Concluída (14/11/2026) | Clínica e logo, unidades, cadeiras, profissionais com horários, procedimentos, formas de pagamento, unidades por membro. Dados iniciais em toda clínica nova. |
 | 4. Pacientes | Concluída (14/11/2026) | Lista com busca e filtros, cadastro com CPF/CEP/LGPD/responsável legal, ficha com abas (só Dados ativa), arquivar e reativar. |
-| 5. Agenda | Não iniciada | |
+| 5. Agenda | Concluída (14/11/2026) | Dia e semana, por profissional ou cadeira, marcar clicando, arrastar para remarcar, status com um clique, bloqueios, conflitos no banco, tempo real, relatório de faltas, aba Agendamentos. Lembrete por WhatsApp fica na Etapa 9. |
 | 6. Prontuário | Não iniciada | |
 | 7. Orçamentos | Não iniciada | |
 | 8. Financeiro | Não iniciada | |
@@ -51,6 +51,16 @@
 - **CEP pelo ViaCEP**, chamado do navegador: só o CEP sai, nenhum dado do paciente. Se o serviço falhar, a tela pede para preencher à mão. Nos testes o ViaCEP é simulado.
 - **Datas sem fuso** (nascimento) são tratadas como texto AAAA-MM-DD; "hoje" e a idade usam o dia de São Paulo (`src/lib/dates.ts`).
 - **Abas da ficha:** cada aba futura ganha a própria rota na sua etapa; até lá, `/pacientes/[id]/[aba]` mostra "em breve".
+- **Agenda: quem vê o quê** (decidido em 14/11/2026, com aval para seguir sem aprovação prévia): owner/manager veem tudo; recepção, as unidades permitidas (`unit_ids`); dentista, só a própria agenda — os profissionais ligados ao seu usuário (`current_professional_ids()`). Dentista sem profissional ligado vê um aviso para o gestor configurar. Regra única na função `can_access_agenda()`, usada nas políticas.
+- **Conflitos no banco** (`exclude using gist` com `tstzrange`): mesmo profissional e mesma cadeira não se sobrepõem. Consultas `canceled` e `no_show` liberam o horário. Encostar (fim = início) é permitido.
+- **Bloqueios** (`schedule_blocks`): da unidade toda (`professional_id` nulo) ou de um profissional. Gatilho recusa consulta em horário bloqueado com SQLSTATE próprio `OB001`. Dentista só bloqueia a própria agenda.
+- **Fora do expediente é permitido** (encaixe); a grade só mostra apagado. O expediente vem de `professional_schedules`.
+- **Consulta não é apagada**, só cancelada (sem permissão de DELETE). `confirmed_at` é preenchido por gatilho ao confirmar.
+- **Horários**: guardados em `timestamptz`; a tela converte para São Paulo com `src/lib/timezone.ts` (deslocamento calculado pelo Intl, funciona se o horário de verão voltar). Consulta que atravessa a meia-noite aparece nos dois dias.
+- **Arrastar para remarcar** só com mouse/caneta; no toque atrapalharia a rolagem, então o celular usa "Editar ou remarcar". Encaixe de 15 min. A posição muda na hora (otimista) e volta se o banco recusar.
+- **Tempo real**: `appointments` e `schedule_blocks` na publicação `supabase_realtime`. O canal só é aberto depois de carregar a sessão e passar o token (`realtime.setAuth`); sem isso a RLS escondia todos os eventos. Ao receber um evento, a tela recarrega os dados (`router.refresh`).
+- **Cadastro rápido de paciente** (nome e telefone) direto na agenda; o resto se completa na ficha.
+- **Taxa de faltas** = faltas ÷ consultas já passadas no período, sem as canceladas.
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1

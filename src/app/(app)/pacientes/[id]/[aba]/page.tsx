@@ -15,7 +15,6 @@ const UPCOMING: Record<string, string> = {
   orcamentos: "Os orçamentos e planos de tratamento chegam em uma próxima etapa.",
   financeiro: "Parcelas e pagamentos do paciente chegam com o módulo financeiro.",
   arquivos: "Fotos e radiografias chegam com o prontuário.",
-  agendamentos: "As consultas do paciente aparecem aqui quando a agenda estiver pronta.",
 };
 
 export default async function Page({ params }: PageProps<"/pacientes/[id]/[aba]">) {
