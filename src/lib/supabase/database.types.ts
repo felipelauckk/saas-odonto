@@ -200,6 +200,83 @@ export type Database = {
           },
         ]
       }
+      patients: {
+        Row: {
+          address: Json | null
+          archived_at: string | null
+          birth_date: string | null
+          clinic_id: string
+          consent_lgpd_at: string | null
+          consent_lgpd_by: string | null
+          cpf: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          gender: Database["public"]["Enums"]["patient_gender"] | null
+          guardian_cpf: string | null
+          guardian_name: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          search_name: string | null
+          source: Database["public"]["Enums"]["patient_source"] | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: Json | null
+          archived_at?: string | null
+          birth_date?: string | null
+          clinic_id: string
+          consent_lgpd_at?: string | null
+          consent_lgpd_by?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          gender?: Database["public"]["Enums"]["patient_gender"] | null
+          guardian_cpf?: string | null
+          guardian_name?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          search_name?: string | null
+          source?: Database["public"]["Enums"]["patient_source"] | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: Json | null
+          archived_at?: string | null
+          birth_date?: string | null
+          clinic_id?: string
+          consent_lgpd_at?: string | null
+          consent_lgpd_by?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          gender?: Database["public"]["Enums"]["patient_gender"] | null
+          guardian_cpf?: string | null
+          guardian_name?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          search_name?: string | null
+          source?: Database["public"]["Enums"]["patient_source"] | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patients_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_methods: {
         Row: {
           active: boolean
@@ -536,9 +613,30 @@ export type Database = {
         Args: { _roles: Database["public"]["Enums"]["member_role"][] }
         Returns: boolean
       }
+      immutable_unaccent: { Args: { "": string }; Returns: string }
       replace_professional_schedule: {
         Args: { _entries: Json; _professional_id: string }
         Returns: undefined
+      }
+      search_patients: {
+        Args: {
+          _limit?: number
+          _offset?: number
+          _query?: string
+          _source?: Database["public"]["Enums"]["patient_source"]
+          _status?: string
+        }
+        Returns: {
+          archived_at: string
+          birth_date: string
+          cpf: string
+          full_name: string
+          id: string
+          phone: string
+          source: Database["public"]["Enums"]["patient_source"]
+          total_count: number
+          whatsapp: string
+        }[]
       }
       seed_clinic_defaults: { Args: { _clinic_id: string }; Returns: undefined }
       set_active_clinic: { Args: { _clinic_id: string }; Returns: undefined }
@@ -547,6 +645,8 @@ export type Database = {
     }
     Enums: {
       member_role: "owner" | "manager" | "dentist" | "receptionist"
+      patient_gender: "female" | "male" | "other" | "not_informed"
+      patient_source: "indicacao" | "instagram" | "google" | "site" | "outro"
       subscription_status: "trialing" | "active" | "past_due" | "canceled"
     }
     CompositeTypes: {
@@ -676,6 +776,8 @@ export const Constants = {
   public: {
     Enums: {
       member_role: ["owner", "manager", "dentist", "receptionist"],
+      patient_gender: ["female", "male", "other", "not_informed"],
+      patient_source: ["indicacao", "instagram", "google", "site", "outro"],
       subscription_status: ["trialing", "active", "past_due", "canceled"],
     },
   },

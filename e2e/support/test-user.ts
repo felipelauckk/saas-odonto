@@ -48,6 +48,7 @@ export async function createTestUser(): Promise<TestUser> {
         "procedures",
         "payment_methods",
         "anamnesis_templates",
+      "patients",
       ];
       for (const { clinic_id } of members ?? []) {
         for (const table of configTables) await client.from(table).delete().eq("clinic_id", clinic_id);

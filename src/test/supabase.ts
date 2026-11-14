@@ -86,6 +86,7 @@ export function createTestEnv(prefix: string) {
       "procedures",
       "payment_methods",
       "anamnesis_templates",
+      "patients",
     ] as const;
     for (const id of clinicIds) {
       for (const table of tables) await admin.from(table).delete().eq("clinic_id", id);
