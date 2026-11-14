@@ -130,6 +130,6 @@ test("edita, arquiva e reativa", async ({ page }) => {
 
 test("abas futuras mostram aviso de em breve", async ({ page }) => {
   await createPatient(page, { name: "Clara Dias" });
-  await page.getByRole("navigation", { name: "Ficha do paciente" }).getByRole("link", { name: "Odontograma" }).click();
-  await expect(page.getByText("Odontograma em breve")).toBeVisible();
+  await page.getByRole("navigation", { name: "Ficha do paciente" }).getByRole("link", { name: "Orçamentos" }).click();
+  await expect(page.getByText("Orçamentos em breve")).toBeVisible();
 });

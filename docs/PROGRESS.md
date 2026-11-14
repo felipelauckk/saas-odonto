@@ -7,7 +7,7 @@
 | 3. Configurações | Concluída (14/11/2026) | Clínica e logo, unidades, cadeiras, profissionais com horários, procedimentos, formas de pagamento, unidades por membro. Dados iniciais em toda clínica nova. |
 | 4. Pacientes | Concluída (14/11/2026) | Lista com busca e filtros, cadastro com CPF/CEP/LGPD/responsável legal, ficha com abas (só Dados ativa), arquivar e reativar. |
 | 5. Agenda | Concluída (14/11/2026) | Dia e semana, por profissional ou cadeira, marcar clicando, arrastar para remarcar, status com um clique, bloqueios, conflitos no banco, tempo real, relatório de faltas, aba Agendamentos. Lembrete por WhatsApp fica na Etapa 9. |
-| 6. Prontuário | Não iniciada | |
+| 6. Prontuário | Concluída (14/11/2026) | Anamnese com versões e alertas, editor do modelo, odontograma por face (permanentes e decíduos), evoluções com complemento, arquivos com galeria. Auditoria de acesso fica na Etapa 11. |
 | 7. Orçamentos | Não iniciada | |
 | 8. Financeiro | Não iniciada | |
 | 9. WhatsApp | Não iniciada | |
@@ -61,6 +61,13 @@
 - **Tempo real**: `appointments` e `schedule_blocks` na publicação `supabase_realtime`. O canal só é aberto depois de carregar a sessão e passar o token (`realtime.setAuth`); sem isso a RLS escondia todos os eventos. Ao receber um evento, a tela recarrega os dados (`router.refresh`).
 - **Cadastro rápido de paciente** (nome e telefone) direto na agenda; o resto se completa na ficha.
 - **Taxa de faltas** = faltas ÷ consultas já passadas no período, sem as canceladas.
+- **Prontuário: permissões** (14/11/2026): dentista escreve; owner/manager só leem — exceto se estiverem ligados a um profissional (dono que também atende), aí escrevem também (`can_write_clinical()`). Recepção não lê nada clínico; vê só os alertas pela função `patient_alerts()`.
+- **Nada clínico é editado nem apagado** (só SELECT/INSERT nas tabelas e no Storage): anamnese vira nova versão (guarda a cópia das perguntas da época), odontograma ganha registro novo, evolução recebe complemento (`complements_note_id`), arquivo fica guardado. A evolução é assinada por um profissional ligado a quem escreve.
+- **Odontograma**: estado atual = registro mais recente de cada dente/face (`currentState`, testado). "Hígido" limpa. Ausente, implante, coroa e canal valem para o dente inteiro. Faces M/D/O/V/L com o nome certo por dente (incisal nos anteriores, palatina na arcada superior). Cada face é um botão com o próprio retângulo (acessível por teclado e leitor de tela, 44px).
+- **Arquivos clínicos** vão do navegador direto para o Storage (`{clinic_id}/patients/{patient_id}/...`), porque a Vercel limita o corpo das requisições a ~4,5 MB. O servidor só gera o caminho e registra o arquivo; se o registro falhar, remove o arquivo órfão. Links assinados de 10 minutos. Até 20 MB por arquivo; imagens e PDF.
+- **Logo**: limite das Server Actions subiu para 2 MB (`next.config.ts`); antes, um logo perto de 1 MB falharia.
+- **Agenda "Ao vivo"**: o indicador só acende quando o banco confirma a assinatura das mudanças; ao voltar para a aba a agenda busca de novo.
+- **Testes Playwright rodam contra a build de produção** (`next build && next start`); com o `next dev` a primeira compilação de cada página estourava o tempo sob carga. `E2E_DEV=1` usa o dev server. Rodar a suíte inteira várias vezes seguidas esbarra no limite de logins do Supabase Auth (aparece "Muitas tentativas"); espere alguns minutos entre execuções ou ajuste em Authentication → Rate Limits.
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1

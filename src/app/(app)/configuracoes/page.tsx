@@ -4,6 +4,7 @@ import {
   Armchair,
   Building2,
   ChevronRight,
+  ClipboardList,
   CreditCard,
   MapPin,
   Stethoscope,
@@ -65,6 +66,12 @@ export default async function Page() {
       description: "Taxas e prazos de recebimento.",
       icon: CreditCard,
       meta: plural(summary.paymentMethods, "forma ativa", "formas ativas"),
+    },
+    {
+      href: "/configuracoes/anamnese",
+      title: "Modelo de anamnese",
+      description: "Perguntas da anamnese e quais viram alerta.",
+      icon: ClipboardList,
     },
     { href: "/configuracoes/membros", title: "Equipe", description: "Quem acessa a clínica e com qual papel.", icon: Users },
   ];

@@ -31,13 +31,15 @@ export function PatientFilters() {
     startTransition(() => router.replace(qs ? `${pathname}?${qs}` : pathname));
   }
 
-  // Busca enquanto digita, com uma pequena espera.
+  // Busca enquanto digita, com uma pequena espera. Também roda quando a URL
+  // muda: se uma navegação antiga terminar depois, a busca atual é refeita.
+  const urlQuery = params.get("q") ?? "";
   useEffect(() => {
-    if (query === (params.get("q") ?? "")) return;
+    if (query.trim() === urlQuery) return;
     const timer = setTimeout(() => navigate({ q: query.trim() || null }), 300);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [query, urlQuery]);
 
   const tab = (value: "active" | "archived", label: string) => (
     <button

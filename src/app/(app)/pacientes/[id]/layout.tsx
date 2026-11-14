@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
+import { AlertsBanner } from "@/features/clinical/components/alerts-banner";
+import { getPatientAlerts } from "@/features/clinical/queries";
 import { PatientHeader } from "@/features/patients/components/patient-header";
 import { PatientTabs } from "@/features/patients/components/patient-tabs";
 import { getPatient } from "@/features/patients/queries";
@@ -10,12 +12,13 @@ export default async function PatientLayout({ children, params }: LayoutProps<"/
   await requireClinic();
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
-  const patient = await getPatient(id);
+  const [patient, alerts] = await Promise.all([getPatient(id), getPatientAlerts(id)]);
   if (!patient) notFound();
 
   return (
     <div className="space-y-6">
       <PatientHeader patient={patient} />
+      <AlertsBanner alerts={alerts} />
       <PatientTabs patientId={patient.id} />
       {children}
     </div>

@@ -55,6 +55,7 @@ type DialogState =
 /** Atualiza a tela quando outra pessoa mexe na agenda da unidade. */
 function useAgendaRealtime(unitId: string) {
   const router = useRouter();
+  const [live, setLive] = useState(false);
   useEffect(() => {
     const supabase = createClient();
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -73,15 +74,31 @@ function useAgendaRealtime(unitId: string) {
         .channel(`agenda-${unitId}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "appointments", filter: `unit_id=eq.${unitId}` }, refresh)
         .on("postgres_changes", { event: "*", schema: "public", table: "schedule_blocks", filter: `unit_id=eq.${unitId}` }, refresh)
-        .subscribe();
+        // "Ao vivo" só depois que o banco confirma a assinatura das mudanças
+        // (o SUBSCRIBED do canal chega antes disso).
+        .on("system", {}, (payload: { extension?: string; status?: string }) => {
+          if (!cancelled && payload.extension === "postgres_changes") setLive(payload.status === "ok");
+        })
+        .subscribe((status) => {
+          if (!cancelled && status !== "SUBSCRIBED") setLive(false);
+        });
     });
+
+    // Rede de segurança: ao voltar para a aba, busca de novo (eventos perdidos com a aba em segundo plano).
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
 
     return () => {
       cancelled = true;
+      setLive(false);
+      document.removeEventListener("visibilitychange", onVisible);
       clearTimeout(timer);
       if (channel) void supabase.removeChannel(channel);
     };
   }, [unitId, router]);
+  return live;
 }
 
 export function AgendaView({ data, unitId, date, today, view, by, selectedId, isDentist }: Props) {
@@ -89,7 +106,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
   const pathname = usePathname();
   const [dialog, setDialog] = useState<DialogState>(null);
   const [message, setMessage] = useState<string | null>(null);
-  useAgendaRealtime(unitId);
+  const live = useAgendaRealtime(unitId);
 
   useEffect(() => {
     if (!message) return;
@@ -397,6 +414,12 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
       )}
 
       <p className="text-xs text-muted-foreground">
+        {live ? (
+          <span className="mr-2 inline-flex items-center gap-1.5" data-realtime="on" title="A agenda atualiza sozinha quando alguém marca ou muda uma consulta">
+            <span className="size-2 rounded-full bg-emerald-500" aria-hidden />
+            Ao vivo ·
+          </span>
+        ) : null}
         Clique num horário livre para marcar. No computador, arraste a consulta para remarcar.{" "}
         <Link href="/agenda/faltas" className="underline underline-offset-4 hover:text-foreground">
           Relatório de faltas

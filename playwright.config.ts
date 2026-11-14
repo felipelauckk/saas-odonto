@@ -19,9 +19,12 @@ export default defineConfig({
     { name: "celular", use: { ...devices["Pixel 7"] } },
   ],
   webServer: {
-    command: `npm run dev -- --port ${PORT}`,
+    // Versão de produção: o servidor de desenvolvimento compila cada página no
+    // primeiro acesso e, com vários testes em paralelo, estourava o tempo.
+    // Use E2E_DEV=1 para testar contra o `next dev` (mais rápido para iterar).
+    command: process.env.E2E_DEV ? `npm run dev -- --port ${PORT}` : `npm run build && npm run start -- --port ${PORT}`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 300_000,
   },
 });

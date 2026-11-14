@@ -134,8 +134,8 @@ test("remarca pela janela de edição", async ({ page }) => {
 test("atualiza sozinha quando outra pessoa marca (tempo real)", async ({ page }) => {
   await page.goto(`/agenda?data=${DAY}`);
   await expect(page.getByRole("button", { name: "Marcar consulta Dra. Ana às 16:00" })).toBeAttached();
-  // Dá tempo de o canal de tempo real conectar.
-  await page.waitForTimeout(2000);
+  // Espera o canal de tempo real conectar.
+  await expect(page.getByText("Ao vivo")).toBeVisible({ timeout: 15_000 });
 
   await insertAppointment("16:00", "16:45");
   await expect(page.getByRole("button", { name: /Paciente Agenda, 16:00 a 16:45/ })).toBeVisible({ timeout: 15_000 });

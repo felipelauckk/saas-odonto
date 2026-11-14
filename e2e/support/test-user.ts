@@ -117,3 +117,21 @@ export async function seedAgenda(user: TestUser) {
     .single();
   return { unitId: unit!.id, professionalId: pro!.id, patientId: patient!.id };
 }
+
+/** Owner ligado a um profissional (dono que também atende) e um paciente adulto. */
+export async function seedClinical(user: TestUser) {
+  const client = admin();
+  const { data: member } = await client
+    .from("clinic_members")
+    .select("id")
+    .eq("clinic_id", user.clinicId)
+    .eq("role", "owner")
+    .single();
+  await client.from("professionals").insert({ clinic_id: user.clinicId, name: "Dr. Dono", member_id: member!.id });
+  const { data: patient } = await client
+    .from("patients")
+    .insert({ clinic_id: user.clinicId, full_name: "Paciente Prontuário", birth_date: "1990-01-01" })
+    .select("id")
+    .single();
+  return { patientId: patient!.id };
+}
