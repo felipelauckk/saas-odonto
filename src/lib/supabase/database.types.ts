@@ -216,6 +216,50 @@ export type Database = {
           },
         ]
       }
+      billing_events: {
+        Row: {
+          clinic_id: string | null
+          created_at: string
+          event: string
+          event_id: string
+          id: string
+          payload: Json
+          provider: string
+          received_at: string
+          updated_at: string
+        }
+        Insert: {
+          clinic_id?: string | null
+          created_at?: string
+          event: string
+          event_id: string
+          id?: string
+          payload: Json
+          provider?: string
+          received_at?: string
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string | null
+          created_at?: string
+          event?: string
+          event_id?: string
+          id?: string
+          payload?: Json
+          provider?: string
+          received_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_events_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_movements: {
         Row: {
           amount_cents: number
@@ -455,6 +499,7 @@ export type Database = {
         Row: {
           asaas_customer_id: string | null
           asaas_subscription_id: string | null
+          canceled_at: string | null
           created_at: string
           document_cnpj_cpf: string | null
           email: string | null
@@ -462,6 +507,7 @@ export type Database = {
           legal_name: string | null
           logo_url: string | null
           name: string
+          past_due_since: string | null
           phone: string | null
           plan_id: string | null
           subscription_status: Database["public"]["Enums"]["subscription_status"]
@@ -471,6 +517,7 @@ export type Database = {
         Insert: {
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
+          canceled_at?: string | null
           created_at?: string
           document_cnpj_cpf?: string | null
           email?: string | null
@@ -478,6 +525,7 @@ export type Database = {
           legal_name?: string | null
           logo_url?: string | null
           name: string
+          past_due_since?: string | null
           phone?: string | null
           plan_id?: string | null
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
@@ -487,6 +535,7 @@ export type Database = {
         Update: {
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
+          canceled_at?: string | null
           created_at?: string
           document_cnpj_cpf?: string | null
           email?: string | null
@@ -494,6 +543,7 @@ export type Database = {
           legal_name?: string | null
           logo_url?: string | null
           name?: string
+          past_due_since?: string | null
           phone?: string | null
           plan_id?: string | null
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
@@ -832,6 +882,24 @@ export type Database = {
           name?: string
           price_cents?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_admins: {
+        Row: {
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1512,6 +1580,8 @@ export type Database = {
         Args: { _receivable_id: string }
         Returns: undefined
       }
+      clinic_access_state: { Args: { _clinic_id: string }; Returns: string }
+      clinic_writable: { Args: { _clinic_id?: string }; Returns: boolean }
       current_clinic_id: { Args: never; Returns: string }
       current_professional_ids: { Args: never; Returns: string[] }
       find_user_id_by_email: { Args: { _email: string }; Returns: string }
@@ -1520,6 +1590,7 @@ export type Database = {
         Returns: boolean
       }
       immutable_unaccent: { Args: { "": string }; Returns: string }
+      is_platform_admin: { Args: never; Returns: boolean }
       mark_overdue_receivables: { Args: never; Returns: number }
       patient_alerts: {
         Args: { _patient_id: string }
