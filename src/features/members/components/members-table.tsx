@@ -19,16 +19,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { roleLabels, memberRoles, type MemberRole } from "@/features/tenancy/roles";
 
 import { updateMember } from "../actions";
+import { MemberUnitsDialog } from "./member-units-dialog";
 import type { MemberRow } from "../queries";
 
 type MembersTableProps = {
   members: MemberRow[];
   currentUserId: string;
   currentRole: MemberRole;
+  units: { id: string; name: string }[];
 };
 
-export function MembersTable({ members, currentUserId, currentRole }: MembersTableProps) {
+export function MembersTable({ members, currentUserId, currentRole, units }: MembersTableProps) {
   const [error, setError] = useState<string | null>(null);
+  const [unitsMember, setUnitsMember] = useState<{ id: string; name: string; unitIds: string[] } | null>(null);
+  const unitName = new Map(units.map((u) => [u.id, u.name]));
+  const showUnits = units.length > 1;
   const [pending, startTransition] = useTransition();
 
   function run(input: Parameters<typeof updateMember>[0]) {
@@ -48,6 +53,7 @@ export function MembersTable({ members, currentUserId, currentRole }: MembersTab
             <TableRow>
               <TableHead className="pl-4">Pessoa</TableHead>
               <TableHead>Papel</TableHead>
+              {showUnits ? <TableHead className="hidden md:table-cell">Unidades</TableHead> : null}
               <TableHead>Situação</TableHead>
               <TableHead className="w-14 pr-4">
                 <span className="sr-only">Ações</span>
@@ -75,6 +81,13 @@ export function MembersTable({ members, currentUserId, currentRole }: MembersTab
                     ) : null}
                   </TableCell>
                   <TableCell>{roleLabels[member.role]}</TableCell>
+                  {showUnits ? (
+                    <TableCell className="hidden text-sm text-muted-foreground md:table-cell">
+                      {member.role === "owner" || member.role === "manager" || member.unitIds.length === 0
+                        ? "Todas"
+                        : member.unitIds.map((id) => unitName.get(id) ?? "?").join(", ")}
+                    </TableCell>
+                  ) : null}
                   <TableCell>
                     {!member.active ? (
                       <Badge variant="outline">Desativado</Badge>
@@ -114,6 +127,23 @@ export function MembersTable({ members, currentUserId, currentRole }: MembersTab
                                   </DropdownMenuItem>
                                 ))}
                               </DropdownMenuGroup>
+                              {showUnits && (member.role === "dentist" || member.role === "receptionist") ? (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="pointer-coarse:min-h-11"
+                                    onClick={() =>
+                                      setUnitsMember({
+                                        id: member.id,
+                                        name: member.fullName ?? member.email ?? "membro",
+                                        unitIds: member.unitIds,
+                                      })
+                                    }
+                                  >
+                                    Unidades permitidas
+                                  </DropdownMenuItem>
+                                </>
+                              ) : null}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 variant="destructive"
@@ -141,6 +171,7 @@ export function MembersTable({ members, currentUserId, currentRole }: MembersTab
           </TableBody>
         </Table>
       </div>
+      <MemberUnitsDialog member={unitsMember} units={units} onClose={() => setUnitsMember(null)} />
     </div>
   );
 }

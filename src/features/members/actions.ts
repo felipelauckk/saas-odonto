@@ -10,6 +10,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/features/tenancy/queries";
 import { canManageClinic } from "@/features/tenancy/roles";
 
+import { memberUnitsSchema } from "@/features/settings/schemas";
+
 import { inviteMemberSchema, updateMemberSchema } from "./schemas";
 
 const MEMBERS_PATH = "/configuracoes/membros";
@@ -152,6 +154,32 @@ export async function updateMember(input: z.input<typeof updateMemberSchema>): P
     .select("id");
 
   if (error?.code === "23514") return { error: "A clínica precisa ter pelo menos um proprietário ativo." };
+  if (error || !data?.length) return { error: "Você não tem permissão para alterar este membro." };
+
+  revalidatePath(MEMBERS_PATH);
+  return {};
+}
+
+/** Define as unidades que um membro pode ver. Lista vazia = todas. */
+export async function updateMemberUnits(input: z.input<typeof memberUnitsSchema>): Promise<{ error?: string }> {
+  const parsed = memberUnitsSchema.safeParse(input);
+  if (!parsed.success) return { error: "Dados inválidos." };
+
+  const session = await getSessionContext();
+  if (!session?.clinic || !canManageClinic(session.clinic.role)) {
+    return { error: "Você não tem permissão para alterar a equipe." };
+  }
+
+  const supabase = await createClient();
+  // Só unidades da clínica ativa (a RLS de units garante isso).
+  const { data: units } = await supabase.from("units").select("id").in("id", parsed.data.unitIds);
+  if ((units?.length ?? 0) !== parsed.data.unitIds.length) return { error: "Unidade inválida." };
+
+  const { data, error } = await supabase
+    .from("clinic_members")
+    .update({ unit_ids: parsed.data.unitIds })
+    .eq("id", parsed.data.memberId)
+    .select("id");
   if (error || !data?.length) return { error: "Você não tem permissão para alterar este membro." };
 
   revalidatePath(MEMBERS_PATH);

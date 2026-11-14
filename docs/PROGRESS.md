@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | 1. Fundação | Concluída (13/11/2026) | Layout, Supabase (clientes), testes. Sem migrations. |
 | 2. Multi-tenant e login | Concluída (14/11/2026) | Banco com RLS, cadastro, login, senha, convites, troca de clínica/unidade. Teste de isolamento passando. |
-| 3. Configurações | Não iniciada | |
+| 3. Configurações | Concluída (14/11/2026) | Clínica e logo, unidades, cadeiras, profissionais com horários, procedimentos, formas de pagamento, unidades por membro. Dados iniciais em toda clínica nova. |
 | 4. Pacientes | Não iniciada | |
 | 5. Agenda | Não iniciada | |
 | 6. Prontuário | Não iniciada | |
@@ -36,6 +36,13 @@
 - **Links de e-mail** (confirmação, convite, nova senha) caem em `/auth/confirmar`, que aceita os três formatos do Supabase (`token_hash`, `code` e `#access_token`).
 - **Confirmação de e-mail ligada** no cadastro. `plans` começa vazia; clínicas em teste ficam com `plan_id` nulo até a Etapa 10.
 - **Testes de banco no Vitest** rodam contra o Supabase remoto (carregam o `.env.local`), criam os próprios usuários e apagam tudo no fim. Os testes Playwright fazem o mesmo.
+- **Configurações: leitura para todos, escrita só owner/manager.** Dentista e recepção leem profissionais, cadeiras, procedimentos e formas de pagamento (precisam na agenda e nos orçamentos). Nada é apagado, só desativado (`active`), porque agenda e financeiro vão apontar para esses registros. Exceção: linhas de horário, substituídas ao salvar a grade.
+- **FKs compostas `(id, clinic_id)`** em cadeiras, horários e no vínculo profissional→membro: o banco impede ligar registros de clínicas diferentes, mesmo que alguém burle o app.
+- **Horários sem sobreposição no banco** (`exclude using gist` com o tipo `timerange`): o mesmo profissional não atende em dois lugares ao mesmo tempo. A grade é salva pela função `replace_professional_schedule()` numa transação só, com a RLS de quem chama.
+- **Dados iniciais** (`seed_clinic_defaults`): 32 procedimentos com preço R$ 0,00 (a clínica define os seus; a tela avisa "sem preço"), 5 formas de pagamento sem taxa e o modelo padrão de anamnese. Rodou também para as clínicas que já existiam.
+- **Logo** no bucket privado `clinic`, caminho `{clinic_id}/logo/...`, exibido por URL assinada. PNG/JPG/WebP até 1 MB (SVG recusado por segurança). As políticas do bucket cobrem só a pasta `logo`; arquivos clínicos ganham regras próprias na Etapa 6.
+- **Fora da tela nesta etapa (decisão de 14/11/2026):** comissão do profissional (coluna existe, Fase 2), editor do modelo de anamnese (Etapa 6) e modelos de mensagem (Etapa 9).
+- **Limites do plano** (`max_units`, `max_professionals`) ainda não são aplicados: entram na Etapa 10, com os planos.
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1

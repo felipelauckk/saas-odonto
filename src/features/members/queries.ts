@@ -11,6 +11,8 @@ export type MemberRow = {
   email: string | null;
   role: MemberRole;
   active: boolean;
+  /** Unidades permitidas (vazio = todas). */
+  unitIds: string[];
   /** Convite enviado e ainda não aceito. */
   pending: boolean;
 };
@@ -26,7 +28,7 @@ export async function listMembers(): Promise<MemberRow[]> {
 
   const { data: members, error } = await supabase
     .from("clinic_members")
-    .select("id, user_id, role, active, created_at")
+    .select("id, user_id, role, active, unit_ids, created_at")
     .eq("clinic_id", clinicId)
     .order("created_at");
   if (error) throw error;
@@ -51,6 +53,7 @@ export async function listMembers(): Promise<MemberRow[]> {
       email: authUser?.email ?? null,
       role: m.role,
       active: m.active,
+      unitIds: m.unit_ids,
       pending: Boolean(authUser && !authUser.last_sign_in_at),
     };
   });

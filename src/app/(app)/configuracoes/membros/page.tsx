@@ -7,13 +7,15 @@ import { PageHeader } from "@/components/layout/page-header";
 import { listMembers } from "@/features/members/queries";
 import { InviteMemberForm } from "@/features/members/components/invite-member-form";
 import { MembersTable } from "@/features/members/components/members-table";
+import { listUnits } from "@/features/settings/queries";
 import { requireManager } from "@/features/tenancy/guards";
 
 export const metadata: Metadata = { title: "Equipe" };
 
 export default async function Page() {
   const session = await requireManager();
-  const members = await listMembers();
+  const [members, units] = await Promise.all([listMembers(), listUnits()]);
+  const activeUnits = units.filter((u) => u.active).map((u) => ({ id: u.id, name: u.name }));
 
   return (
     <div className="space-y-8">
@@ -45,7 +47,7 @@ export default async function Page() {
           Membros
         </h2>
         {members.length ? (
-          <MembersTable members={members} currentUserId={session.user.id} currentRole={session.clinic.role} />
+          <MembersTable members={members} currentUserId={session.user.id} currentRole={session.clinic.role} units={activeUnits} />
         ) : (
           <EmptyState icon={Users} title="Ninguém na equipe ainda" description="Convide a primeira pessoa acima." />
         )}

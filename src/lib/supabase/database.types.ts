@@ -536,6 +536,10 @@ export type Database = {
         Args: { _roles: Database["public"]["Enums"]["member_role"][] }
         Returns: boolean
       }
+      replace_professional_schedule: {
+        Args: { _entries: Json; _professional_id: string }
+        Returns: undefined
+      }
       seed_clinic_defaults: { Args: { _clinic_id: string }; Returns: undefined }
       set_active_clinic: { Args: { _clinic_id: string }; Returns: undefined }
       timemultirange: { Args: never; Returns: unknown }

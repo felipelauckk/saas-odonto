@@ -8,16 +8,18 @@ type FormFieldProps = ComponentProps<typeof Input> & {
   name: string;
   errors?: string[];
   hint?: string;
+  /** Classes do contêiner (ex.: ocupar duas colunas na grade). */
+  containerClassName?: string;
 };
 
 /** Rótulo + campo + mensagem de erro, com ligação de acessibilidade. */
-export function FormField({ label, name, errors, hint, id, ...inputProps }: FormFieldProps) {
+export function FormField({ label, name, errors, hint, id, containerClassName, ...inputProps }: FormFieldProps) {
   const inputId = id ?? name;
   const error = errors?.[0];
   const describedBy = error ? `${inputId}-erro` : hint ? `${inputId}-dica` : undefined;
 
   return (
-    <div className="space-y-1.5">
+    <div className={containerClassName ? `space-y-1.5 ${containerClassName}` : "space-y-1.5"}>
       <Label htmlFor={inputId}>{label}</Label>
       <Input
         id={inputId}
