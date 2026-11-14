@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { SettingsHeader } from "@/components/layout/settings-header";
+import { SubpageHeader } from "@/components/layout/subpage-header";
 import { NewUnitButton, UnitsList } from "@/features/settings/components/units-manager";
 import { listUnits } from "@/features/settings/queries";
 import { requireManager } from "@/features/tenancy/guards";
@@ -13,7 +13,7 @@ export default async function Page() {
 
   return (
     <div className="space-y-8">
-      <SettingsHeader
+      <SubpageHeader
         title="Unidades"
         description="Com mais de uma unidade ativa, aparece um seletor de unidade no topo do sistema."
         actions={<NewUnitButton />}

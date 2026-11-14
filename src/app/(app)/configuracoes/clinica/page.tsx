@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { SettingsHeader } from "@/components/layout/settings-header";
+import { SubpageHeader } from "@/components/layout/subpage-header";
 import { ClinicForm } from "@/features/settings/components/clinic-form";
 import { LogoForm } from "@/features/settings/components/logo-form";
 import { getClinic } from "@/features/settings/queries";
@@ -15,7 +15,7 @@ export default async function Page() {
 
   return (
     <div className="space-y-8">
-      <SettingsHeader title="Clínica" description="Dados que aparecem em orçamentos, recibos e mensagens." />
+      <SubpageHeader title="Clínica" description="Dados que aparecem em orçamentos, recibos e mensagens." />
       <section className="space-y-4 rounded-xl border p-5 sm:p-6" aria-labelledby="logo-titulo">
         <h2 id="logo-titulo" className="text-base font-medium">
           Logo

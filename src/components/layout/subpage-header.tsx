@@ -4,16 +4,16 @@ import { ChevronLeft } from "lucide-react";
 
 import { PageHeader } from "./page-header";
 
-type SettingsHeaderProps = { title: string; description?: string; actions?: ReactNode; backHref?: string; backLabel?: string };
+type SubpageHeaderProps = { title: string; description?: string; actions?: ReactNode; backHref?: string; backLabel?: string };
 
-/** Cabeçalho das telas de Configurações, com link de volta. */
-export function SettingsHeader({
+/** Cabeçalho de subpágina, com link de volta. */
+export function SubpageHeader({
   title,
   description,
   actions,
   backHref = "/configuracoes",
   backLabel = "Configurações",
-}: SettingsHeaderProps) {
+}: SubpageHeaderProps) {
   return (
     <div className="space-y-3">
       <Link

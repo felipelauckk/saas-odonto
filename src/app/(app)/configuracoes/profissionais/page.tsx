@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { SettingsHeader } from "@/components/layout/settings-header";
+import { SubpageHeader } from "@/components/layout/subpage-header";
 import { NewProfessionalButton, ProfessionalsList } from "@/features/settings/components/professionals-manager";
 import { listLinkableMembers, listProfessionals } from "@/features/settings/queries";
 import { requireManager } from "@/features/tenancy/guards";
@@ -13,7 +13,7 @@ export default async function Page() {
 
   return (
     <div className="space-y-8">
-      <SettingsHeader
+      <SubpageHeader
         title="Profissionais"
         description="Quem atende na clínica, com cor na agenda e horários."
         actions={<NewProfessionalButton members={members} />}

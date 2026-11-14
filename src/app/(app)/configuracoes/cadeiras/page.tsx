@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { SettingsHeader } from "@/components/layout/settings-header";
+import { SubpageHeader } from "@/components/layout/subpage-header";
 import { ChairsList, NewChairButton } from "@/features/settings/components/chairs-manager";
 import { listChairs, listUnits } from "@/features/settings/queries";
 import { getSessionContext } from "@/features/tenancy/queries";
@@ -14,7 +14,7 @@ export default async function Page() {
 
   return (
     <div className="space-y-8">
-      <SettingsHeader
+      <SubpageHeader
         title="Cadeiras"
         description="Cada cadeira pertence a uma unidade."
         actions={<NewChairButton units={units} unitId={session?.activeUnit?.id} />}

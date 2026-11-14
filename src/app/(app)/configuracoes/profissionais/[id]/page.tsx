@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
-import { SettingsHeader } from "@/components/layout/settings-header";
+import { SubpageHeader } from "@/components/layout/subpage-header";
 import { EditProfessionalButton } from "@/features/settings/components/professionals-manager";
 import { ScheduleEditor } from "@/features/settings/components/schedule-editor";
 import { StatusBadge } from "@/features/settings/components/status-badge";
@@ -23,7 +23,7 @@ export default async function Page({ params }: PageProps<"/configuracoes/profiss
 
   return (
     <div className="space-y-8">
-      <SettingsHeader
+      <SubpageHeader
         title={professional.name}
         backHref="/configuracoes/profissionais"
         backLabel="Profissionais"

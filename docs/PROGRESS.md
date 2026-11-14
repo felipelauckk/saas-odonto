@@ -5,7 +5,7 @@
 | 1. Fundação | Concluída (13/11/2026) | Layout, Supabase (clientes), testes. Sem migrations. |
 | 2. Multi-tenant e login | Concluída (14/11/2026) | Banco com RLS, cadastro, login, senha, convites, troca de clínica/unidade. Teste de isolamento passando. |
 | 3. Configurações | Concluída (14/11/2026) | Clínica e logo, unidades, cadeiras, profissionais com horários, procedimentos, formas de pagamento, unidades por membro. Dados iniciais em toda clínica nova. |
-| 4. Pacientes | Não iniciada | |
+| 4. Pacientes | Concluída (14/11/2026) | Lista com busca e filtros, cadastro com CPF/CEP/LGPD/responsável legal, ficha com abas (só Dados ativa), arquivar e reativar. |
 | 5. Agenda | Não iniciada | |
 | 6. Prontuário | Não iniciada | |
 | 7. Orçamentos | Não iniciada | |
@@ -43,6 +43,14 @@
 - **Logo** no bucket privado `clinic`, caminho `{clinic_id}/logo/...`, exibido por URL assinada. PNG/JPG/WebP até 1 MB (SVG recusado por segurança). As políticas do bucket cobrem só a pasta `logo`; arquivos clínicos ganham regras próprias na Etapa 6.
 - **Fora da tela nesta etapa (decisão de 14/11/2026):** comissão do profissional (coluna existe, Fase 2), editor do modelo de anamnese (Etapa 6) e modelos de mensagem (Etapa 9).
 - **Limites do plano** (`max_units`, `max_professionals`) ainda não são aplicados: entram na Etapa 10, com os planos.
+- **Pacientes: todos os papéis leem, cadastram, editam e arquivam** (decisão de 14/11/2026). O banco não tem permissão de DELETE em `patients`: só arquivamento (`archived_at`).
+- **CPF único por clínica** (índice parcial). O mesmo CPF pode existir em clínicas diferentes. Ao repetir, a tela mostra o paciente existente com link para a ficha.
+- **Busca** pela função `search_patients()` (SECURITY INVOKER, respeita a RLS): nome sem acento e em qualquer parte (coluna gerada `search_name` + índice trigram), CPF pelo começo e telefone/WhatsApp por qualquer trecho de dígitos (a partir de 3). Devolve o total para a paginação (25 por página). Filtros ficam na URL.
+- **Responsável legal** (`guardian_name`, `guardian_cpf`): incluído a pedido (14/11/2026). Os campos aparecem e o nome passa a ser obrigatório quando a data de nascimento indica menor de 18 anos.
+- **Consentimento LGPD** registrado uma única vez, com data e quem registrou (`consent_lgpd_at`, `consent_lgpd_by`).
+- **CEP pelo ViaCEP**, chamado do navegador: só o CEP sai, nenhum dado do paciente. Se o serviço falhar, a tela pede para preencher à mão. Nos testes o ViaCEP é simulado.
+- **Datas sem fuso** (nascimento) são tratadas como texto AAAA-MM-DD; "hoje" e a idade usam o dia de São Paulo (`src/lib/dates.ts`).
+- **Abas da ficha:** cada aba futura ganha a própria rota na sua etapa; até lá, `/pacientes/[id]/[aba]` mostra "em breve".
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1

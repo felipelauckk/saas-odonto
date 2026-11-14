@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { SettingsHeader } from "@/components/layout/settings-header";
+import { SubpageHeader } from "@/components/layout/subpage-header";
 import { NewProcedureButton, ProceduresList } from "@/features/settings/components/procedures-manager";
 import { listProcedures } from "@/features/settings/queries";
 import { requireManager } from "@/features/tenancy/guards";
@@ -13,7 +13,7 @@ export default async function Page() {
 
   return (
     <div className="space-y-8">
-      <SettingsHeader
+      <SubpageHeader
         title="Procedimentos"
         description="Preço e duração de cada procedimento. Usados na agenda e nos orçamentos."
         actions={<NewProcedureButton />}
