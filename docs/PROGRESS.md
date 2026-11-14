@@ -12,7 +12,7 @@
 | 8. Financeiro | Concluída (14/11/2026) | Contas a receber com filtros, baixa com taxa, estorno e cancelamento, cobranças avulsas, caixa do dia por unidade, recibo em PDF com valor por extenso, vencidos automáticos, aba Financeiro da ficha. |
 | 9. WhatsApp | Concluída (14/11/2026) | Camada `messaging` com provedor plugável (simulado e Meta), lembrete no dia anterior, confirmação pelo botão, aniversário, modelos editáveis e log de envios. Falta configurar o WhatsApp real. |
 | 10. Assinatura do SaaS | Concluída (14/11/2026) | Planos, assinatura pelo Asaas (Pix/boleto/cartão), webhook, modo somente leitura com aviso fixo, limites do plano, painel do superadmin. Falta configurar o Asaas real. |
-| 11. Painel inicial e acabamento | Não iniciada | |
+| 11. Painel inicial e acabamento | Concluída (14/11/2026) | Indicadores por unidade ou consolidado, agenda do dia, auditoria (aberturas e alterações), exportação LGPD em PDF, revisão de segurança, cabeçalhos de segurança, testes dos fluxos principais. |
 
 ## Decisões técnicas
 
@@ -92,6 +92,10 @@
 - **Webhook do Asaas** (`/api/asaas/webhook`, token no cabeçalho `asaas-access-token`): pagamento confirmado/recebido → ativa; atraso → `past_due` (marca a data uma vez); assinatura removida → cancelada. Idempotente por id do evento (`billing_events`).
 - **Superadmin** (`platform_admins`, só o servidor lê): painel `/admin` com clínicas, receita mensal, planos e ajustes manuais (estender teste, ativar, cancelar, trocar plano). Para os demais usuários a área responde 404. Nunca consulta tabelas de pacientes. Liberar: `npm run admin:add -- email`. A conta de teste `clinicateste@example.com` já é superadmin.
 - **Testes E2E longos**: algumas execuções travaram com todos os testes parando ao mesmo tempo (duração idêntica, e antes `ERR_NETWORK_IO_SUSPENDED`): sinal de rede suspensa/computador dormindo durante a execução. Repetidas, passaram. Não foi encontrado travamento no código nem no banco.
+- **Painel**: função `dashboard_metrics` (SECURITY INVOKER: cada número respeita a RLS de quem pede — dentista vê os próprios). Consultas de hoje, faturamento do mês (pagamentos recebidos), a receber e vencido, orçamentos em aberto, taxa de faltas dos últimos 30 dias. Gestão com mais de uma unidade vê consolidado por padrão, com opção "Unidade atual".
+- **Auditoria** (`audit_log`): alterações em anamnese, odontograma, evoluções, arquivos, orçamentos, itens, recebíveis e caixa por gatilho; aberturas das abas clínicas, do orçamento e do financeiro do paciente pela função `log_access` (chamada no servidor); exportações também. Só owner/manager leem (Configurações → Auditoria); ninguém altera nem apaga. Ações do servidor/cron não entram (sem usuário).
+- **Exportação LGPD**: `/pacientes/[id]/exportar` gera um PDF com dados pessoais, anamnese, odontograma, evoluções, consultas, orçamentos, financeiro e lista de arquivos. Só quem lê o prontuário exporta; fica na auditoria.
+- **Revisão de segurança (14/11/2026)**: todas as tabelas com RLS; toda função SECURITY DEFINER com `search_path` fixo; nenhuma tabela nem função de dados acessível sem login (só os construtores do tipo `timerange`, criados pelo Postgres); service role só em código de servidor, sempre depois de checar permissão, token ou assinatura; cabeçalhos `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` e `Strict-Transport-Security`.
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1
@@ -118,3 +122,21 @@
 
 - **Asaas real**: criar conta, gerar a chave de API e preencher na Vercel `ASAAS_API_KEY`, `ASAAS_ENV` (`sandbox` para testar, `production` para valer) e `ASAAS_WEBHOOK_TOKEN`; cadastrar o webhook no painel do Asaas apontando para `https://<domínio>/api/asaas/webhook` com o mesmo token.
 - **Planos**: cadastrar os planos reais (nome, preço, limites) em `/admin/planos`.
+
+## Pendências da Etapa 11
+
+- **Dois fatores (2FA) para owners**: previsto como opcional na especificação, não implementado.
+- **Content-Security-Policy**: não configurada (exige mapear Supabase, Realtime, ViaCEP e Asaas); os demais cabeçalhos de segurança estão ativos.
+- **Backups do Supabase**: ativar e testar uma restauração (plano pago do Supabase tem backups diários; o gratuito não).
+- **Auditoria**: hoje lista os 200 registros mais recentes, sem busca por período ou por pessoa.
+
+## Resumo das pendências (para revisar juntos)
+
+1. Domínio definitivo + Supabase Auth → URL Configuration (Site URL e Redirect URLs) — sem isso, links de e-mail (confirmação, convite, nova senha) não funcionam no endereço da Vercel.
+2. SMTP próprio (Resend, SES...) e modelos de e-mail em português no Supabase.
+3. Trocar a chave secreta do Supabase (foi compartilhada no chat) e atualizar na Vercel.
+4. WhatsApp real (Meta): app, modelos aprovados, variáveis na Vercel e webhook.
+5. `CRON_SECRET` na Vercel (lembretes diários).
+6. Asaas real: chave, ambiente, token e webhook; cadastrar os planos em `/admin/planos`.
+7. 2FA para owners; Content-Security-Policy; backups.
+8. Rodar a suíte Playwright completa com o computador acordado (a última execução foi interrompida por suspensões da máquina; cada etapa passou isolada) e apagar as 26 clínicas "Clínica E2E …" que essa execução interrompida deixou no banco (precisa da sua autorização).

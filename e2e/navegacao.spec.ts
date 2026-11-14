@@ -18,7 +18,7 @@ test.afterEach(async () => {
 test("a raiz redireciona para o painel", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/painel$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Painel" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Olá|Painel/ })).toBeVisible();
 });
 
 test("navega pelo menu até Pacientes", async ({ page, isMobile }) => {

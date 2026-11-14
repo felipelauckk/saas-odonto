@@ -9,6 +9,7 @@ import {
   MapPin,
   MessageCircle,
   Receipt,
+  ShieldCheck,
   Stethoscope,
   UserRound,
   Users,
@@ -82,6 +83,7 @@ export default async function Page() {
       description: "Lembretes e textos enviados pelo WhatsApp.",
       icon: MessageCircle,
     },
+    { href: "/configuracoes/auditoria", title: "Auditoria", description: "Quem abriu ou alterou dados sensíveis.", icon: ShieldCheck },
     { href: "/configuracoes/membros", title: "Equipe", description: "Quem acessa a clínica e com qual papel.", icon: Users },
   ];
 

@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { ChevronLeft, MessageCircle, Phone } from "lucide-react";
+import { ChevronLeft, FileDown, MessageCircle, Phone } from "lucide-react";
+
+import { buttonVariants } from "@/components/ui/button";
 
 import { Badge } from "@/components/ui/badge";
 import { ageFromBirthDate, formatIsoDate } from "@/lib/dates";
@@ -9,7 +11,7 @@ import type { Patient } from "../queries";
 import { MINOR_AGE } from "../schemas";
 import { ArchiveButton } from "./archive-button";
 
-export function PatientHeader({ patient }: { patient: Patient }) {
+export function PatientHeader({ patient, canExport = false }: { patient: Patient; canExport?: boolean }) {
   const age = patient.birth_date ? ageFromBirthDate(patient.birth_date) : null;
   const contact = patient.whatsapp ?? patient.phone;
 
@@ -54,7 +56,15 @@ export function PatientHeader({ patient }: { patient: Patient }) {
             ) : null}
           </p>
         </div>
-        <ArchiveButton patientId={patient.id} archived={Boolean(patient.archived_at)} name={patient.full_name} />
+        <div className="flex flex-wrap gap-2">
+          {canExport ? (
+            <a href={`/pacientes/${patient.id}/exportar`} className={buttonVariants({ variant: "outline" })} title="Todos os dados do paciente em PDF (direito de acesso da LGPD)">
+              <FileDown aria-hidden />
+              Exportar dados
+            </a>
+          ) : null}
+          <ArchiveButton patientId={patient.id} archived={Boolean(patient.archived_at)} name={patient.full_name} />
+        </div>
       </div>
     </div>
   );

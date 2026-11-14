@@ -55,7 +55,8 @@ export async function createTestUser(): Promise<TestUser> {
     async cleanup() {
       const { data: members } = await client.from("clinic_members").select("clinic_id").eq("user_id", userId);
       const configTables = [
-        "messages_log",
+        "audit_log",
+      "messages_log",
       "message_templates",
       "cash_movements",
       "receivables",

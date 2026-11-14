@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { logAccess } from "@/features/audit/log";
+
 import { ClinicalRestricted } from "@/features/clinical/components/restricted";
 import { Odontogram } from "@/features/clinical/components/odontogram";
 import { getClinicalAccess, getToothRecords } from "@/features/clinical/queries";
@@ -12,6 +14,7 @@ export default async function Page({ params }: PageProps<"/pacientes/[id]/odonto
   const { id } = await params;
   const access = await getClinicalAccess();
   if (!access.canRead) return <ClinicalRestricted />;
+  await logAccess("view", "tooth_records", id);
 
   const [records, patient] = await Promise.all([getToothRecords(id), getPatient(id)]);
   // Criança até 12 anos abre nos decíduos.

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+import { logAccess } from "@/features/audit/log";
 import { ShieldCheck } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -26,6 +28,7 @@ export default async function Page({ params }: PageProps<"/pacientes/[id]/anamne
     );
   }
 
+  await logAccess("view", "anamneses", id);
   const { versions, template } = await getAnamnesis(id);
   return <AnamnesisView patientId={id} versions={versions} template={template} canWrite={access.canWrite} />;
 }

@@ -43,7 +43,7 @@ test.describe("com usuário", () => {
 
   test("entra, vê a clínica e sai", async ({ page, isMobile }) => {
     await signIn(page, user);
-    await expect(page.getByRole("heading", { level: 1, name: "Painel" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /Olá|Painel/ })).toBeVisible();
 
     if (isMobile) await page.getByRole("button", { name: "Abrir menu" }).click();
     await expect(page.getByText(user.clinicName).filter({ visible: true })).toBeVisible();

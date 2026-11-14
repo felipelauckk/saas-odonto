@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+import { logAccess } from "@/features/audit/log";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
@@ -20,6 +22,7 @@ export default async function Page({ params }: PageProps<"/orcamentos/[id]">) {
   const detail = await getPlan(id);
   if (!detail) notFound();
   const { plan, items, receivables } = detail;
+  await logAccess("view", "treatment_plans", plan.patient_id, plan.id);
 
   const supabase = await createClient();
   const { data: paymentMethods } = await supabase.from("payment_methods").select("id, name").eq("active", true).order("created_at");

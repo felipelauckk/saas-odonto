@@ -216,6 +216,53 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          at: string
+          clinic_id: string
+          created_at: string
+          id: string
+          patient_id: string | null
+          record_id: string | null
+          table_name: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          at?: string
+          clinic_id: string
+          created_at?: string
+          id?: string
+          patient_id?: string | null
+          record_id?: string | null
+          table_name: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          at?: string
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          patient_id?: string | null
+          record_id?: string | null
+          table_name?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billing_events: {
         Row: {
           clinic_id: string | null
@@ -1584,6 +1631,7 @@ export type Database = {
       clinic_writable: { Args: { _clinic_id?: string }; Returns: boolean }
       current_clinic_id: { Args: never; Returns: string }
       current_professional_ids: { Args: never; Returns: string[] }
+      dashboard_metrics: { Args: { _unit_id?: string }; Returns: Json }
       find_user_id_by_email: { Args: { _email: string }; Returns: string }
       has_role: {
         Args: { _roles: Database["public"]["Enums"]["member_role"][] }
@@ -1591,6 +1639,15 @@ export type Database = {
       }
       immutable_unaccent: { Args: { "": string }; Returns: string }
       is_platform_admin: { Args: never; Returns: boolean }
+      log_access: {
+        Args: {
+          _action: string
+          _patient_id: string
+          _record_id: string
+          _table_name: string
+        }
+        Returns: undefined
+      }
       mark_overdue_receivables: { Args: never; Returns: number }
       patient_alerts: {
         Args: { _patient_id: string }

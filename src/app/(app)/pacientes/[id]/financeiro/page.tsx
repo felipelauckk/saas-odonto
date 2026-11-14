@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+import { logAccess } from "@/features/audit/log";
 import { Wallet } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -14,6 +16,7 @@ export const metadata: Metadata = { title: "Financeiro" };
 export default async function Page({ params }: PageProps<"/pacientes/[id]/financeiro">) {
   const session = await requireClinic();
   const { id } = await params;
+  void logAccess("view", "receivables", id);
   const [receivables, paymentMethods, patient] = await Promise.all([listPatientReceivables(id), listActivePaymentMethods(), getPatient(id)]);
   const role = session.clinic.role;
   const canOperate = role !== "dentist";
