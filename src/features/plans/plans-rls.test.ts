@@ -165,16 +165,27 @@ describe.skipIf(!hasSupabase)("orçamentos (RLS e aprovação)", () => {
     }
   });
 
-  it("app não cria recebível direto nem aprova pelo update", async () => {
+  it("parcela de orçamento só nasce pela aprovação; dentista não lança cobrança", async () => {
     const { error } = await owner.from("receivables").insert({
       clinic_id: clinicId,
       unit_id: unitId,
       patient_id: patientId,
-      description: "Manual",
+      plan_id: planId,
+      description: "Parcela forjada",
       amount_cents: 100,
       due_date: "2030-01-10",
     } as never);
     expect(error).not.toBeNull();
+
+    const { error: dentistError } = await dentist.from("receivables").insert({
+      clinic_id: clinicId,
+      unit_id: unitId,
+      patient_id: patientId,
+      description: "Avulsa",
+      amount_cents: 100,
+      due_date: "2030-01-10",
+    });
+    expect(dentistError).not.toBeNull();
 
     const { data: draft } = await owner
       .from("treatment_plans")

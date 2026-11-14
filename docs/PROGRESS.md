@@ -9,7 +9,7 @@
 | 5. Agenda | Concluída (14/11/2026) | Dia e semana, por profissional ou cadeira, marcar clicando, arrastar para remarcar, status com um clique, bloqueios, conflitos no banco, tempo real, relatório de faltas, aba Agendamentos. Lembrete por WhatsApp fica na Etapa 9. |
 | 6. Prontuário | Concluída (14/11/2026) | Anamnese com versões e alertas, editor do modelo, odontograma por face (permanentes e decíduos), evoluções com complemento, arquivos com galeria. Auditoria de acesso fica na Etapa 11. |
 | 7. Orçamentos | Concluída (14/11/2026) | Montagem com sugestões do odontograma, PDF com a identidade da clínica, aprovação total ou parcial gerando parcelas, itens realizados e conclusão automática. |
-| 8. Financeiro | Não iniciada | |
+| 8. Financeiro | Concluída (14/11/2026) | Contas a receber com filtros, baixa com taxa, estorno e cancelamento, cobranças avulsas, caixa do dia por unidade, recibo em PDF com valor por extenso, vencidos automáticos, aba Financeiro da ficha. |
 | 9. WhatsApp | Não iniciada | |
 | 10. Assinatura do SaaS | Não iniciada | |
 | 11. Painel inicial e acabamento | Não iniciada | |
@@ -74,6 +74,12 @@
 - **Recebíveis** guardam o profissional do orçamento: o dentista vê só os próprios (regra da especificação). O app não insere recebível direto; lançamentos manuais e baixa vêm na Etapa 8.
 - **PDF** com `@react-pdf/renderer` no servidor (`/orcamentos/[id]/pdf`), respeitando a RLS do usuário. Logo em PNG/JPG entra no PDF; WebP não é suportado pela biblioteca e fica de fora.
 - **Sugestões do odontograma** no orçamento só aparecem para quem lê o prontuário (a recepção monta sem elas).
+- **Financeiro: permissões** — owner/manager tudo; recepção recebe, lança cobranças avulsas e opera o caixa (`can_operate_finance()`); estorno e cancelamento só owner/manager; dentista só lê os próprios recebimentos e não vê o caixa.
+- **Baixa** pela função `receive_payment` (SQLSTATE `OF00x`): valor pago editável, taxa = % da forma de pagamento sobre o valor pago (`fee_cents`), entrada automática no caixa. Pagamento retroativo vai para o meio-dia daquele dia; futuro é recusado. Estorno lança uma saída no caixa de hoje e reabre a conta.
+- **Caixa não se edita nem apaga**: erro se corrige com lançamento contrário. Saldo por forma de pagamento.
+- **Vencidos**: gatilho marca `overdue` ao gravar com vencimento passado, e o `pg_cron` roda `mark_overdue_receivables()` todo dia às 00:05 de São Paulo (03:05 UTC).
+- **Recibo** em PDF (A5 paisagem) com valor por extenso (`src/lib/extenso.ts`, testado).
+- **Abas da ficha**: todas têm conteúdo agora; a rota genérica de "em breve" foi removida.
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1

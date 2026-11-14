@@ -127,9 +127,3 @@ test("edita, arquiva e reativa", async ({ page }) => {
   await page.getByRole("button", { name: "Reativar paciente" }).click();
   await expect(page.getByRole("button", { name: "Arquivar" })).toBeVisible();
 });
-
-test("abas futuras mostram aviso de em breve", async ({ page }) => {
-  await createPatient(page, { name: "Clara Dias" });
-  await page.getByRole("navigation", { name: "Ficha do paciente" }).getByRole("link", { name: "Financeiro" }).click();
-  await expect(page.getByText("Financeiro em breve")).toBeVisible();
-});
