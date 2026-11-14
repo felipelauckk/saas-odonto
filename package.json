@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "db:types": "supabase gen types typescript --linked --schema public > src/lib/supabase/database.types.ts",
+    "db:types": "supabase gen types typescript --remote --schema public > src/lib/supabase/database.types.ts",
     "db:push": "supabase db push"
   },
   "dependencies": {
@@ -40,6 +40,7 @@
     "supabase": "^3.1.0",
     "tailwindcss": "4.3.3",
     "typescript": "^5",
+    "vite": "^8.3.8",
     "vitest": "^5.1.0"
   },
   "engines": {
