@@ -13,8 +13,9 @@ import type { Database } from "./database.types";
  * Crie um novo cliente a cada requisição.
  */
 export async function createClient() {
-  const env = getPublicEnv();
+  // cookies() antes de tudo: marca a rota como dinâmica (nunca gerada no build).
   const cookieStore = await cookies();
+  const env = getPublicEnv();
 
   return createServerClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
