@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { SimpleSelect } from "@/components/forms/simple-select";
@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { saveAppointment, type PatientOption } from "../actions";
 import { repeatLabels, type Repeat } from "../advanced";
 import { DURATION_OPTIONS } from "../labels";
+import { labWarnings } from "@/features/prosthetics/actions";
+
 import { PatientPicker } from "./patient-picker";
 
 export type AppointmentFormValues = {
@@ -52,6 +54,18 @@ export function AppointmentForm({ initial, professionals, chairs, procedures, ta
   const [pending, startTransition] = useTransition();
   const [repeat, setRepeat] = useState<"none" | Repeat>("none");
   const [repeatCount, setRepeatCount] = useState("4");
+  const [labOrders, setLabOrders] = useState<{ patientId: string; list: Awaited<ReturnType<typeof labWarnings>> }>({ patientId: "", list: [] });
+  const patientId = values.patient?.id ?? null;
+  useEffect(() => {
+    if (!patientId) return;
+    let alive = true;
+    labWarnings(patientId).then((list) => alive && setLabOrders({ patientId, list }));
+    return () => {
+      alive = false;
+    };
+  }, [patientId]);
+  // Trabalho ainda no laboratório: avisa se a consulta é antes do retorno previsto.
+  const labConflicts = labOrders.patientId === patientId ? labOrders.list.filter((o) => values.date < o.expectedReturnOn) : [];
   const set = <K extends keyof AppointmentFormValues>(key: K, value: AppointmentFormValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }));
 
@@ -90,6 +104,11 @@ export function AppointmentForm({ initial, professionals, chairs, procedures, ta
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
       {error ? <FormMessage state={{ status: "error", message: error }} /> : null}
+      {labConflicts.length ? (
+        <p role="status" className="rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+          {labConflicts.map((o) => `${o.workType}${o.labName ? ` (${o.labName})` : ""} só volta do laboratório em ${o.expectedReturnOn.split("-").reverse().join("/")}`).join("; ")}. Confira antes de marcar.
+        </p>
+      ) : null}
 
       {values.id ? (
         <div className="space-y-1.5">
