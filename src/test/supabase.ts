@@ -8,6 +8,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
 
+import { purgeClinic } from "./purge-clinic";
+
 export type Client = SupabaseClient<Database>;
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -79,73 +81,7 @@ export function createTestEnv(prefix: string) {
   }
 
   async function cleanup() {
-    const tables = [
-      "audit_log",
-      "dunning_log",
-      "dunning_steps",
-      "patient_charges",
-      "clinic_billing",
-      "crc_contacts",
-      "leads",
-      "crm_campaigns",
-      "crm_stages",
-      "crc_templates",
-      "signature_requests",
-      "patient_documents",
-      "document_templates",
-      "medications",
-      "messages_log",
-      "message_templates",
-      "commission_closings",
-      "commission_rules",
-      "bank_transactions",
-      "cash_movements",
-      "payables",
-      "suppliers",
-      "cost_centers",
-      "finance_categories",
-      "receivables",
-      "treatment_plans",
-      "clinical_notes",
-      "anamneses",
-      "tooth_records",
-      "patient_files",
-      "patient_returns",
-      "waitlist",
-      "appointment_tag_links",
-      "appointment_tags",
-      "appointments",
-      "schedule_blocks",
-      "professional_schedules",
-      "professionals",
-      "chairs",
-      "procedures",
-      "payment_methods",
-      "anamnesis_templates",
-      "patients",
-      "referral_partners",
-    ] as const;
-    for (const id of clinicIds) {
-      const { data: files } = await admin.from("patient_files").select("storage_path").eq("clinic_id", id);
-      if (files?.length) await admin.storage.from("clinic").remove(files.map((f) => f.storage_path));
-      const { data: bills } = await admin.from("payables").select("attachment_path").eq("clinic_id", id).not("attachment_path", "is", null);
-      if (bills?.length) await admin.storage.from("clinic").remove(bills.map((b) => b.attachment_path as string));
-      const { data: docs } = await admin.from("patient_documents").select("pdf_path").eq("clinic_id", id);
-      const { data: sigs } = await admin.from("signature_requests").select("signed_pdf_path, signature_path").eq("clinic_id", id);
-      const docPaths = [
-        ...(docs ?? []).map((d) => d.pdf_path),
-        ...(sigs ?? []).flatMap((s) => [s.signed_pdf_path, s.signature_path]),
-      ].filter((p): p is string => Boolean(p));
-      if (docPaths.length) await admin.storage.from("clinic").remove(docPaths);
-      for (const table of tables) await admin.from(table).delete().eq("clinic_id", id);
-      await admin.storage.from("clinic").list(`${id}/logo`).then(async ({ data }) => {
-        if (data?.length) await admin.storage.from("clinic").remove(data.map((f) => `${id}/logo/${f.name}`));
-      });
-      await admin.from("clinic_members").delete().eq("clinic_id", id);
-      await admin.from("profiles").update({ active_clinic_id: null }).eq("active_clinic_id", id);
-      await admin.from("units").delete().eq("clinic_id", id);
-      await admin.from("clinics").delete().eq("id", id);
-    }
+    for (const id of clinicIds) await purgeClinic(admin as unknown as SupabaseClient, id);
     for (const id of userIds) await admin.auth.admin.deleteUser(id);
   }
 

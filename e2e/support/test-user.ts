@@ -4,6 +4,8 @@ import { existsSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
+import { purgeClinic } from "../../src/test/purge-clinic";
+
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
 export const hasSupabase = Boolean(
@@ -54,60 +56,7 @@ export async function createTestUser(): Promise<TestUser> {
     clinicId: member.clinic_id,
     async cleanup() {
       const { data: members } = await client.from("clinic_members").select("clinic_id").eq("user_id", userId);
-      const configTables = [
-        "audit_log",
-      "signature_requests",
-      "patient_documents",
-      "document_templates",
-      "medications",
-      "messages_log",
-      "message_templates",
-      "commission_closings",
-      "commission_rules",
-      "bank_transactions",
-      "cash_movements",
-      "payables",
-      "suppliers",
-      "cost_centers",
-      "finance_categories",
-      "receivables",
-      "treatment_plans",
-      "clinical_notes",
-      "anamneses",
-      "tooth_records",
-      "patient_files",
-      "patient_returns",
-      "waitlist",
-      "appointment_tag_links",
-      "appointment_tags",
-      "appointments",
-      "schedule_blocks",
-      "professional_schedules",
-        "professionals",
-        "chairs",
-        "procedures",
-        "payment_methods",
-        "anamnesis_templates",
-      "patients",
-      ];
-      for (const { clinic_id } of members ?? []) {
-        const { data: files } = await client.from("patient_files").select("storage_path").eq("clinic_id", clinic_id);
-        if (files?.length) await client.storage.from("clinic").remove(files.map((f) => f.storage_path));
-        const { data: bills } = await client.from("payables").select("attachment_path").eq("clinic_id", clinic_id).not("attachment_path", "is", null);
-        if (bills?.length) await client.storage.from("clinic").remove(bills.map((b) => b.attachment_path as string));
-        const { data: docs } = await client.from("patient_documents").select("pdf_path").eq("clinic_id", clinic_id);
-        const { data: sigs } = await client.from("signature_requests").select("signed_pdf_path, signature_path").eq("clinic_id", clinic_id);
-        const docPaths = [
-          ...(docs ?? []).map((d) => d.pdf_path),
-          ...(sigs ?? []).flatMap((s) => [s.signed_pdf_path, s.signature_path]),
-        ].filter((p): p is string => Boolean(p));
-        if (docPaths.length) await client.storage.from("clinic").remove(docPaths);
-        for (const table of configTables) await client.from(table).delete().eq("clinic_id", clinic_id);
-        await client.from("clinic_members").delete().eq("clinic_id", clinic_id);
-        await client.from("profiles").update({ active_clinic_id: null }).eq("active_clinic_id", clinic_id);
-        await client.from("units").delete().eq("clinic_id", clinic_id);
-        await client.from("clinics").delete().eq("id", clinic_id);
-      }
+      for (const { clinic_id } of members ?? []) await purgeClinic(client, clinic_id);
       await client.auth.admin.deleteUser(userId);
     },
   };
