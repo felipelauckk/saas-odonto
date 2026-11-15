@@ -82,6 +82,9 @@ export function createTestEnv(prefix: string) {
     const tables = [
       "audit_log",
       "crc_contacts",
+      "leads",
+      "crm_campaigns",
+      "crm_stages",
       "crc_templates",
       "signature_requests",
       "patient_documents",
@@ -116,6 +119,7 @@ export function createTestEnv(prefix: string) {
       "payment_methods",
       "anamnesis_templates",
       "patients",
+      "referral_partners",
     ] as const;
     for (const id of clinicIds) {
       const { data: files } = await admin.from("patient_files").select("storage_path").eq("clinic_id", id);

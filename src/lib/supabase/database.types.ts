@@ -759,6 +759,7 @@ export type Database = {
           document_cnpj_cpf: string | null
           email: string | null
           id: string
+          lead_form_token: string
           legal_name: string | null
           logo_url: string | null
           name: string
@@ -780,6 +781,7 @@ export type Database = {
           document_cnpj_cpf?: string | null
           email?: string | null
           id?: string
+          lead_form_token?: string
           legal_name?: string | null
           logo_url?: string | null
           name: string
@@ -801,6 +803,7 @@ export type Database = {
           document_cnpj_cpf?: string | null
           email?: string | null
           id?: string
+          lead_form_token?: string
           legal_name?: string | null
           logo_url?: string | null
           name?: string
@@ -1091,6 +1094,88 @@ export type Database = {
           },
         ]
       }
+      crm_campaigns: {
+        Row: {
+          active: boolean
+          clinic_id: string
+          cost_cents: number
+          created_at: string
+          id: string
+          name: string
+          source: Database["public"]["Enums"]["lead_source"] | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          clinic_id: string
+          cost_cents?: number
+          created_at?: string
+          id?: string
+          name: string
+          source?: Database["public"]["Enums"]["lead_source"] | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          clinic_id?: string
+          cost_cents?: number
+          created_at?: string
+          id?: string
+          name?: string
+          source?: Database["public"]["Enums"]["lead_source"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_campaigns_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_stages: {
+        Row: {
+          auto_key: string | null
+          clinic_id: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["crm_stage_kind"]
+          name: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          auto_key?: string | null
+          clinic_id: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["crm_stage_kind"]
+          name: string
+          position: number
+          updated_at?: string
+        }
+        Update: {
+          auto_key?: string | null
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["crm_stage_kind"]
+          name?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_stages_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_templates: {
         Row: {
           active: boolean
@@ -1177,6 +1262,125 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clinics"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          campaign_id: string | null
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          email: string | null
+          from_public_form: boolean
+          id: string
+          interest: string | null
+          lost_reason: string | null
+          name: string
+          notes: string | null
+          patient_id: string | null
+          phone: string | null
+          procedure_id: string | null
+          referred_by_partner_id: string | null
+          referred_by_patient_id: string | null
+          source: Database["public"]["Enums"]["lead_source"]
+          stage_changed_at: string
+          stage_id: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          from_public_form?: boolean
+          id?: string
+          interest?: string | null
+          lost_reason?: string | null
+          name: string
+          notes?: string | null
+          patient_id?: string | null
+          phone?: string | null
+          procedure_id?: string | null
+          referred_by_partner_id?: string | null
+          referred_by_patient_id?: string | null
+          source?: Database["public"]["Enums"]["lead_source"]
+          stage_changed_at?: string
+          stage_id: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          from_public_form?: boolean
+          id?: string
+          interest?: string | null
+          lost_reason?: string | null
+          name?: string
+          notes?: string | null
+          patient_id?: string | null
+          phone?: string | null
+          procedure_id?: string | null
+          referred_by_partner_id?: string | null
+          referred_by_patient_id?: string | null
+          source?: Database["public"]["Enums"]["lead_source"]
+          stage_changed_at?: string
+          stage_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_campaign_id_clinic_id_fkey"
+            columns: ["campaign_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "crm_campaigns"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "leads_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "leads_procedure_id_clinic_id_fkey"
+            columns: ["procedure_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "leads_referred_by_partner_id_clinic_id_fkey"
+            columns: ["referred_by_partner_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "referral_partners"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "leads_referred_by_patient_id_clinic_id_fkey"
+            columns: ["referred_by_patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "leads_stage_id_clinic_id_fkey"
+            columns: ["stage_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "crm_stages"
+            referencedColumns: ["id", "clinic_id"]
           },
         ]
       }
@@ -1612,6 +1816,8 @@ export type Database = {
           id: string
           notes: string | null
           phone: string | null
+          referred_by_partner_id: string | null
+          referred_by_patient_id: string | null
           search_name: string | null
           source: Database["public"]["Enums"]["patient_source"] | null
           updated_at: string
@@ -1634,6 +1840,8 @@ export type Database = {
           id?: string
           notes?: string | null
           phone?: string | null
+          referred_by_partner_id?: string | null
+          referred_by_patient_id?: string | null
           search_name?: string | null
           source?: Database["public"]["Enums"]["patient_source"] | null
           updated_at?: string
@@ -1656,6 +1864,8 @@ export type Database = {
           id?: string
           notes?: string | null
           phone?: string | null
+          referred_by_partner_id?: string | null
+          referred_by_patient_id?: string | null
           search_name?: string | null
           source?: Database["public"]["Enums"]["patient_source"] | null
           updated_at?: string
@@ -1668,6 +1878,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clinics"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patients_referred_partner_fk"
+            columns: ["referred_by_partner_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "referral_partners"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "patients_referred_patient_fk"
+            columns: ["referred_by_patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
           },
         ]
       }
@@ -2202,6 +2426,47 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "units"
             referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
+      referral_partners: {
+        Row: {
+          active: boolean
+          clinic_id: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          clinic_id: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_partners_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2831,6 +3096,10 @@ export type Database = {
           recovered_cents: number
         }[]
       }
+      crm_advance: {
+        Args: { _clinic_id: string; _key: string; _patient_id: string }
+        Returns: undefined
+      }
       current_clinic_id: { Args: never; Returns: string }
       current_professional_ids: { Args: never; Returns: string[] }
       dashboard_metrics: { Args: { _unit_id?: string }; Returns: Json }
@@ -2880,6 +3149,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      regenerate_lead_form_token: { Args: never; Returns: string }
       replace_professional_schedule: {
         Args: { _entries: Json; _professional_id: string }
         Returns: undefined
@@ -2908,6 +3178,7 @@ export type Database = {
       seed_agenda_defaults: { Args: { _clinic_id: string }; Returns: undefined }
       seed_clinic_defaults: { Args: { _clinic_id: string }; Returns: undefined }
       seed_crc_defaults: { Args: { _clinic_id: string }; Returns: undefined }
+      seed_crm_defaults: { Args: { _clinic_id: string }; Returns: undefined }
       seed_document_defaults: {
         Args: { _clinic_id: string }
         Returns: undefined
@@ -2949,6 +3220,7 @@ export type Database = {
         | "overdue_returns"
         | "birthdays"
         | "overdue_payments"
+      crm_stage_kind: "open" | "won" | "lost"
       document_kind:
         | "prescription"
         | "special_prescription"
@@ -2959,6 +3231,14 @@ export type Database = {
         | "post_op"
         | "other"
       document_status: "issued" | "signed" | "canceled"
+      lead_source:
+        | "instagram"
+        | "google"
+        | "indicacao"
+        | "site"
+        | "anuncio"
+        | "passante"
+        | "outro"
       member_role: "owner" | "manager" | "dentist" | "receptionist"
       message_kind:
         | "appointment_reminder"
@@ -3146,6 +3426,7 @@ export const Constants = {
         "birthdays",
         "overdue_payments",
       ],
+      crm_stage_kind: ["open", "won", "lost"],
       document_kind: [
         "prescription",
         "special_prescription",
@@ -3157,6 +3438,15 @@ export const Constants = {
         "other",
       ],
       document_status: ["issued", "signed", "canceled"],
+      lead_source: [
+        "instagram",
+        "google",
+        "indicacao",
+        "site",
+        "anuncio",
+        "passante",
+        "outro",
+      ],
       member_role: ["owner", "manager", "dentist", "receptionist"],
       message_kind: [
         "appointment_reminder",

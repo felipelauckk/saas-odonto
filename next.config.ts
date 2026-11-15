@@ -5,9 +5,17 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // O formulário de captação pode ser incorporado no site da clínica (iframe).
+        source: "/captacao/:token",
+        headers: [{ key: "Content-Security-Policy", value: "frame-ancestors *" }],
+      },
+      {
+        source: "/:path((?!captacao/).*)",
+        headers: [{ key: "X-Frame-Options", value: "DENY" }],
+      },
+      {
         source: "/:path*",
         headers: [
-          { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },

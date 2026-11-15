@@ -1,5 +1,6 @@
 import "server-only";
 
+import { fetchAll } from "@/lib/supabase/fetch-all";
 import { createClient } from "@/lib/supabase/server";
 import { addDays } from "@/lib/timezone";
 
@@ -11,12 +12,15 @@ export async function getCrcBoard(today: string) {
   const supabase = await createClient();
   const [itemsRes, contactsRes, templatesRes] = await Promise.all([
     supabase.rpc("crc_items"),
-    supabase
-      .from("crc_contacts")
-      .select("id, queue, item_key, channel, outcome, notes, next_contact_on, created_at, created_by")
-      .gte("created_at", `${addDays(today, -365)}T00:00:00Z`)
-      .order("created_at", { ascending: false })
-      .limit(5000),
+    fetchAll((a, b) =>
+      supabase
+        .from("crc_contacts")
+        .select("id, queue, item_key, channel, outcome, notes, next_contact_on, created_at, created_by")
+        .gte("created_at", `${addDays(today, -365)}T00:00:00Z`)
+        .order("created_at", { ascending: false })
+        .order("id")
+        .range(a, b),
+    ).then((data) => ({ data, error: null })),
     supabase.from("crc_templates").select("queue, body"),
   ]);
   if (itemsRes.error) throw itemsRes.error;
@@ -58,12 +62,15 @@ export async function getCrcStats(from: string, to: string) {
   const supabase = await createClient();
   const [statsRes, contactsRes] = await Promise.all([
     supabase.rpc("crc_stats", { _from: from, _to: to }),
-    supabase
-      .from("crc_contacts")
-      .select("created_at")
-      .gte("created_at", `${addDays(from, -1)}T00:00:00Z`)
-      .lte("created_at", `${addDays(to, 1)}T23:59:59Z`)
-      .limit(20000),
+    fetchAll((a, b) =>
+      supabase
+        .from("crc_contacts")
+        .select("created_at")
+        .gte("created_at", `${addDays(from, -1)}T00:00:00Z`)
+        .lte("created_at", `${addDays(to, 1)}T23:59:59Z`)
+        .order("id")
+        .range(a, b),
+    ).then((data) => ({ data, error: null })),
   ]);
   if (statsRes.error) throw statsRes.error;
   if (contactsRes.error) throw contactsRes.error;
