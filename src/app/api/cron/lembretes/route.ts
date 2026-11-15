@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 
 import { NextResponse } from "next/server";
 
+import { runFollowups } from "@/features/ai/followup";
 import { runDailyMessages } from "@/features/messaging/service";
 
 /**
@@ -17,5 +18,7 @@ export async function GET(request: Request) {
   if (!ok) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
 
   const summary = await runDailyMessages();
-  return NextResponse.json(summary);
+  // Follow-up das filas da CRC pelo assistente (só clínicas que ligaram; horário comercial).
+  const followups = await runFollowups();
+  return NextResponse.json({ ...summary, followups });
 }

@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/format";
 
+import { VoiceDictation } from "@/features/ai/components/voice-dictation";
+
 import { addClinicalNote } from "../actions";
 
 type Note = {
@@ -73,7 +75,10 @@ function NoteForm({
         />
       ) : null}
       <div className="space-y-1.5">
-        <Label htmlFor={fieldId}>{complementsNoteId ? "Complemento" : "Nova evolução"}</Label>
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor={fieldId}>{complementsNoteId ? "Complemento" : "Nova evolução"}</Label>
+          <VoiceDictation kind="note" title="Ditar evolução" onResult={(r) => setBody((b) => (b.trim() ? `${b.trim()}\n${r.data.text}` : r.data.text))} />
+        </div>
         <Textarea
           id={fieldId}
           rows={complementsNoteId ? 3 : 5}

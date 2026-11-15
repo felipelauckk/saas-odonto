@@ -10,6 +10,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const CLINIC_TABLES = [
   "audit_log",
+  "ai_insights",
+  "ai_usage_log",
+  "whatsapp_messages",
+  "whatsapp_conversations",
+  "clinic_ai_settings",
+  "service_invoices",
+  "clinic_fiscal_settings",
+  "booking_requests",
+  "portal_links",
+  "online_booking_settings",
   "specialty_records",
   "professional_specialty_forms",
   "specialty_templates",

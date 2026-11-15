@@ -18,6 +18,8 @@ import { ARCHES, conditionColors, conditionLabels, faceLabel, type Face, type To
 import { PatientPicker } from "@/features/agenda/components/patient-picker";
 import type { PatientOption } from "@/features/agenda/actions";
 
+import { VoiceDictation } from "@/features/ai/components/voice-dictation";
+
 import { savePlan } from "../actions";
 
 type Procedure = { id: string; name: string; price_cents: number; applies_to_tooth: boolean };
@@ -138,9 +140,26 @@ export function PlanBuilder(props: Props) {
       </section>
 
       <section className="space-y-4 rounded-xl border p-5 sm:p-6" aria-labelledby="incluir-item">
-        <h2 id="incluir-item" className="text-base font-medium">
-          Incluir procedimento
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 id="incluir-item" className="text-base font-medium">
+            Incluir procedimento
+          </h2>
+          <VoiceDictation
+            kind="plan"
+            title="Ditar orçamento"
+            context={{ procedures: props.procedures.map((p) => ({ id: p.id, name: p.name })) }}
+            onResult={(r) => {
+              // Itens entram na lista para revisão; nada é salvo até "Salvar".
+              const added: Item[] = r.data.items.map((it) => {
+                const p = props.procedures.find((x) => x.id === it.procedureId);
+                const tooth = p?.applies_to_tooth && it.tooth && (ALL_TEETH as number[]).includes(it.tooth) ? it.tooth : null;
+                return { key: key(), procedureId: p?.id ?? null, description: p?.name ?? it.description, tooth, faces: tooth ? it.faces : [], priceCents: p?.price_cents ?? 0 };
+              });
+              setItems((list) => [...list, ...added]);
+              if (added.some((i) => !i.procedureId)) setError("Alguns itens ditados não correspondem a procedimentos cadastrados: confira o valor antes de salvar.");
+            }}
+          />
+        </div>
 
         {props.suggestions.length ? (
           <div className="space-y-2">

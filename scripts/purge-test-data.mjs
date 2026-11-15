@@ -53,14 +53,21 @@ if (!apply) {
 const { purgeClinic } = await import("../src/test/purge-clinic.ts");
 let done = 0;
 const failed = [];
-for (const c of testClinics) {
-  try {
-    await purgeClinic(admin, c.id);
-    done++;
-  } catch (e) {
-    failed.push(`${c.name}: ${e.message}`);
-  }
-}
+// Várias clínicas ao mesmo tempo (cada uma tem ~60 exclusões pela rede).
+const queue = [...testClinics];
+await Promise.all(
+  Array.from({ length: Number(process.env.PURGE_CONCURRENCY ?? 3) }, async () => {
+    for (let c = queue.shift(); c; c = queue.shift()) {
+      try {
+        await purgeClinic(admin, c.id);
+        done++;
+        if (done % 50 === 0) console.log(`${done} de ${testClinics.length}...`);
+      } catch (e) {
+        failed.push(`${c.name}: ${e.message}`);
+      }
+    }
+  }),
+);
 for (const u of testUsers) await admin.auth.admin.deleteUser(u.id);
 console.log(`Apagadas ${done} clínicas e ${testUsers.length} usuários de teste.`);
 if (failed.length) console.log(`Falharam ${failed.length}:\n${failed.slice(0, 10).join("\n")}`);

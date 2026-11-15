@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Target } from "lucide-react";
+import { Sparkles, Target } from "lucide-react";
 import { z } from "zod";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -36,10 +36,16 @@ export default async function Page({ searchParams }: PageProps<"/analitico">) {
         title="Painel analítico"
         description="Evolução mensal, metas, funil e rankings."
         actions={
-          <Link href={`/analitico/metas?mes=${month}`} className={buttonVariants({ variant: "outline" })}>
-            <Target aria-hidden />
-            Metas
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/analitico/ia" className={buttonVariants({ variant: "outline" })}>
+              <Sparkles aria-hidden />
+              Perguntar à IA
+            </Link>
+            <Link href={`/analitico/metas?mes=${month}`} className={buttonVariants({ variant: "outline" })}>
+              <Target aria-hidden />
+              Metas
+            </Link>
+          </div>
         }
       />
       <PeriodFilter

@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+import { VoiceDictation } from "@/features/ai/components/voice-dictation";
+
 import { saveAnamnesis } from "../actions";
 import type { Answer } from "../anamnesis";
 
@@ -58,6 +60,22 @@ export function AnamnesisForm({ patientId, templateId, initial, onDone, onCancel
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
       {error ? <FormMessage state={{ status: "error", message: error }} /> : null}
+      <div className="flex justify-end">
+        <VoiceDictation
+          kind="anamnesis"
+          title="Ditar anamnese"
+          context={{ questions: answers.map((a) => ({ id: a.id, label: a.label })) }}
+          onResult={(r) =>
+            setAnswers((list) =>
+              list.map((a) => {
+                const got = r.data.answers.find((x) => x.questionId === a.id);
+                if (!got || (got.answer === null && !got.details)) return a;
+                return { ...a, ...(got.answer ? { answer: got.answer } : {}), ...(got.details ? { text: got.details } : {}) };
+              }),
+            )
+          }
+        />
+      </div>
       <ol className="divide-y rounded-xl border">
         {answers.map((a, index) => (
           <li key={a.id} className="space-y-2 px-4 py-3 sm:px-5">

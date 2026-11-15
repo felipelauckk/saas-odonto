@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { NextResponse } from "next/server";
 
+import { handleInboundMessage } from "@/features/ai/assistant";
 import { confirmFromButton } from "@/features/messaging/service";
 
 /** Verificação do webhook pela Meta (configuração inicial). */
@@ -18,7 +19,8 @@ type WebhookBody = {
   entry?: {
     changes?: {
       value?: {
-        messages?: { type?: string; button?: { payload?: string }; interactive?: { button_reply?: { id?: string } } }[];
+        metadata?: { phone_number_id?: string };
+        messages?: { from?: string; type?: string; text?: { body?: string }; button?: { payload?: string }; interactive?: { button_reply?: { id?: string } } }[];
       };
     }[];
   }[];
@@ -40,6 +42,10 @@ export async function POST(request: Request) {
       for (const message of change.value?.messages ?? []) {
         const payload = message.button?.payload ?? message.interactive?.button_reply?.id;
         if (payload) await confirmFromButton(payload);
+        // Texto livre: vai para a caixa de entrada e, se ligado, para o assistente.
+        else if (message.type === "text" && message.from && message.text?.body) {
+          await handleInboundMessage({ phoneNumberId: change.value?.metadata?.phone_number_id ?? null, from: message.from, text: message.text.body.slice(0, 4000) });
+        }
       }
     }
   }
