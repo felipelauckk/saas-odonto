@@ -759,7 +759,56 @@ async function crcCrm(supabase: Supabase, f: ReportFilters): Promise<ReportResul
   };
 }
 
+// 15. Consumo de material -----------------------------------------------------------------------------------
+
+async function consumo(supabase: Supabase, f: ReportFilters): Promise<ReportResult> {
+  const { start, end } = rangeOf(f);
+  const moves = await fetchAll((a, b) => {
+    let q = supabase
+      .from("stock_movements")
+      .select("qty, unit_cost_cents, shortage, treatment_item_id, stock_products(name, measure), treatment_items(procedures(name), description)")
+      .in("kind", ["procedure", "manual_out"])
+      .gte("created_at", start)
+      .lt("created_at", end)
+      .order("id");
+    if (f.unitId) q = q.eq("unit_id", f.unitId);
+    return q.range(a, b);
+  });
+  const groups = new Map<string, { row: Row; items: Set<string> }>();
+  for (const m of moves) {
+    const byProduct = f.groupBy === "produto";
+    const key = byProduct
+      ? `${m.stock_products?.name ?? "Produto"}${m.stock_products?.measure ? ` (${m.stock_products.measure})` : ""}`
+      : m.treatment_item_id
+        ? (m.treatment_items?.procedures?.name ?? m.treatment_items?.description ?? "Procedimento")
+        : "Saídas manuais";
+    const g = groups.get(key) ?? { row: { group: key, procedures: 0, qty: 0, cost: 0 }, items: new Set<string>() };
+    groups.set(key, g);
+    if (m.treatment_item_id) g.items.add(m.treatment_item_id);
+    g.row.qty = Number(g.row.qty) + -Number(m.qty);
+    // Custo só do que saiu de lote (a falta não tem custo conhecido).
+    g.row.cost = Number(g.row.cost) + Math.round((-Number(m.qty) - Number(m.shortage)) * m.unit_cost_cents);
+  }
+  const rows: Row[] = [...groups.values()]
+    .map(({ row, items }): Row => ({ ...row, procedures: items.size, perProcedure: items.size ? Math.round(Number(row.cost) / items.size) : null }))
+    .sort((a, b) => Number(b.cost) - Number(a.cost));
+  const byProduct = f.groupBy === "produto";
+  return {
+    columns: [
+      { key: "group", label: byProduct ? "Material" : "Procedimento", type: "text" },
+      ...(byProduct ? [{ key: "qty", label: "Quantidade", type: "decimal" as const }] : [{ key: "procedures", label: "Realizados", type: "int" as const }]),
+      { key: "cost", label: "Custo de material", type: "money" },
+      ...(byProduct ? [] : [{ key: "perProcedure", label: "Custo por procedimento", type: "money" as const }]),
+    ],
+    rows,
+    total: { group: "Total", qty: sum(rows, "qty"), procedures: sum(rows, "procedures"), cost: sum(rows, "cost"), perProcedure: null },
+    summary: [{ label: "Custo de material", value: sum(rows, "cost"), type: "money" }],
+    note: "Baixas pelos kits ao realizar procedimentos e saídas manuais. Custo pelo valor de compra de cada lote.",
+  };
+}
+
 const runners: Record<string, (supabase: Supabase, f: ReportFilters) => Promise<ReportResult>> = {
+  consumo,
   faturamento,
   producao,
   orcamentos,

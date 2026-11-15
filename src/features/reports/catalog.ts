@@ -36,6 +36,7 @@ export const reports: readonly ReportDef[] = [
   { slug: "despesas", title: "Contas a pagar e DRE", description: "Despesas por categoria e resultado do período.", filters: ["period", "unit"] },
   { slug: "comissoes", title: "Comissões", description: "Comissão calculada por profissional em cada mês do período.", filters: ["period", "professional"] },
   { slug: "retornos", title: "Retornos", description: "Alertas de retorno vencidos, cumpridos e dispensados.", filters: ["period", "professional"] },
+  { slug: "consumo", title: "Consumo de material", description: "Materiais baixados por procedimento e custo de material.", filters: ["period", "unit", "groupBy"], groupBy: [{ value: "procedimento", label: "Procedimento" }, { value: "produto", label: "Material" }] },
   { slug: "crc-crm", title: "CRC e CRM", description: "Contatos e recuperação da CRC; leads e conversão do CRM.", filters: ["period"] },
 ];
 
