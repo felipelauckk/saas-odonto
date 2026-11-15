@@ -29,6 +29,7 @@ export const PATIENT_TABS = [
   { slug: "anamnese", label: "Anamnese" },
   { slug: "odontograma", label: "Odontograma" },
   { slug: "evolucoes", label: "Evoluções" },
+  { slug: "fichas", label: "Fichas" },
   { slug: "orcamentos", label: "Orçamentos" },
   { slug: "financeiro", label: "Financeiro" },
   { slug: "arquivos", label: "Arquivos" },

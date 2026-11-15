@@ -8,6 +8,7 @@ import {
   Banknote,
   CreditCard,
   FileText,
+  FlaskConical,
   Landmark,
   Megaphone,
   MapPin,
@@ -81,6 +82,7 @@ export default async function Page() {
       icon: CreditCard,
       meta: plural(summary.paymentMethods, "forma ativa", "formas ativas"),
     },
+    { href: "/configuracoes/laboratorios", title: "Laboratórios", description: "Laboratórios de prótese, preços e prazos.", icon: FlaskConical },
     { href: "/configuracoes/cobranca", title: "Cobrança online", description: "Conta Asaas da clínica, Pix, boleto, link e régua de cobrança.", icon: Banknote },
     { href: "/configuracoes/documentos", title: "Documentos", description: "Modelos de receitas, atestados, contratos e termos.", icon: FileText },
     {
@@ -89,6 +91,7 @@ export default async function Page() {
       description: "Perguntas da anamnese e quais viram alerta.",
       icon: ClipboardList,
     },
+    { href: "/configuracoes/fichas", title: "Fichas clínicas", description: "Fichas por especialidade e quem usa cada uma.", icon: ClipboardList },
     {
       href: "/configuracoes/mensagens",
       title: "Mensagens",

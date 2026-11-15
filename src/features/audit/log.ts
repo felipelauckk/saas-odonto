@@ -2,7 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-type AuditedTable = "patients" | "anamneses" | "tooth_records" | "clinical_notes" | "patient_files" | "treatment_plans" | "receivables";
+type AuditedTable = "patients" | "anamneses" | "tooth_records" | "clinical_notes" | "patient_files" | "treatment_plans" | "receivables" | "specialty_records";
 
 /**
  * Registra que o usuário abriu (view) ou exportou (export) um dado sensível.

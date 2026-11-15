@@ -12,6 +12,11 @@ export const AUDIT_TABLE_LABELS: Record<string, string> = {
   treatment_items: "Item de orçamento",
   receivables: "Financeiro",
   cash_movements: "Caixa",
+  payables: "Contas a pagar",
+  leads: "Lead (CRM)",
+  prosthetic_orders: "Ordem protética",
+  specialty_records: "Ficha de especialidade",
+  patient_documents: "Documento",
 };
 
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
