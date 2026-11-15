@@ -7,6 +7,7 @@ import {
   ClipboardList,
   CreditCard,
   FileText,
+  Landmark,
   MapPin,
   MessageCircle,
   Receipt,
@@ -65,6 +66,7 @@ export default async function Page() {
       meta: plural(summary.procedures, "procedimento", "procedimentos"),
       warning: summary.unpriced ? plural(summary.unpriced, "sem preço", "sem preço") : undefined,
     },
+    { href: "/configuracoes/financeiro", title: "Cadastros financeiros", description: "Categorias, fornecedores e centros de custo.", icon: Landmark },
     {
       href: "/configuracoes/formas-de-pagamento",
       title: "Formas de pagamento",

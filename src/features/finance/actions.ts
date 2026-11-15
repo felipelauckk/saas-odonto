@@ -97,6 +97,7 @@ const movementSchema = z.object({
   amountCents: z.number().int().positive("Informe o valor."),
   description: z.string().trim().min(2, "Descreva o lançamento.").max(200),
   paymentMethodId: z.uuid().nullable(),
+  categoryId: z.uuid().nullable().optional(),
 });
 
 export async function addCashMovement(input: z.input<typeof movementSchema>): Promise<Result> {
@@ -112,6 +113,7 @@ export async function addCashMovement(input: z.input<typeof movementSchema>): Pr
     amount_cents: parsed.data.amountCents,
     description: parsed.data.description,
     payment_method_id: parsed.data.paymentMethodId,
+    category_id: parsed.data.categoryId ?? null,
     created_by: session.user.id,
   });
   if (error) return { error: financeError(error) };

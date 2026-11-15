@@ -7,7 +7,7 @@ import { z } from "zod";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { CashMovementButton } from "@/features/finance/components/cash-movement-button";
-import { getCashDay, listActivePaymentMethods } from "@/features/finance/queries";
+import { getCashDay, listActivePaymentMethods, listExpenseCategories } from "@/features/finance/queries";
 import { requireClinic } from "@/features/tenancy/guards";
 import { todayIso } from "@/lib/dates";
 import { formatCurrency } from "@/lib/format";
@@ -24,7 +24,7 @@ export default async function Page({ searchParams }: PageProps<"/financeiro/caix
   const { data: raw } = await searchParams;
   const today = todayIso();
   const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).safeParse(raw).success ? (raw as string) : today;
-  const [cash, paymentMethods] = await Promise.all([getCashDay({ unitId: unit.id, date }), listActivePaymentMethods()]);
+  const [cash, paymentMethods, categories] = await Promise.all([getCashDay({ unitId: unit.id, date }), listActivePaymentMethods(), listExpenseCategories()]);
   const balance = cash.totalIn - cash.totalOut;
   const dayHref = (d: string) => (d === today ? "/financeiro/caixa" : `/financeiro/caixa?data=${d}`);
 
@@ -45,7 +45,7 @@ export default async function Page({ searchParams }: PageProps<"/financeiro/caix
             {session.units.length > 1 ? ` · ${unit.name}` : ""}
           </h2>
         </div>
-        {date === today ? <CashMovementButton paymentMethods={paymentMethods} /> : null}
+        {date === today ? <CashMovementButton paymentMethods={paymentMethods} categories={categories} /> : null}
       </div>
 
       <dl className="grid gap-3 sm:grid-cols-3">

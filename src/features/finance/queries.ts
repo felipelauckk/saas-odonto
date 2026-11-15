@@ -91,3 +91,9 @@ export async function listActivePaymentMethods() {
   const { data } = await supabase.from("payment_methods").select("id, name, fee_percent").eq("active", true).order("created_at");
   return data ?? [];
 }
+
+export async function listExpenseCategories() {
+  const supabase = await createClient();
+  const { data } = await supabase.from("finance_categories").select("id, name").eq("type", "expense").eq("active", true).order("name");
+  return data ?? [];
+}

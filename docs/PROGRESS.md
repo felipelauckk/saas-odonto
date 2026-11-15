@@ -18,6 +18,7 @@
 
 | Etapa | Status | Observações |
 | --- | --- | --- |
+| 13. Contas a pagar e fluxo de caixa | Concluída (15/11/2026) | Contas a pagar (fornecedor, categoria, centro de custo, parcelas, mensal fixa, comprovante), baixa no caixa, fluxo realizado e previsto, DRE mensal, conciliação OFX assistida, categorias padrão e cadastros. |
 | 12. Documentos e assinatura eletrônica | Concluída (14/11/2026) | Modelos com variáveis, receituário (simples e controle especial em 2 vias) com lista de medicamentos, atestado, declaração, contrato, termo, orientações; aba Documentos; assinatura por link com página de evidências e hash; anamnese por link; verificação de PDF. |
 
 ## Decisões técnicas
@@ -108,6 +109,12 @@
 - **Envio do link**: copiar ou "Abrir no WhatsApp" (mensagem pronta, do WhatsApp da própria clínica). Envio automático pela API da Meta e por e-mail ficam para quando houver modelo aprovado e SMTP.
 - **Anamnese por link**: o paciente preenche e assina; vira nova versão (sem `filled_by`, com `signed_at`) e um PDF assinado.
 - **Verificar documento** (Configurações → Documentos): confere um PDF pelo SHA-256 com os emitidos e assinados da clínica.
+- **Contas a pagar (Etapa 13)**: só owner/manager veem e lançam; a recepção continua lançando só a despesa do caixa do dia (agora com categoria). Baixa pela função `pay_payable`, que lança a saída no caixa com a categoria. Conta paga ou cancelada não se altera (gatilho `guard_payables`; a baixa marca a transação com `app.paying_payable` para passar pela trava). Vencidas pelo mesmo cron das contas a receber.
+- **Recorrência e parcelas**: "mensal fixa" lança 12 meses de uma vez; "parcelada" divide o valor (centavos na 1ª). As do mesmo grupo podem ser canceladas juntas ("esta e as próximas").
+- **Comprovante** do navegador direto ao Storage em `{clinic_id}/finance/...` (política só para owner/manager), aberto por link de 2 minutos.
+- **Fluxo de caixa**: realizado = movimentos do caixa; previsto = contas a receber e a pagar em aberto pelo vencimento; por dia, semana (segunda) ou mês; unidade ou consolidado.
+- **DRE gerencial (regime de caixa)**: receita bruta = recebimentos pagos no mês; − taxas das formas de pagamento; − despesas por categoria (contas pagas + saídas avulsas do caixa).
+- **Conciliação OFX**: leitor próprio (SGML e XML, valores com ponto ou vírgula, Latin-1); não duplica (FITID por conta); sugere o par pelo mesmo valor e data até 3 dias, ninguém sugerido duas vezes; a pessoa confirma ou ignora.
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1

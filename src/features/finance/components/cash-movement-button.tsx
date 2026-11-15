@@ -14,12 +14,13 @@ import { parseBRLToCents } from "@/lib/money";
 
 import { addCashMovement } from "../actions";
 
-export function CashMovementButton({ paymentMethods }: { paymentMethods: { id: string; name: string }[] }) {
+export function CashMovementButton({ paymentMethods, categories = [] }: { paymentMethods: { id: string; name: string }[]; categories?: { id: string; name: string }[] }) {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"in" | "out">("out");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [method, setMethod] = useState(paymentMethods[0]?.id ?? "none");
+  const [categoryId, setCategoryId] = useState("none");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -27,7 +28,7 @@ export function CashMovementButton({ paymentMethods }: { paymentMethods: { id: s
     const cents = parseBRLToCents(amount);
     if (!cents) return setError("Valor inválido.");
     startTransition(async () => {
-      const result = await addCashMovement({ type, amountCents: cents, description, paymentMethodId: method === "none" ? null : method });
+      const result = await addCashMovement({ type, amountCents: cents, description, paymentMethodId: method === "none" ? null : method, categoryId: type === "out" && categoryId !== "none" ? categoryId : null });
       if (result.error) setError(result.error);
       else {
         setOpen(false);
@@ -77,6 +78,9 @@ export function CashMovementButton({ paymentMethods }: { paymentMethods: { id: s
               options={[{ value: "none", label: "Não informar" }, ...paymentMethods.map((m) => ({ value: m.id, label: m.name }))]}
             />
           </div>
+          {type === "out" && categories.length ? (
+            <SimpleSelect id="cash-category" label="Categoria da despesa" value={categoryId} onChange={setCategoryId} options={[{ value: "none", label: "Sem categoria" }, ...categories.map((c) => ({ value: c.id, label: c.name }))]} />
+          ) : null}
           <p className="text-xs text-muted-foreground">Lançamentos não podem ser editados. Para corrigir, lance o contrário.</p>
           <DialogFooter>
             <Button onClick={submit} disabled={pending}>

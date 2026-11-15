@@ -7,8 +7,8 @@ export default async function FinanceLayout({ children }: LayoutProps<"/financei
   const isDentist = session.clinic.role === "dentist";
   return (
     <div className="space-y-6">
-      <PageHeader title="Financeiro" description={isDentist ? "Seus recebimentos." : "Contas a receber e caixa do dia."} />
-      <FinanceTabs showCash={!isDentist} />
+      <PageHeader title="Financeiro" description={isDentist ? "Seus recebimentos." : "Receber, pagar, caixa e resultados."} />
+      <FinanceTabs showCash={!isDentist} showManagement={session.clinic.role === "owner" || session.clinic.role === "manager"} />
       {children}
     </div>
   );
