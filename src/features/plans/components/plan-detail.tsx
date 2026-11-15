@@ -30,6 +30,7 @@ type Props = {
     valid_until: string | null;
     created_at: string;
     approved_at: string | null;
+    patientId: string;
     patientName: string;
     professionalName: string;
     paymentMethodName: string | null;
@@ -90,6 +91,12 @@ export function PlanDetailView({ plan, items, receivables, paymentMethods, canMa
           <FileDown aria-hidden />
           PDF
         </a>
+        <Link href={`/pacientes/${plan.patientId}/documentos?novo=contract&orcamento=${plan.id}`} className={buttonVariants({ variant: "outline" })}>
+          Gerar contrato
+        </Link>
+        <Link href={`/pacientes/${plan.patientId}/documentos?novo=consent&orcamento=${plan.id}`} className={buttonVariants({ variant: "ghost" })}>
+          Termo de consentimento
+        </Link>
       </div>
 
       <section className="rounded-xl border" aria-label="Itens do orçamento">

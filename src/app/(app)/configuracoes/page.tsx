@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ClipboardList,
   CreditCard,
+  FileText,
   MapPin,
   MessageCircle,
   Receipt,
@@ -71,6 +72,7 @@ export default async function Page() {
       icon: CreditCard,
       meta: plural(summary.paymentMethods, "forma ativa", "formas ativas"),
     },
+    { href: "/configuracoes/documentos", title: "Documentos", description: "Modelos de receitas, atestados, contratos e termos.", icon: FileText },
     {
       href: "/configuracoes/anamnese",
       title: "Modelo de anamnese",

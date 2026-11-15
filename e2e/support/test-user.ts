@@ -56,6 +56,10 @@ export async function createTestUser(): Promise<TestUser> {
       const { data: members } = await client.from("clinic_members").select("clinic_id").eq("user_id", userId);
       const configTables = [
         "audit_log",
+      "signature_requests",
+      "patient_documents",
+      "document_templates",
+      "medications",
       "messages_log",
       "message_templates",
       "cash_movements",
@@ -78,6 +82,13 @@ export async function createTestUser(): Promise<TestUser> {
       for (const { clinic_id } of members ?? []) {
         const { data: files } = await client.from("patient_files").select("storage_path").eq("clinic_id", clinic_id);
         if (files?.length) await client.storage.from("clinic").remove(files.map((f) => f.storage_path));
+        const { data: docs } = await client.from("patient_documents").select("pdf_path").eq("clinic_id", clinic_id);
+        const { data: sigs } = await client.from("signature_requests").select("signed_pdf_path, signature_path").eq("clinic_id", clinic_id);
+        const docPaths = [
+          ...(docs ?? []).map((d) => d.pdf_path),
+          ...(sigs ?? []).flatMap((s) => [s.signed_pdf_path, s.signature_path]),
+        ].filter((p): p is string => Boolean(p));
+        if (docPaths.length) await client.storage.from("clinic").remove(docPaths);
         for (const table of configTables) await client.from(table).delete().eq("clinic_id", clinic_id);
         await client.from("clinic_members").delete().eq("clinic_id", clinic_id);
         await client.from("profiles").update({ active_clinic_id: null }).eq("active_clinic_id", clinic_id);

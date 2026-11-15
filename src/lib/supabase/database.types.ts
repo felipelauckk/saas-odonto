@@ -607,6 +607,104 @@ export type Database = {
           },
         ]
       }
+      document_templates: {
+        Row: {
+          active: boolean
+          body: string
+          clinic_id: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["document_kind"]
+          name: string
+          procedure_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          clinic_id: string
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["document_kind"]
+          name: string
+          procedure_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["document_kind"]
+          name?: string
+          procedure_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_templates_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_templates_procedure_id_clinic_id_fkey"
+            columns: ["procedure_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
+      medications: {
+        Row: {
+          active: boolean
+          clinic_id: string
+          created_at: string
+          default_dosage: string | null
+          default_quantity: string | null
+          id: string
+          name: string
+          presentation: string | null
+          special_control: boolean
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          clinic_id: string
+          created_at?: string
+          default_dosage?: string | null
+          default_quantity?: string | null
+          id?: string
+          name: string
+          presentation?: string | null
+          special_control?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          clinic_id?: string
+          created_at?: string
+          default_dosage?: string | null
+          default_quantity?: string | null
+          id?: string
+          name?: string
+          presentation?: string | null
+          special_control?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medications_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_templates: {
         Row: {
           active: boolean
@@ -717,6 +815,108 @@ export type Database = {
             columns: ["patient_id", "clinic_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
+      patient_documents: {
+        Row: {
+          body: string
+          canceled_at: string | null
+          canceled_by: string | null
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          issued_at: string
+          kind: Database["public"]["Enums"]["document_kind"]
+          patient_id: string
+          pdf_path: string | null
+          pdf_sha256: string | null
+          plan_id: string | null
+          prescription: Json | null
+          professional_id: string | null
+          status: Database["public"]["Enums"]["document_status"]
+          template_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          canceled_at?: string | null
+          canceled_by?: string | null
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          issued_at?: string
+          kind: Database["public"]["Enums"]["document_kind"]
+          patient_id: string
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          plan_id?: string | null
+          prescription?: Json | null
+          professional_id?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          template_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          canceled_at?: string | null
+          canceled_by?: string | null
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          issued_at?: string
+          kind?: Database["public"]["Enums"]["document_kind"]
+          patient_id?: string
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          plan_id?: string | null
+          prescription?: Json | null
+          professional_id?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_documents_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_documents_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "patient_documents_plan_id_clinic_id_fkey"
+            columns: ["plan_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_plans"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "patient_documents_professional_id_clinic_id_fkey"
+            columns: ["professional_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "patient_documents_template_id_clinic_id_fkey"
+            columns: ["template_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
             referencedColumns: ["id", "clinic_id"]
           },
         ]
@@ -1326,6 +1526,114 @@ export type Database = {
           },
         ]
       }
+      signature_requests: {
+        Row: {
+          anamnesis_id: string | null
+          anamnesis_template_id: string | null
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          document_id: string | null
+          expires_at: string
+          id: string
+          original_sha256: string | null
+          patient_id: string
+          purpose: Database["public"]["Enums"]["signature_purpose"]
+          signature_path: string | null
+          signed_at: string | null
+          signed_pdf_path: string | null
+          signed_sha256: string | null
+          signer_ip: string | null
+          signer_name: string | null
+          signer_user_agent: string | null
+          status: Database["public"]["Enums"]["signature_status"]
+          token_hash: string
+          updated_at: string
+        }
+        Insert: {
+          anamnesis_id?: string | null
+          anamnesis_template_id?: string | null
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          expires_at: string
+          id?: string
+          original_sha256?: string | null
+          patient_id: string
+          purpose: Database["public"]["Enums"]["signature_purpose"]
+          signature_path?: string | null
+          signed_at?: string | null
+          signed_pdf_path?: string | null
+          signed_sha256?: string | null
+          signer_ip?: string | null
+          signer_name?: string | null
+          signer_user_agent?: string | null
+          status?: Database["public"]["Enums"]["signature_status"]
+          token_hash: string
+          updated_at?: string
+        }
+        Update: {
+          anamnesis_id?: string | null
+          anamnesis_template_id?: string | null
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          expires_at?: string
+          id?: string
+          original_sha256?: string | null
+          patient_id?: string
+          purpose?: Database["public"]["Enums"]["signature_purpose"]
+          signature_path?: string | null
+          signed_at?: string | null
+          signed_pdf_path?: string | null
+          signed_sha256?: string | null
+          signer_ip?: string | null
+          signer_name?: string | null
+          signer_user_agent?: string | null
+          status?: Database["public"]["Enums"]["signature_status"]
+          token_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signature_requests_anamnesis_id_fkey"
+            columns: ["anamnesis_id"]
+            isOneToOne: false
+            referencedRelation: "anamneses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signature_requests_anamnesis_template_id_fkey"
+            columns: ["anamnesis_template_id"]
+            isOneToOne: false
+            referencedRelation: "anamnesis_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signature_requests_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signature_requests_document_id_clinic_id_fkey"
+            columns: ["document_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patient_documents"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "signature_requests_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       tooth_records: {
         Row: {
           clinic_id: string
@@ -1638,6 +1946,10 @@ export type Database = {
         Returns: boolean
       }
       immutable_unaccent: { Args: { "": string }; Returns: string }
+      is_clinical_document: {
+        Args: { _kind: Database["public"]["Enums"]["document_kind"] }
+        Returns: boolean
+      }
       is_platform_admin: { Args: never; Returns: boolean }
       log_access: {
         Args: {
@@ -1691,6 +2003,10 @@ export type Database = {
         }[]
       }
       seed_clinic_defaults: { Args: { _clinic_id: string }; Returns: undefined }
+      seed_document_defaults: {
+        Args: { _clinic_id: string }
+        Returns: undefined
+      }
       seed_message_templates: {
         Args: { _clinic_id: string }
         Returns: undefined
@@ -1710,6 +2026,16 @@ export type Database = {
         | "no_show"
         | "canceled"
       cash_movement_type: "in" | "out"
+      document_kind:
+        | "prescription"
+        | "special_prescription"
+        | "certificate"
+        | "attendance"
+        | "contract"
+        | "consent"
+        | "post_op"
+        | "other"
+      document_status: "issued" | "signed" | "canceled"
       member_role: "owner" | "manager" | "dentist" | "receptionist"
       message_kind:
         | "appointment_reminder"
@@ -1720,6 +2046,8 @@ export type Database = {
       patient_gender: "female" | "male" | "other" | "not_informed"
       patient_source: "indicacao" | "instagram" | "google" | "site" | "outro"
       receivable_status: "open" | "paid" | "overdue" | "canceled"
+      signature_purpose: "document" | "anamnesis"
+      signature_status: "pending" | "signed" | "revoked"
       subscription_status: "trialing" | "active" | "past_due" | "canceled"
       tooth_condition:
         | "healthy"
@@ -1875,6 +2203,17 @@ export const Constants = {
         "canceled",
       ],
       cash_movement_type: ["in", "out"],
+      document_kind: [
+        "prescription",
+        "special_prescription",
+        "certificate",
+        "attendance",
+        "contract",
+        "consent",
+        "post_op",
+        "other",
+      ],
+      document_status: ["issued", "signed", "canceled"],
       member_role: ["owner", "manager", "dentist", "receptionist"],
       message_kind: [
         "appointment_reminder",
@@ -1886,6 +2225,8 @@ export const Constants = {
       patient_gender: ["female", "male", "other", "not_informed"],
       patient_source: ["indicacao", "instagram", "google", "site", "outro"],
       receivable_status: ["open", "paid", "overdue", "canceled"],
+      signature_purpose: ["document", "anamnesis"],
+      signature_status: ["pending", "signed", "revoked"],
       subscription_status: ["trialing", "active", "past_due", "canceled"],
       tooth_condition: [
         "healthy",

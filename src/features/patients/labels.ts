@@ -32,5 +32,6 @@ export const PATIENT_TABS = [
   { slug: "orcamentos", label: "Orçamentos" },
   { slug: "financeiro", label: "Financeiro" },
   { slug: "arquivos", label: "Arquivos" },
+  { slug: "documentos", label: "Documentos" },
   { slug: "agendamentos", label: "Agendamentos" },
 ] as const;

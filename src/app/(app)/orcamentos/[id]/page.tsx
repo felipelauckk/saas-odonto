@@ -54,6 +54,7 @@ export default async function Page({ params }: PageProps<"/orcamentos/[id]">) {
           valid_until: plan.valid_until,
           created_at: plan.created_at,
           approved_at: plan.approved_at,
+          patientId: plan.patient_id,
           patientName: plan.patients?.full_name ?? "",
           professionalName: plan.professionals?.name ?? "",
           paymentMethodName: plan.payment_methods?.name ?? null,

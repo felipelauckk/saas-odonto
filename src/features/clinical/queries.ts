@@ -41,7 +41,7 @@ export async function getAnamnesis(patientId: string) {
   const [versionsRes, templateRes] = await Promise.all([
     supabase
       .from("anamneses")
-      .select("id, answers, filled_by, created_at, template_id")
+      .select("id, answers, filled_by, signed_at, created_at, template_id")
       .eq("patient_id", patientId)
       .order("created_at", { ascending: false }),
     supabase
@@ -59,7 +59,7 @@ export async function getAnamnesis(patientId: string) {
     versions: versionsRes.data.map((v) => ({
       id: v.id,
       createdAt: v.created_at,
-      filledBy: v.filled_by ? (names.get(v.filled_by) ?? "Usuário") : null,
+      filledBy: v.filled_by ? (names.get(v.filled_by) ?? "Usuário") : v.signed_at ? "preenchida e assinada pelo paciente" : null,
       answers: parseAnswers(v.answers),
     })),
     template: templateRes.data

@@ -6,6 +6,7 @@ import { ShieldCheck } from "lucide-react";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { AlertsBanner } from "@/features/clinical/components/alerts-banner";
 import { AnamnesisView } from "@/features/clinical/components/anamnesis-view";
+import { SendLinkDialog } from "@/features/documents/components/send-link-dialog";
 import { getAnamnesis, getClinicalAccess, getPatientAlerts } from "@/features/clinical/queries";
 
 export const metadata: Metadata = { title: "Anamnese" };
@@ -30,5 +31,12 @@ export default async function Page({ params }: PageProps<"/pacientes/[id]/anamne
 
   await logAccess("view", "anamneses", id);
   const { versions, template } = await getAnamnesis(id);
-  return <AnamnesisView patientId={id} versions={versions} template={template} canWrite={access.canWrite} />;
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <SendLinkDialog patientId={id} documentId={null} label="anamnese" triggerLabel="Enviar para o paciente preencher" />
+      </div>
+      <AnamnesisView patientId={id} versions={versions} template={template} canWrite={access.canWrite} />
+    </div>
+  );
 }

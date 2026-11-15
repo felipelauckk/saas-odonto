@@ -14,6 +14,12 @@
 | 10. Assinatura do SaaS | Concluída (14/11/2026) | Planos, assinatura pelo Asaas (Pix/boleto/cartão), webhook, modo somente leitura com aviso fixo, limites do plano, painel do superadmin. Falta configurar o Asaas real. |
 | 11. Painel inicial e acabamento | Concluída (14/11/2026) | Indicadores por unidade ou consolidado, agenda do dia, auditoria (aberturas e alterações), exportação LGPD em PDF, revisão de segurança, cabeçalhos de segurança, testes dos fluxos principais. |
 
+## Fase 2 (docs/SPEC-FASE2.md)
+
+| Etapa | Status | Observações |
+| --- | --- | --- |
+| 12. Documentos e assinatura eletrônica | Concluída (14/11/2026) | Modelos com variáveis, receituário (simples e controle especial em 2 vias) com lista de medicamentos, atestado, declaração, contrato, termo, orientações; aba Documentos; assinatura por link com página de evidências e hash; anamnese por link; verificação de PDF. |
+
 ## Decisões técnicas
 
 - **Next.js 16.4 com `cacheComponents` desligado.** O template novo liga essa opção, que guarda dados em cache no servidor. Quase todas as telas dependem da sessão e de dados por clínica (RLS), e um cache mal configurado poderia mostrar dados de uma clínica para outra. Usamos o modelo clássico (sem cache automático). Se for religar no futuro, revisar todo `use cache`.
@@ -96,6 +102,12 @@
 - **Auditoria** (`audit_log`): alterações em anamnese, odontograma, evoluções, arquivos, orçamentos, itens, recebíveis e caixa por gatilho; aberturas das abas clínicas, do orçamento e do financeiro do paciente pela função `log_access` (chamada no servidor); exportações também. Só owner/manager leem (Configurações → Auditoria); ninguém altera nem apaga. Ações do servidor/cron não entram (sem usuário).
 - **Exportação LGPD**: `/pacientes/[id]/exportar` gera um PDF com dados pessoais, anamnese, odontograma, evoluções, consultas, orçamentos, financeiro e lista de arquivos. Só quem lê o prontuário exporta; fica na auditoria.
 - **Revisão de segurança (14/11/2026)**: todas as tabelas com RLS; toda função SECURITY DEFINER com `search_path` fixo; nenhuma tabela nem função de dados acessível sem login (só os construtores do tipo `timerange`, criados pelo Postgres); service role só em código de servidor, sempre depois de checar permissão, token ou assinatura; cabeçalhos `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` e `Strict-Transport-Security`.
+- **Documentos (Etapa 12, decisões aprovadas em 14/11/2026)**: receituário e atestado só quem atende (`can_write_clinical`) emite e só quem lê o prontuário vê; contrato, termo, declaração e orientações qualquer papel. Documento emitido guarda a cópia do texto e não se edita (só cancela); assinado não muda (gatilho `guard_patient_documents`, `OD00x`). Antimicrobianos e controlados marcados como controle especial: receita em 2 vias (RDC 471/2021). Textos padrão são modelos genéricos para a clínica revisar.
+- **PDF de documentos** só o servidor grava e lê (pasta `documents/`, sem política de Storage para o app); a equipe abre por link de 2 minutos gerado depois de a RLS confirmar o acesso. Se o PDF falha, a emissão é desfeita.
+- **Assinatura eletrônica**: link `/assinar/[token]` com token de 32 bytes aleatórios; o banco guarda só o SHA-256 do token (a coluna nem é legível pelo app). Prazo padrão 7 dias (1 a 60), uso único (troca atômica pending → signed), um link ativo por documento. A página pública mostra só título e texto do documento e o nome da clínica. Registra nome digitado, assinatura desenhada, data/hora, IP e navegador; o PDF assinado = páginas originais intactas (`pdf-lib`) + página de evidências com o hash do original; o hash do arquivo final fica registrado. Antes de assinar, o servidor confere se o PDF guardado ainda tem o hash da emissão. Lei 14.063/2020 (assinatura eletrônica simples/avançada).
+- **Envio do link**: copiar ou "Abrir no WhatsApp" (mensagem pronta, do WhatsApp da própria clínica). Envio automático pela API da Meta e por e-mail ficam para quando houver modelo aprovado e SMTP.
+- **Anamnese por link**: o paciente preenche e assina; vira nova versão (sem `filled_by`, com `signed_at`) e um PDF assinado.
+- **Verificar documento** (Configurações → Documentos): confere um PDF pelo SHA-256 com os emitidos e assinados da clínica.
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1
@@ -140,3 +152,8 @@
 6. Asaas real: chave, ambiente, token e webhook; cadastrar os planos em `/admin/planos`.
 7. 2FA para owners; Content-Security-Policy; backups.
 8. ~~Suíte Playwright completa e limpeza das clínicas de teste~~ — feito em 14/11/2026: 79 de 80 passaram (2 pulados por regra de toque/mouse); o único erro (arquivar paciente não atualizava o cabeçalho às vezes) foi corrigido e passou 12 de 12 vezes. Rodar com `caffeinate -i npx playwright test` para o Mac não dormir no meio.
+
+## Pendências da Etapa 12
+
+- Certificado digital ICP-Brasil do profissional (fora da etapa, pela especificação).
+- Envio automático do link de assinatura pela API da Meta (precisa de modelo aprovado) e por e-mail (precisa de SMTP).

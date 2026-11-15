@@ -81,6 +81,10 @@ export function createTestEnv(prefix: string) {
   async function cleanup() {
     const tables = [
       "audit_log",
+      "signature_requests",
+      "patient_documents",
+      "document_templates",
+      "medications",
       "messages_log",
       "message_templates",
       "cash_movements",
@@ -103,6 +107,13 @@ export function createTestEnv(prefix: string) {
     for (const id of clinicIds) {
       const { data: files } = await admin.from("patient_files").select("storage_path").eq("clinic_id", id);
       if (files?.length) await admin.storage.from("clinic").remove(files.map((f) => f.storage_path));
+      const { data: docs } = await admin.from("patient_documents").select("pdf_path").eq("clinic_id", id);
+      const { data: sigs } = await admin.from("signature_requests").select("signed_pdf_path, signature_path").eq("clinic_id", id);
+      const docPaths = [
+        ...(docs ?? []).map((d) => d.pdf_path),
+        ...(sigs ?? []).flatMap((s) => [s.signed_pdf_path, s.signature_path]),
+      ].filter((p): p is string => Boolean(p));
+      if (docPaths.length) await admin.storage.from("clinic").remove(docPaths);
       for (const table of tables) await admin.from(table).delete().eq("clinic_id", id);
       await admin.storage.from("clinic").list(`${id}/logo`).then(async ({ data }) => {
         if (data?.length) await admin.storage.from("clinic").remove(data.map((f) => `${id}/logo/${f.name}`));
