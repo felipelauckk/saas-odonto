@@ -16,6 +16,7 @@ const KIND_INFO: Record<MessageKind, { title: string; description: string }> = {
   appointment_reminder: { title: "Lembrete de consulta", description: "Enviado no dia anterior, com botão para confirmar." },
   appointment_confirmation: { title: "Confirmação", description: "Resposta quando o paciente confirma pelo botão." },
   birthday: { title: "Aniversário", description: "Enviado no dia do aniversário do paciente." },
+  payment_reminder: { title: "Régua de cobrança", description: "Textos de cada etapa ficam em Configurações > Cobrança online." },
   return_reminder: { title: "Alerta de retorno", description: "Enviado quando vence o retorno do paciente (ex.: limpeza a cada 6 meses)." },
 };
 

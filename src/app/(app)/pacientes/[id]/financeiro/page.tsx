@@ -4,12 +4,14 @@ import { logAccess } from "@/features/audit/log";
 import { Wallet } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/empty-state";
+import { isOnlineBillingEnabled, listCharges } from "@/features/charges/service";
 import { NewReceivableButton } from "@/features/finance/components/new-receivable";
 import { ReceivablesList } from "@/features/finance/components/receivables-list";
 import { listActivePaymentMethods, listPatientReceivables } from "@/features/finance/queries";
 import { getPatient } from "@/features/patients/queries";
 import { requireClinic } from "@/features/tenancy/guards";
 import { formatCurrency } from "@/lib/format";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Financeiro" };
 
@@ -20,6 +22,9 @@ export default async function Page({ params }: PageProps<"/pacientes/[id]/financ
   const [receivables, paymentMethods, patient] = await Promise.all([listPatientReceivables(id), listActivePaymentMethods(), getPatient(id)]);
   const role = session.clinic.role;
   const canOperate = role !== "dentist";
+  const [onlineEnabled, charges] = canOperate
+    ? await Promise.all([isOnlineBillingEnabled(session.clinic.id), createClient().then((s) => listCharges(s, { patientId: id }))])
+    : [false, []];
   const pending = receivables.filter((r) => r.status === "open" || r.status === "overdue").reduce((s, r) => s + r.amount_cents, 0);
   const paid = receivables.filter((r) => r.status === "paid").reduce((s, r) => s + (r.paid_amount_cents ?? 0), 0);
   const newButton = canOperate && patient ? <NewReceivableButton patient={{ id: patient.id, name: patient.full_name, detail: null }} /> : null;
@@ -43,6 +48,7 @@ export default async function Page({ params }: PageProps<"/pacientes/[id]/financ
         canOperate={canOperate}
         canManage={role === "owner" || role === "manager"}
         showPatient={false}
+        online={{ enabled: onlineEnabled, clinicName: session.clinic.name, charges }}
       />
     </div>
   );

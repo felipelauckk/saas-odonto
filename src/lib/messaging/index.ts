@@ -21,6 +21,7 @@ export function getMessagingProvider(): MessagingProvider {
         appointment_confirmation: env.WHATSAPP_TEMPLATE_CONFIRMATION || "consulta_confirmada",
         birthday: env.WHATSAPP_TEMPLATE_BIRTHDAY || "aniversario",
         return_reminder: env.WHATSAPP_TEMPLATE_RETURN || "retorno",
+        payment_reminder: env.WHATSAPP_TEMPLATE_PAYMENT || "lembrete_cobranca",
       },
     });
   }

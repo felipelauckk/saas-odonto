@@ -8,12 +8,14 @@ import { EmptyState } from "@/components/feedback/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isOnlineBillingEnabled, listCharges } from "@/features/charges/service";
 import { NewReceivableButton } from "@/features/finance/components/new-receivable";
 import { ReceivablesList } from "@/features/finance/components/receivables-list";
 import { RECEIVABLE_FILTERS, type ReceivableFilter } from "@/features/finance/labels";
 import { getReceivablesSummary, listActivePaymentMethods, listReceivables } from "@/features/finance/queries";
 import { requireClinic } from "@/features/tenancy/guards";
 import { formatCurrency } from "@/lib/format";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Financeiro" };
 
@@ -31,10 +33,12 @@ export default async function Page({ searchParams }: PageProps<"/financeiro">) {
   const canOperate = role !== "dentist";
   const canManage = role === "owner" || role === "manager";
 
-  const [receivables, summary, paymentMethods] = await Promise.all([
+  const [receivables, summary, paymentMethods, onlineEnabled, charges] = await Promise.all([
     listReceivables({ filter, from, to, q }),
     getReceivablesSummary(),
     listActivePaymentMethods(),
+    canOperate ? isOnlineBillingEnabled(session.clinic.id) : Promise.resolve(false),
+    canOperate ? createClient().then((s) => listCharges(s, { openOnly: true })) : Promise.resolve([]),
   ]);
   const listed = receivables.reduce((s, r) => s + (r.status === "paid" ? (r.paid_amount_cents ?? 0) : r.amount_cents), 0);
 
@@ -105,7 +109,7 @@ export default async function Page({ searchParams }: PageProps<"/financeiro">) {
       </form>
 
       {receivables.length ? (
-        <ReceivablesList receivables={receivables} paymentMethods={paymentMethods} canOperate={canOperate} canManage={canManage} />
+        <ReceivablesList receivables={receivables} paymentMethods={paymentMethods} canOperate={canOperate} canManage={canManage} online={{ enabled: onlineEnabled, clinicName: session.clinic.name, charges }} />
       ) : (
         <EmptyState icon={Wallet} title="Nenhuma conta encontrada" description="As parcelas dos orçamentos aprovados e as cobranças avulsas aparecem aqui." />
       )}

@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Mensagens" };
 
 const order: MessageKind[] = ["appointment_reminder", "appointment_confirmation", "return_reminder", "birthday"];
 const statusLabel = { sent: "Enviada", simulated: "Simulada", failed: "Falhou", received: "Recebida" } as const;
-const kindLabel: Record<MessageKind, string> = { appointment_reminder: "Lembrete", appointment_confirmation: "Confirmação", birthday: "Aniversário", return_reminder: "Retorno" };
+const kindLabel: Record<MessageKind, string> = { appointment_reminder: "Lembrete", appointment_confirmation: "Confirmação", birthday: "Aniversário", return_reminder: "Retorno", payment_reminder: "Cobrança" };
 
 export default async function Page() {
   await requireManager();

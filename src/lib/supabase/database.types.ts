@@ -631,6 +631,47 @@ export type Database = {
           },
         ]
       }
+      clinic_billing: {
+        Row: {
+          api_key_encrypted: string | null
+          api_key_hint: string | null
+          clinic_id: string
+          connected_at: string | null
+          created_at: string
+          environment: string
+          updated_at: string
+          webhook_token: string
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          api_key_hint?: string | null
+          clinic_id: string
+          connected_at?: string | null
+          created_at?: string
+          environment?: string
+          updated_at?: string
+          webhook_token?: string
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          api_key_hint?: string | null
+          clinic_id?: string
+          connected_at?: string | null
+          created_at?: string
+          environment?: string
+          updated_at?: string
+          webhook_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_billing_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: true
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_members: {
         Row: {
           active: boolean
@@ -1227,6 +1268,92 @@ export type Database = {
           },
         ]
       }
+      dunning_log: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          id: string
+          offset_days: number
+          receivable_id: string
+          sent_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          id?: string
+          offset_days: number
+          receivable_id: string
+          sent_at?: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          offset_days?: number
+          receivable_id?: string
+          sent_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dunning_log_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dunning_log_receivable_id_fkey"
+            columns: ["receivable_id"]
+            isOneToOne: false
+            referencedRelation: "receivables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dunning_steps: {
+        Row: {
+          active: boolean
+          body: string
+          clinic_id: string
+          created_at: string
+          id: string
+          offset_days: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          clinic_id: string
+          created_at?: string
+          id?: string
+          offset_days: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          offset_days?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dunning_steps_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_categories: {
         Row: {
           active: boolean
@@ -1545,6 +1672,90 @@ export type Database = {
           },
         ]
       }
+      patient_charges: {
+        Row: {
+          amount_cents: number
+          asaas_installment_id: string | null
+          asaas_payment_id: string | null
+          bank_slip_url: string | null
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          due_date: string
+          fee_cents: number | null
+          id: string
+          installments: number
+          invoice_url: string | null
+          kind: Database["public"]["Enums"]["charge_kind"]
+          paid_at: string | null
+          paid_cents: number | null
+          patient_id: string
+          pix_payload: string | null
+          receivable_ids: string[]
+          status: Database["public"]["Enums"]["charge_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          asaas_installment_id?: string | null
+          asaas_payment_id?: string | null
+          bank_slip_url?: string | null
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          due_date: string
+          fee_cents?: number | null
+          id?: string
+          installments?: number
+          invoice_url?: string | null
+          kind: Database["public"]["Enums"]["charge_kind"]
+          paid_at?: string | null
+          paid_cents?: number | null
+          patient_id: string
+          pix_payload?: string | null
+          receivable_ids: string[]
+          status?: Database["public"]["Enums"]["charge_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          asaas_installment_id?: string | null
+          asaas_payment_id?: string | null
+          bank_slip_url?: string | null
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          due_date?: string
+          fee_cents?: number | null
+          id?: string
+          installments?: number
+          invoice_url?: string | null
+          kind?: Database["public"]["Enums"]["charge_kind"]
+          paid_at?: string | null
+          paid_cents?: number | null
+          patient_id?: string
+          pix_payload?: string | null
+          receivable_ids?: string[]
+          status?: Database["public"]["Enums"]["charge_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_charges_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_charges_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       patient_documents: {
         Row: {
           body: string
@@ -1802,6 +2013,7 @@ export type Database = {
         Row: {
           address: Json | null
           archived_at: string | null
+          asaas_customer_id: string | null
           birth_date: string | null
           clinic_id: string
           consent_lgpd_at: string | null
@@ -1826,6 +2038,7 @@ export type Database = {
         Insert: {
           address?: Json | null
           archived_at?: string | null
+          asaas_customer_id?: string | null
           birth_date?: string | null
           clinic_id: string
           consent_lgpd_at?: string | null
@@ -1850,6 +2063,7 @@ export type Database = {
         Update: {
           address?: Json | null
           archived_at?: string | null
+          asaas_customer_id?: string | null
           birth_date?: string | null
           clinic_id?: string
           consent_lgpd_at?: string | null
@@ -2327,6 +2541,7 @@ export type Database = {
           due_date: string
           fee_cents: number
           id: string
+          in_negotiation: boolean
           installment_number: number
           installment_total: number
           paid_amount_cents: number | null
@@ -2349,6 +2564,7 @@ export type Database = {
           due_date: string
           fee_cents?: number
           id?: string
+          in_negotiation?: boolean
           installment_number?: number
           installment_total?: number
           paid_amount_cents?: number | null
@@ -2371,6 +2587,7 @@ export type Database = {
           due_date?: string
           fee_cents?: number
           id?: string
+          in_negotiation?: boolean
           installment_number?: number
           installment_total?: number
           paid_amount_cents?: number | null
@@ -3183,6 +3400,10 @@ export type Database = {
         Args: { _clinic_id: string }
         Returns: undefined
       }
+      seed_dunning_defaults: {
+        Args: { _clinic_id: string }
+        Returns: undefined
+      }
       seed_finance_defaults: {
         Args: { _clinic_id: string }
         Returns: undefined
@@ -3192,6 +3413,15 @@ export type Database = {
         Returns: undefined
       }
       set_active_clinic: { Args: { _clinic_id: string }; Returns: undefined }
+      settle_online_charge: {
+        Args: {
+          _charge_id: string
+          _fee_cents: number
+          _paid_cents: number
+          _paid_on: string
+        }
+        Returns: undefined
+      }
       timemultirange: { Args: never; Returns: unknown }
       today_sp: { Args: never; Returns: string }
       user_clinic_ids: { Args: never; Returns: string[] }
@@ -3209,6 +3439,8 @@ export type Database = {
       cancel_reason: "patient_canceled" | "clinic_canceled" | "rescheduled"
       cash_movement_type: "in" | "out"
       category_type: "income" | "expense"
+      charge_kind: "pix" | "boleto" | "link"
+      charge_status: "pending" | "paid" | "overdue" | "canceled" | "refunded"
       commission_base: "received" | "executed"
       crc_channel: "call" | "whatsapp" | "other"
       crc_outcome: "no_answer" | "thinking" | "scheduled" | "not_interested"
@@ -3245,6 +3477,7 @@ export type Database = {
         | "appointment_confirmation"
         | "birthday"
         | "return_reminder"
+        | "payment_reminder"
       message_status: "sent" | "simulated" | "failed" | "received"
       patient_file_kind: "photo" | "xray" | "document" | "other"
       patient_gender: "female" | "male" | "other" | "not_informed"
@@ -3414,6 +3647,8 @@ export const Constants = {
       cancel_reason: ["patient_canceled", "clinic_canceled", "rescheduled"],
       cash_movement_type: ["in", "out"],
       category_type: ["income", "expense"],
+      charge_kind: ["pix", "boleto", "link"],
+      charge_status: ["pending", "paid", "overdue", "canceled", "refunded"],
       commission_base: ["received", "executed"],
       crc_channel: ["call", "whatsapp", "other"],
       crc_outcome: ["no_answer", "thinking", "scheduled", "not_interested"],
@@ -3453,6 +3688,7 @@ export const Constants = {
         "appointment_confirmation",
         "birthday",
         "return_reminder",
+        "payment_reminder",
       ],
       message_status: ["sent", "simulated", "failed", "received"],
       patient_file_kind: ["photo", "xray", "document", "other"],

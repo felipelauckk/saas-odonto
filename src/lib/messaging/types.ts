@@ -11,6 +11,10 @@ export type TemplateVariables = {
   profissional?: string;
   /** Valor em aberto (mensagens da CRC). */
   valor?: string;
+  /** Vencimento da parcela (régua de cobrança). */
+  vencimento?: string;
+  /** Link de pagamento (régua de cobrança). */
+  link?: string;
 };
 
 export type OutgoingMessage = {

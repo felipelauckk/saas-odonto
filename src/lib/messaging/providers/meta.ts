@@ -15,6 +15,7 @@ const TEMPLATE_PARAMS: Record<MessageKind, (keyof OutgoingMessage["variables"])[
   appointment_confirmation: ["paciente", "data", "hora"],
   birthday: ["paciente", "clinica"],
   return_reminder: ["paciente", "clinica"],
+  payment_reminder: ["paciente", "valor", "vencimento", "link"],
 };
 
 /**

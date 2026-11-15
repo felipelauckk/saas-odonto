@@ -42,7 +42,7 @@ async function templateFor(admin: Admin, clinicId: string, kind: MessageKind) {
 }
 
 /** Envia (ou simula) uma mensagem e registra no log. Devolve o status final. */
-async function deliver(
+export async function deliver(
   admin: Admin,
   params: { clinicId: string; patientId: string; appointmentId?: string; kind: MessageKind; phone: string | null; body: string; variables: TemplateVariables; confirm?: boolean; isReply?: boolean },
 ) {
@@ -116,7 +116,7 @@ export async function runDailyMessages({ now = new Date(), clinicId }: { now?: D
   const admin = createAdminClient();
   const today = todayIso(now);
   const tomorrow = addDays(today, 1);
-  const summary = { reminders: 0, birthdays: 0, returns: 0, failed: 0 };
+  const summary = { reminders: 0, birthdays: 0, returns: 0, dunning: 0, failed: 0 };
 
   let appointmentsQuery = admin
     .from("appointments")
@@ -194,7 +194,72 @@ export async function runDailyMessages({ now = new Date(), clinicId }: { now?: D
     else summary.returns++;
   }
 
+  const dunning = await runDunning(admin, today, clinicId);
+  summary.dunning += dunning.sent;
+  summary.failed += dunning.failed;
+
   return summary;
+}
+
+const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+/**
+ * Régua de cobrança: para cada etapa ativa (dias em relação ao vencimento),
+ * avisa as parcelas em aberto que caem nela hoje. Uma vez por parcela e etapa;
+ * parcela paga, cancelada ou em negociação não recebe.
+ */
+export async function runDunning(admin: Admin, today: string, clinicId?: string) {
+  const result = { sent: 0, failed: 0 };
+  let stepsQuery = admin.from("dunning_steps").select("clinic_id, offset_days, body").eq("active", true);
+  if (clinicId) stepsQuery = stepsQuery.eq("clinic_id", clinicId);
+  const { data: steps } = await stepsQuery;
+  for (const step of steps ?? []) {
+    const due = addDays(today, -step.offset_days);
+    const { data: receivables } = await admin
+      .from("receivables")
+      .select("id, patient_id, amount_cents, due_date, patients(full_name, whatsapp, phone), clinics(name)")
+      .eq("clinic_id", step.clinic_id)
+      .in("status", ["open", "overdue"])
+      .eq("in_negotiation", false)
+      .eq("due_date", due);
+    if (!receivables?.length) continue;
+    const { data: done } = await admin
+      .from("dunning_log")
+      .select("receivable_id")
+      .eq("offset_days", step.offset_days)
+      .in("receivable_id", receivables.map((r) => r.id));
+    const already = new Set((done ?? []).map((d) => d.receivable_id));
+    for (const r of receivables) {
+      if (already.has(r.id)) continue;
+      const { data: charge } = await admin
+        .from("patient_charges")
+        .select("invoice_url")
+        .eq("clinic_id", step.clinic_id)
+        .in("status", ["pending", "overdue"])
+        .contains("receivable_ids", [r.id])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const status = await deliver(admin, {
+        clinicId: step.clinic_id,
+        patientId: r.patient_id,
+        kind: "payment_reminder",
+        phone: r.patients?.whatsapp ?? r.patients?.phone ?? null,
+        body: step.body,
+        variables: {
+          paciente: firstName(r.patients?.full_name ?? ""),
+          clinica: r.clinics?.name ?? "",
+          valor: brl.format(r.amount_cents / 100),
+          vencimento: r.due_date.split("-").reverse().join("/"),
+          link: charge?.invoice_url ? `Pague por aqui: ${charge.invoice_url}` : "",
+        },
+      });
+      await admin.from("dunning_log").insert({ clinic_id: step.clinic_id, receivable_id: r.id, offset_days: step.offset_days, status });
+      if (status === "failed") result.failed++;
+      else result.sent++;
+    }
+  }
+  return result;
 }
 
 /** Paciente tocou em "Confirmar" no lembrete. */

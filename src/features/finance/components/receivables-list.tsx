@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FileDown, MoreHorizontal } from "lucide-react";
 
 import { FormMessage } from "@/components/forms/form-message";
@@ -16,6 +17,10 @@ import { formatIsoDate, todayIso } from "@/lib/dates";
 import { formatCurrency } from "@/lib/format";
 import { centsToInput, parseBRLToCents } from "@/lib/money";
 
+import { setNegotiation } from "@/features/charges/actions";
+import { ChargeForm, ChargeView } from "@/features/charges/components/charge-dialog";
+import type { ChargeView as Charge } from "@/features/charges/service";
+
 import { cancelReceivable, receivePayment, reversePayment } from "../actions";
 import { receivableStatusLabels, type ReceivableStatus } from "../labels";
 
@@ -28,7 +33,8 @@ export type ReceivableItem = {
   paid_amount_cents: number | null;
   fee_cents: number;
   patient_id: string;
-  patients: { full_name: string } | null;
+  in_negotiation?: boolean;
+  patients: { full_name: string; whatsapp?: string | null; phone?: string | null } | null;
   payment_methods: { name: string } | null;
 };
 
@@ -38,6 +44,8 @@ type Props = {
   canOperate: boolean;
   canManage: boolean;
   showPatient?: boolean;
+  /** Cobrança online (Asaas da clínica). */
+  online?: { enabled: boolean; clinicName: string; charges: Charge[] };
 };
 
 function ReceiveForm({ receivable, paymentMethods, onDone }: { receivable: ReceivableItem; paymentMethods: Props["paymentMethods"]; onDone: () => void }) {
@@ -96,8 +104,12 @@ function ReceiveForm({ receivable, paymentMethods, onDone }: { receivable: Recei
   );
 }
 
-export function ReceivablesList({ receivables, paymentMethods, canOperate, canManage, showPatient = true }: Props) {
+export function ReceivablesList({ receivables, paymentMethods, canOperate, canManage, showPatient = true, online }: Props) {
+  const router = useRouter();
   const [receiving, setReceiving] = useState<ReceivableItem | null>(null);
+  const [charging, setCharging] = useState<ReceivableItem | null>(null);
+  const [viewing, setViewing] = useState<{ charge: Charge; receivable: ReceivableItem } | null>(null);
+  const chargeOf = (id: string) => online?.charges.find((c) => c.receivableIds.includes(id) && (c.status === "pending" || c.status === "overdue"));
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const today = todayIso();
@@ -131,13 +143,23 @@ export function ReceivablesList({ receivables, paymentMethods, canOperate, canMa
                   {r.status === "paid" && r.fee_cents ? ` · taxa ${formatCurrency(r.fee_cents)}` : ""}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
+                {r.in_negotiation && pendingPayment ? <Badge variant="outline">Em negociação</Badge> : null}
                 <Badge variant={late ? "destructive" : r.status === "paid" ? "outline" : "secondary"}>
                   {late && r.status === "open" ? receivableStatusLabels.overdue : receivableStatusLabels[r.status]}
                 </Badge>
-                <span className="w-28 text-right text-sm font-medium tabular-nums">
+                <span className="text-sm font-medium tabular-nums sm:w-28 sm:text-right">
                   {formatCurrency(r.status === "paid" && r.paid_amount_cents ? r.paid_amount_cents : r.amount_cents)}
                 </span>
+                {canOperate && pendingPayment && chargeOf(r.id) ? (
+                  <Button size="sm" variant="outline" onClick={() => setViewing({ charge: chargeOf(r.id)!, receivable: r })}>
+                    Ver cobrança
+                  </Button>
+                ) : canOperate && pendingPayment && online?.enabled ? (
+                  <Button size="sm" variant="outline" onClick={() => setCharging(r)}>
+                    Cobrar online
+                  </Button>
+                ) : null}
                 {canOperate && pendingPayment ? (
                   <Button size="sm" onClick={() => setReceiving(r)}>
                     Receber
@@ -149,21 +171,27 @@ export function ReceivablesList({ receivables, paymentMethods, canOperate, canMa
                     Recibo
                   </a>
                 ) : null}
-                {canManage && (pendingPayment || r.status === "paid") ? (
+                {(canManage && (pendingPayment || r.status === "paid")) || (canOperate && pendingPayment) ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={`Mais ações: ${r.description}`} />}>
                       <MoreHorizontal />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-44">
-                      {r.status === "paid" ? (
+                      {pendingPayment && canOperate ? (
+                        <DropdownMenuItem className="pointer-coarse:min-h-11" onClick={() => run(() => setNegotiation(r.id, !r.in_negotiation))}>
+                          {r.in_negotiation ? "Tirar de negociação" : "Marcar em negociação"}
+                        </DropdownMenuItem>
+                      ) : null}
+                      {r.status === "paid" && canManage ? (
                         <DropdownMenuItem className="pointer-coarse:min-h-11" onClick={() => run(() => reversePayment(r.id))}>
                           Estornar pagamento
                         </DropdownMenuItem>
-                      ) : (
+                      ) : null}
+                      {pendingPayment && canManage ? (
                         <DropdownMenuItem variant="destructive" className="pointer-coarse:min-h-11" onClick={() => run(() => cancelReceivable(r.id))}>
-                          Cancelar cobrança
+                          Cancelar parcela
                         </DropdownMenuItem>
-                      )}
+                      ) : null}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : null}
@@ -172,6 +200,49 @@ export function ReceivablesList({ receivables, paymentMethods, canOperate, canMa
           );
         })}
       </ul>
+
+      <Dialog open={charging !== null} onOpenChange={(o) => { if (!o) { setCharging(null); router.refresh(); } }}>
+        <DialogContent className="sm:max-w-lg">
+          {charging ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Cobrar online</DialogTitle>
+                <DialogDescription>{charging.patients?.full_name}</DialogDescription>
+              </DialogHeader>
+              <ChargeForm
+                receivables={receivables.filter((x) => x.patient_id === charging.patient_id && (x.status === "open" || x.status === "overdue") && !chargeOf(x.id))}
+                preselected={[charging.id]}
+                patientName={charging.patients?.full_name ?? ""}
+                phone={charging.patients?.whatsapp ?? charging.patients?.phone ?? null}
+                clinicName={online?.clinicName ?? ""}
+              />
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={viewing !== null} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="sm:max-w-lg">
+          {viewing ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Cobrança enviada</DialogTitle>
+                <DialogDescription>{viewing.receivable.patients?.full_name}</DialogDescription>
+              </DialogHeader>
+              <ChargeView
+                charge={viewing.charge}
+                patientName={viewing.receivable.patients?.full_name ?? ""}
+                phone={viewing.receivable.patients?.whatsapp ?? viewing.receivable.patients?.phone ?? null}
+                clinicName={online?.clinicName ?? ""}
+                onCanceled={() => {
+                  setViewing(null);
+                  router.refresh();
+                }}
+              />
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={receiving !== null} onOpenChange={(o) => !o && setReceiving(null)}>
         <DialogContent className="sm:max-w-md">

@@ -6,7 +6,7 @@ import { addDays, zonedToUtc } from "@/lib/timezone";
 import { RECEIVABLE_FILTERS, type ReceivableFilter } from "./labels";
 
 const RECEIVABLE_SELECT =
-  "id, description, amount_cents, due_date, status, paid_at, paid_amount_cents, fee_cents, installment_number, installment_total, patient_id, plan_id, patients!inner(full_name, search_name), professionals(name), payment_methods(name)";
+  "id, description, amount_cents, due_date, status, paid_at, paid_amount_cents, fee_cents, installment_number, installment_total, patient_id, plan_id, in_negotiation, patients!inner(full_name, search_name, whatsapp, phone), professionals(name), payment_methods(name)";
 
 export async function listReceivables({
   filter,
