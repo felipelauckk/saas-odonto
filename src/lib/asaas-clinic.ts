@@ -73,3 +73,80 @@ export async function getPixQrCode(cred: AsaasCredentials, paymentId: string) {
 export async function cancelPayment(cred: AsaasCredentials, paymentId: string) {
   return request<{ deleted: boolean }>(cred, `/payments/${paymentId}`, { method: "DELETE" });
 }
+
+// Nota fiscal de serviço (NFS-e) --------------------------------------------------------------
+
+export type AsaasInvoice = {
+  id: string;
+  status: string; // SCHEDULED, SYNCHRONIZED, AUTHORIZED, PROCESSING_CANCELLATION, CANCELED, CANCELLATION_DENIED, ERROR
+  number?: string | null;
+  pdfUrl?: string | null;
+  xmlUrl?: string | null;
+  statusDescription?: string | null;
+};
+
+/** Como a prefeitura da clínica autentica (certificado ou usuário/senha) — o Asaas informa. */
+export async function getMunicipalOptions(cred: AsaasCredentials) {
+  return request<{ authenticationType?: string; supportsCancellation?: boolean; municipalInscriptionHelp?: string; specialTaxRegimesList?: { label: string; value: string }[] }>(cred, "/fiscalInfo/municipalOptions");
+}
+
+/**
+ * Envia os dados fiscais da clínica ao Asaas. O certificado A1 vai direto
+ * para o Asaas (não fica guardado no nosso banco).
+ */
+export async function saveFiscalInfo(
+  cred: AsaasCredentials,
+  input: { email: string; municipalInscription: string; simplesNacional: boolean; cnae?: string | null; serviceListItem?: string | null; rpsSerie?: string | null; rpsNumber?: number | null; certificate?: { file: Blob; fileName: string; password: string } | null },
+) {
+  const form = new FormData();
+  form.set("email", input.email);
+  form.set("municipalInscription", input.municipalInscription);
+  form.set("simplesNacional", String(input.simplesNacional));
+  if (input.cnae) form.set("cnae", input.cnae);
+  if (input.serviceListItem) form.set("serviceListItem", input.serviceListItem);
+  if (input.rpsSerie) form.set("rpsSerie", input.rpsSerie);
+  if (input.rpsNumber) form.set("rpsNumber", String(input.rpsNumber));
+  if (input.certificate) {
+    form.set("certificateFile", input.certificate.file, input.certificate.fileName);
+    form.set("certificatePassword", input.certificate.password);
+  }
+  const response = await fetch(`${baseUrl(cred.environment)}/fiscalInfo`, {
+    method: "POST",
+    headers: { access_token: cred.apiKey, "User-Agent": "odonto-saas" },
+    body: form,
+    cache: "no-store",
+  });
+  const data = (await response.json().catch(() => ({}))) as AsaasError;
+  if (response.status === 401) throw new AsaasClinicError("Chave de API do Asaas inválida.");
+  if (!response.ok) throw new AsaasClinicError(data.errors?.[0]?.description ?? `Asaas respondeu ${response.status}.`);
+}
+
+export async function createInvoice(
+  cred: AsaasCredentials,
+  input: {
+    customer: string;
+    serviceDescription: string;
+    observations: string;
+    value: number;
+    effectiveDate: string;
+    municipalServiceCode: string;
+    municipalServiceName: string;
+    externalReference: string;
+    taxes: { retainIss: boolean; iss: number; cofins: number; csll: number; inss: number; ir: number; pis: number };
+  },
+) {
+  return request<AsaasInvoice>(cred, "/invoices", { method: "POST", body: JSON.stringify({ ...input, deductions: 0 }) });
+}
+
+/** Emite já (sem esperar a data agendada). */
+export async function authorizeInvoice(cred: AsaasCredentials, id: string) {
+  return request<AsaasInvoice>(cred, `/invoices/${id}/authorize`, { method: "POST" });
+}
+
+export async function cancelInvoice(cred: AsaasCredentials, id: string) {
+  return request<AsaasInvoice>(cred, `/invoices/${id}/cancel`, { method: "POST" });
+}
+
+export async function getInvoice(cred: AsaasCredentials, id: string) {
+  return request<AsaasInvoice>(cred, `/invoices/${id}`);
+}

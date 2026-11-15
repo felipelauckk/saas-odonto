@@ -10,6 +10,7 @@ export function FinanceTabs({ showCash, showManagement = false, showCommissions 
     { href: "/financeiro", label: "Contas a receber", active: pathname === "/financeiro" },
     ...(showManagement ? [{ href: "/financeiro/pagar", label: "Contas a pagar", active: pathname.startsWith("/financeiro/pagar") }] : []),
     ...(showCash ? [{ href: "/financeiro/caixa", label: "Caixa do dia", active: pathname.startsWith("/financeiro/caixa") }] : []),
+    ...(showCash ? [{ href: "/financeiro/notas", label: "Notas fiscais", active: pathname.startsWith("/financeiro/notas") }] : []),
     ...(showManagement
       ? [
           { href: "/financeiro/fluxo", label: "Fluxo de caixa", active: pathname.startsWith("/financeiro/fluxo") },

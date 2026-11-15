@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { isOnlineBillingEnabled, listCharges } from "@/features/charges/service";
+import { getInvoicesInfo } from "@/features/invoices/queries";
 import { NewReceivableButton } from "@/features/finance/components/new-receivable";
 import { ReceivablesList } from "@/features/finance/components/receivables-list";
 import { RECEIVABLE_FILTERS, type ReceivableFilter } from "@/features/finance/labels";
@@ -40,6 +41,7 @@ export default async function Page({ searchParams }: PageProps<"/financeiro">) {
     canOperate ? isOnlineBillingEnabled(session.clinic.id) : Promise.resolve(false),
     canOperate ? createClient().then((s) => listCharges(s, { openOnly: true })) : Promise.resolve([]),
   ]);
+  const invoicesInfo = canOperate ? await getInvoicesInfo(session.clinic.id, receivables.filter((r) => r.status === "paid").map((r) => r.id)) : undefined;
   const listed = receivables.reduce((s, r) => s + (r.status === "paid" ? (r.paid_amount_cents ?? 0) : r.amount_cents), 0);
 
   const hrefFor = (status: string) => {
@@ -109,7 +111,7 @@ export default async function Page({ searchParams }: PageProps<"/financeiro">) {
       </form>
 
       {receivables.length ? (
-        <ReceivablesList receivables={receivables} paymentMethods={paymentMethods} canOperate={canOperate} canManage={canManage} online={{ enabled: onlineEnabled, clinicName: session.clinic.name, charges }} />
+        <ReceivablesList receivables={receivables} paymentMethods={paymentMethods} canOperate={canOperate} canManage={canManage} online={{ enabled: onlineEnabled, clinicName: session.clinic.name, charges }} invoices={invoicesInfo} />
       ) : (
         <EmptyState icon={Wallet} title="Nenhuma conta encontrada" description="As parcelas dos orçamentos aprovados e as cobranças avulsas aparecem aqui." />
       )}

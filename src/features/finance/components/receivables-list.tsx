@@ -18,6 +18,7 @@ import { formatCurrency } from "@/lib/format";
 import { centsToInput, parseBRLToCents } from "@/lib/money";
 
 import { setNegotiation } from "@/features/charges/actions";
+import { issueInvoiceAction } from "@/features/invoices/actions";
 import { ChargeForm, ChargeView } from "@/features/charges/components/charge-dialog";
 import type { ChargeView as Charge } from "@/features/charges/service";
 
@@ -46,6 +47,8 @@ type Props = {
   showPatient?: boolean;
   /** Cobrança online (Asaas da clínica). */
   online?: { enabled: boolean; clinicName: string; charges: Charge[] };
+  /** Nota fiscal: ligada na clínica e notas já emitidas por recebimento. */
+  invoices?: { enabled: boolean; byReceivable: Record<string, { status: string; pdfUrl: string | null }> };
 };
 
 function ReceiveForm({ receivable, paymentMethods, onDone }: { receivable: ReceivableItem; paymentMethods: Props["paymentMethods"]; onDone: () => void }) {
@@ -104,7 +107,7 @@ function ReceiveForm({ receivable, paymentMethods, onDone }: { receivable: Recei
   );
 }
 
-export function ReceivablesList({ receivables, paymentMethods, canOperate, canManage, showPatient = true, online }: Props) {
+export function ReceivablesList({ receivables, paymentMethods, canOperate, canManage, showPatient = true, online, invoices }: Props) {
   const router = useRouter();
   const [receiving, setReceiving] = useState<ReceivableItem | null>(null);
   const [charging, setCharging] = useState<ReceivableItem | null>(null);
@@ -165,13 +168,20 @@ export function ReceivablesList({ receivables, paymentMethods, canOperate, canMa
                     Receber
                   </Button>
                 ) : null}
+                {r.status === "paid" && invoices?.byReceivable[r.id] ? (
+                  invoices.byReceivable[r.id]!.pdfUrl ? (
+                    <a href={invoices.byReceivable[r.id]!.pdfUrl!} target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>NFS-e</a>
+                  ) : (
+                    <Badge variant={invoices.byReceivable[r.id]!.status === "error" ? "destructive" : "secondary"}>{invoices.byReceivable[r.id]!.status === "error" ? "NFS-e com erro" : "NFS-e em emissão"}</Badge>
+                  )
+                ) : null}
                 {r.status === "paid" ? (
                   <a href={`/financeiro/recibo/${r.id}`} target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
                     <FileDown aria-hidden />
                     Recibo
                   </a>
                 ) : null}
-                {(canManage && (pendingPayment || r.status === "paid")) || (canOperate && pendingPayment) ? (
+                {(canManage && (pendingPayment || r.status === "paid")) || (canOperate && (pendingPayment || (r.status === "paid" && invoices?.enabled))) ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={`Mais ações: ${r.description}`} />}>
                       <MoreHorizontal />
@@ -180,6 +190,11 @@ export function ReceivablesList({ receivables, paymentMethods, canOperate, canMa
                       {pendingPayment && canOperate ? (
                         <DropdownMenuItem className="pointer-coarse:min-h-11" onClick={() => run(() => setNegotiation(r.id, !r.in_negotiation))}>
                           {r.in_negotiation ? "Tirar de negociação" : "Marcar em negociação"}
+                        </DropdownMenuItem>
+                      ) : null}
+                      {r.status === "paid" && invoices?.enabled && (!invoices.byReceivable[r.id] || invoices.byReceivable[r.id]!.status === "error") ? (
+                        <DropdownMenuItem className="pointer-coarse:min-h-11" onClick={() => run(() => issueInvoiceAction(r.id))}>
+                          Emitir NFS-e
                         </DropdownMenuItem>
                       ) : null}
                       {r.status === "paid" && canManage ? (

@@ -8,7 +8,7 @@ import { decryptSecret, encryptSecret } from "@/lib/secrets";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { createClient } from "@/lib/supabase/server";
 
-type UserClient = Awaited<ReturnType<typeof createClient>>;
+type UserClient = Awaited<ReturnType<typeof createClient>> | ReturnType<typeof createAdminClient>;
 export type ChargeKind = "pix" | "boleto" | "link";
 export type ChargeView = {
   id: string;
@@ -22,6 +22,25 @@ export type ChargeView = {
   pixPayload: string | null;
   receivableIds: string[];
 };
+
+/** Cliente do paciente no Asaas da clínica (cria na primeira vez; exige CPF). */
+export async function ensureAsaasCustomer(
+  cred: AsaasCredentials,
+  patient: { id: string; full_name: string; cpf: string | null; email: string | null; whatsapp: string | null; phone: string | null; asaas_customer_id: string | null },
+  purpose: string,
+): Promise<{ customerId: string } | { error: string }> {
+  if (patient.asaas_customer_id) return { customerId: patient.asaas_customer_id };
+  if (!patient.cpf) return { error: `Cadastre o CPF do paciente para ${purpose}.` };
+  const customer = await createCustomer(cred, {
+    name: patient.full_name,
+    cpfCnpj: patient.cpf,
+    email: patient.email,
+    mobilePhone: patient.whatsapp ?? patient.phone,
+    externalReference: patient.id,
+  });
+  await createAdminClient().from("patients").update({ asaas_customer_id: customer.id }).eq("id", patient.id);
+  return { customerId: customer.id };
+}
 
 /** A clínica tem conta Asaas conectada? (lido pelo servidor: a recepção não vê a configuração.) */
 export async function isOnlineBillingEnabled(clinicId: string): Promise<boolean> {
@@ -91,7 +110,7 @@ export async function disconnectClinicAsaas(clinicId: string) {
  * usuário (RLS); a gravação usa o servidor.
  */
 export async function createCharge(
-  ctx: { supabase: UserClient; clinicId: string; userId: string },
+  ctx: { supabase: UserClient; clinicId: string; userId: string | null },
   input: { receivableIds: string[]; kind: ChargeKind; installments: number; dueDate: string | null },
 ): Promise<{ error?: string; charge?: ChargeView }> {
   const { data: receivables } = await ctx.supabase
@@ -114,19 +133,9 @@ export async function createCharge(
   if (!cred) return { error: "Conecte a conta Asaas da clínica em Configurações > Cobrança online." };
 
   const admin = createAdminClient();
-  let customerId = patient.asaas_customer_id;
-  if (!customerId) {
-    if (!patient.cpf) return { error: "Cadastre o CPF do paciente para gerar a cobrança." };
-    const customer = await createCustomer(cred, {
-      name: patient.full_name,
-      cpfCnpj: patient.cpf,
-      email: patient.email,
-      mobilePhone: patient.whatsapp ?? patient.phone,
-      externalReference: patientId,
-    });
-    customerId = customer.id;
-    await admin.from("patients").update({ asaas_customer_id: customerId }).eq("id", patientId);
-  }
+  const customer = await ensureAsaasCustomer(cred, { id: patientId, ...patient }, "gerar a cobrança");
+  if ("error" in customer) return { error: customer.error };
+  const customerId = customer.customerId;
 
   const today = todayIso();
   const earliest = receivables.map((r) => r.due_date).sort()[0]!;
@@ -194,15 +203,22 @@ type WebhookPayload = { event?: string; payment?: AsaasPayment };
  * Notificação do Asaas da clínica. O token do cabeçalho identifica a clínica;
  * pagamento confirmado dá baixa nas parcelas com a taxa real.
  */
-export async function handleClinicWebhook(token: string, payload: WebhookPayload): Promise<{ status: number }> {
-  if (!/^[0-9a-f]{64}$/.test(token)) return { status: 401 };
+/** Clínica dona do token do webhook (ou nulo). */
+export async function clinicFromWebhookToken(token: string): Promise<string | null> {
+  if (!/^[0-9a-f]{64}$/.test(token)) return null;
+  const { data } = await createAdminClient().from("clinic_billing").select("clinic_id").eq("webhook_token", token).maybeSingle();
+  return data?.clinic_id ?? null;
+}
+
+export async function handleClinicWebhook(token: string, payload: WebhookPayload): Promise<{ status: number; settled?: { clinicId: string; receivableIds: string[] } }> {
+  const clinicId = await clinicFromWebhookToken(token);
+  if (!clinicId) return { status: 401 };
   const admin = createAdminClient();
-  const { data: billing } = await admin.from("clinic_billing").select("clinic_id").eq("webhook_token", token).maybeSingle();
-  if (!billing) return { status: 401 };
+  const billing = { clinic_id: clinicId };
   const p = payload.payment;
   const ref = p?.externalReference ?? "";
   if (!p || !/^[0-9a-f-]{36}$/i.test(ref)) return { status: 200 };
-  const { data: charge } = await admin.from("patient_charges").select("id, status, amount_cents, installments").eq("id", ref).eq("clinic_id", billing.clinic_id).maybeSingle();
+  const { data: charge } = await admin.from("patient_charges").select("id, status, amount_cents, installments, receivable_ids").eq("id", ref).eq("clinic_id", billing.clinic_id).maybeSingle();
   if (!charge) return { status: 200 };
 
   switch (payload.event) {
@@ -217,7 +233,7 @@ export async function handleClinicWebhook(token: string, payload: WebhookPayload
       const paidOn = (p.clientPaymentDate ?? p.paymentDate ?? p.confirmedDate ?? todayIso()).slice(0, 10);
       const { error } = await admin.rpc("settle_online_charge", { _charge_id: charge.id, _paid_cents: paid, _fee_cents: fee, _paid_on: paidOn });
       if (error) return { status: 500 };
-      return { status: 200 };
+      return { status: 200, settled: charge.status === "paid" ? undefined : { clinicId, receivableIds: charge.receivable_ids } };
     }
     case "PAYMENT_OVERDUE":
       if (charge.status === "pending") await admin.from("patient_charges").update({ status: "overdue" }).eq("id", charge.id);

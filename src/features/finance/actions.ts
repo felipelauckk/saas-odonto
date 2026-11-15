@@ -4,9 +4,10 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { autoIssueInvoices } from "@/features/invoices/service";
+import { getSessionContext } from "@/features/tenancy/queries";
 import { subscriptionErrorMessage } from "@/lib/db-errors";
 import { createClient } from "@/lib/supabase/server";
-import { getSessionContext } from "@/features/tenancy/queries";
 
 type Result = { error?: string };
 
@@ -43,6 +44,9 @@ export async function receivePayment(input: z.input<typeof receiveSchema>): Prom
     _paid_on: parsed.data.paidOn,
   });
   if (error) return { error: financeError(error) };
+  // Nota fiscal automática (se a clínica ligou); erro de emissão fica registrado na nota.
+  const session = await getSessionContext();
+  if (session?.clinic) await autoIssueInvoices(session.clinic.id, [parsed.data.receivableId]);
   revalidate();
   return {};
 }
