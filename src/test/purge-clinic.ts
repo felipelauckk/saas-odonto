@@ -97,6 +97,8 @@ export async function purgeClinic(admin: SupabaseClient, clinicId: string): Prom
   if (paths.length) await storage.remove(paths);
 
   for (const table of CLINIC_TABLES) await admin.from(table).delete().eq("clinic_id", clinicId);
+  // As exclusões acima geram registros de auditoria (gatilhos): apaga de novo antes da clínica.
+  await admin.from("audit_log").delete().eq("clinic_id", clinicId);
   await admin.from("clinic_members").delete().eq("clinic_id", clinicId);
   await admin.from("profiles").update({ active_clinic_id: null }).eq("active_clinic_id", clinicId);
   await admin.from("units").delete().eq("clinic_id", clinicId);

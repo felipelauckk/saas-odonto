@@ -52,7 +52,7 @@ test("cadastra paciente com CEP preenchendo o endereço e consentimento LGPD", a
   await expect(page.getByText(/Avenida Paulista, 1000/)).toBeVisible();
   await expect(page.getByText(/Registrado em/)).toBeVisible();
   // WhatsApp igual ao telefone por padrão.
-  await expect(page.getByRole("link", { name: "WhatsApp" })).toHaveAttribute("href", "https://wa.me/5511988887777");
+  await expect(page.getByRole("main").getByRole("link", { name: "WhatsApp" })).toHaveAttribute("href", "https://wa.me/5511988887777");
 });
 
 test("menor de idade exige responsável", async ({ page }) => {

@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
+import { fetchWithTimeout } from "../../src/lib/supabase/fetch-timeout";
 import { purgeClinic } from "../../src/test/purge-clinic";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
@@ -15,6 +16,7 @@ export const hasSupabase = Boolean(
 export function admin() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
+    global: { fetch: fetchWithTimeout },
   });
 }
 

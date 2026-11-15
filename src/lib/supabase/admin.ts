@@ -6,6 +6,7 @@ import { getPublicEnv } from "@/lib/env";
 import { getServerEnv } from "@/lib/env.server";
 
 import type { Database } from "./database.types";
+import { fetchWithTimeout } from "./fetch-timeout";
 
 /**
  * Cliente com a service role: IGNORA a RLS.
@@ -18,5 +19,6 @@ export function createAdminClient() {
 
   return createSupabaseClient<Database>(NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
+    global: { fetch: fetchWithTimeout },
   });
 }

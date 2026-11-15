@@ -78,7 +78,11 @@ export async function saveFiscalSettings(_prev: ActionState, formData: FormData)
   const ctx = await context(true);
   if (!ctx) return { status: "error", message: "Só a gestão configura a nota fiscal.", values };
   const { email, certificate_password, ...row } = parsed.data;
-  const { error } = await ctx.supabase.from("clinic_fiscal_settings").upsert({ clinic_id: ctx.clinicId, ...row });
+  // Insere na primeira vez; depois só atualiza (clinic_id não pode ser alterado pelo app).
+  const { data: existing } = await ctx.supabase.from("clinic_fiscal_settings").select("clinic_id").eq("clinic_id", ctx.clinicId).maybeSingle();
+  const { error } = existing
+    ? await ctx.supabase.from("clinic_fiscal_settings").update(row).eq("clinic_id", ctx.clinicId)
+    : await ctx.supabase.from("clinic_fiscal_settings").insert({ clinic_id: ctx.clinicId, ...row });
   if (error) return { status: "error", message: subscriptionErrorMessage(error) ?? "Não foi possível salvar.", values };
 
   const file = formData.get("certificate");

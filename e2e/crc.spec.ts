@@ -31,7 +31,7 @@ test("falta na primeira consulta aparece na CRC; contato com retorno marcado sai
   await page.goto("/crc");
   await expect(page.getByRole("link", { name: "Faltas na primeira consulta 1" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("link", { name: "Paciente Agenda" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "WhatsApp" })).toHaveAttribute("href", /wa\.me\/5511988887777\?text=.*Sentimos%20sua%20falta/);
+  await expect(page.getByRole("main").getByRole("link", { name: "WhatsApp" })).toHaveAttribute("href", /wa\.me\/5511988887777\?text=.*Sentimos%20sua%20falta/);
 
   await page.getByRole("button", { name: "Registrar contato" }).click();
   const dialog = page.getByRole("dialog");

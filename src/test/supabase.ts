@@ -7,6 +7,7 @@ import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
+import { fetchWithTimeout } from "@/lib/supabase/fetch-timeout";
 
 import { purgeClinic } from "./purge-clinic";
 
@@ -18,7 +19,7 @@ const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const hasSupabase = Boolean(url && anonKey && serviceKey);
 
-const noSession = { auth: { autoRefreshToken: false, persistSession: false } };
+const noSession = { auth: { autoRefreshToken: false, persistSession: false }, global: { fetch: fetchWithTimeout } };
 
 export function adminClient(): Client {
   return createClient<Database>(url!, serviceKey!, noSession);
