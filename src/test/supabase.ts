@@ -87,7 +87,12 @@ export function createTestEnv(prefix: string) {
       "medications",
       "messages_log",
       "message_templates",
+      "bank_transactions",
       "cash_movements",
+      "payables",
+      "suppliers",
+      "cost_centers",
+      "finance_categories",
       "receivables",
       "treatment_plans",
       "clinical_notes",
@@ -107,6 +112,8 @@ export function createTestEnv(prefix: string) {
     for (const id of clinicIds) {
       const { data: files } = await admin.from("patient_files").select("storage_path").eq("clinic_id", id);
       if (files?.length) await admin.storage.from("clinic").remove(files.map((f) => f.storage_path));
+      const { data: bills } = await admin.from("payables").select("attachment_path").eq("clinic_id", id).not("attachment_path", "is", null);
+      if (bills?.length) await admin.storage.from("clinic").remove(bills.map((b) => b.attachment_path as string));
       const { data: docs } = await admin.from("patient_documents").select("pdf_path").eq("clinic_id", id);
       const { data: sigs } = await admin.from("signature_requests").select("signed_pdf_path, signature_path").eq("clinic_id", id);
       const docPaths = [

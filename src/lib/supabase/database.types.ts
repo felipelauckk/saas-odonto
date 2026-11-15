@@ -263,6 +263,92 @@ export type Database = {
           },
         ]
       }
+      bank_transactions: {
+        Row: {
+          account_label: string | null
+          amount_cents: number
+          cash_movement_id: string | null
+          clinic_id: string
+          created_at: string
+          description: string | null
+          fitid: string
+          id: string
+          imported_by: string | null
+          matched_at: string | null
+          matched_by: string | null
+          payable_id: string | null
+          posted_on: string
+          receivable_id: string | null
+          status: Database["public"]["Enums"]["bank_tx_status"]
+          updated_at: string
+        }
+        Insert: {
+          account_label?: string | null
+          amount_cents: number
+          cash_movement_id?: string | null
+          clinic_id: string
+          created_at?: string
+          description?: string | null
+          fitid: string
+          id?: string
+          imported_by?: string | null
+          matched_at?: string | null
+          matched_by?: string | null
+          payable_id?: string | null
+          posted_on: string
+          receivable_id?: string | null
+          status?: Database["public"]["Enums"]["bank_tx_status"]
+          updated_at?: string
+        }
+        Update: {
+          account_label?: string | null
+          amount_cents?: number
+          cash_movement_id?: string | null
+          clinic_id?: string
+          created_at?: string
+          description?: string | null
+          fitid?: string
+          id?: string
+          imported_by?: string | null
+          matched_at?: string | null
+          matched_by?: string | null
+          payable_id?: string | null
+          posted_on?: string
+          receivable_id?: string | null
+          status?: Database["public"]["Enums"]["bank_tx_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_cash_movement_id_clinic_id_fkey"
+            columns: ["cash_movement_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "cash_movements"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_payable_id_clinic_id_fkey"
+            columns: ["payable_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "payables"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_receivable_id_clinic_id_fkey"
+            columns: ["receivable_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "receivables"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       billing_events: {
         Row: {
           clinic_id: string | null
@@ -310,12 +396,14 @@ export type Database = {
       cash_movements: {
         Row: {
           amount_cents: number
+          category_id: string | null
           clinic_id: string
           created_at: string
           created_by: string | null
           description: string
           id: string
           occurred_at: string
+          payable_id: string | null
           payment_method_id: string | null
           receivable_id: string | null
           type: Database["public"]["Enums"]["cash_movement_type"]
@@ -324,12 +412,14 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          category_id?: string | null
           clinic_id: string
           created_at?: string
           created_by?: string | null
           description: string
           id?: string
           occurred_at?: string
+          payable_id?: string | null
           payment_method_id?: string | null
           receivable_id?: string | null
           type: Database["public"]["Enums"]["cash_movement_type"]
@@ -338,12 +428,14 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          category_id?: string | null
           clinic_id?: string
           created_at?: string
           created_by?: string | null
           description?: string
           id?: string
           occurred_at?: string
+          payable_id?: string | null
           payment_method_id?: string | null
           receivable_id?: string | null
           type?: Database["public"]["Enums"]["cash_movement_type"]
@@ -352,11 +444,25 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "cash_movements_category_fk"
+            columns: ["category_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
             foreignKeyName: "cash_movements_clinic_id_fkey"
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_movements_payable_fk"
+            columns: ["payable_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "payables"
+            referencedColumns: ["id", "clinic_id"]
           },
           {
             foreignKeyName: "cash_movements_payment_method_id_clinic_id_fkey"
@@ -607,6 +713,41 @@ export type Database = {
           },
         ]
       }
+      cost_centers: {
+        Row: {
+          active: boolean
+          clinic_id: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          clinic_id: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_centers_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_templates: {
         Row: {
           active: boolean
@@ -655,6 +796,44 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "procedures"
             referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
+      finance_categories: {
+        Row: {
+          active: boolean
+          clinic_id: string
+          created_at: string
+          id: string
+          name: string
+          type: Database["public"]["Enums"]["category_type"]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          clinic_id: string
+          created_at?: string
+          id?: string
+          name: string
+          type: Database["public"]["Enums"]["category_type"]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["category_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_categories_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1052,6 +1231,127 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clinics"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      payables: {
+        Row: {
+          amount_cents: number
+          attachment_path: string | null
+          category_id: string
+          clinic_id: string
+          cost_center_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string
+          group_id: string | null
+          id: string
+          installment_number: number
+          installment_total: number
+          notes: string | null
+          paid_amount_cents: number | null
+          paid_at: string | null
+          paid_by: string | null
+          payment_method_id: string | null
+          recurring: boolean
+          status: Database["public"]["Enums"]["payable_status"]
+          supplier_id: string | null
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          attachment_path?: string | null
+          category_id: string
+          clinic_id: string
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date: string
+          group_id?: string | null
+          id?: string
+          installment_number?: number
+          installment_total?: number
+          notes?: string | null
+          paid_amount_cents?: number | null
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_method_id?: string | null
+          recurring?: boolean
+          status?: Database["public"]["Enums"]["payable_status"]
+          supplier_id?: string | null
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          attachment_path?: string | null
+          category_id?: string
+          clinic_id?: string
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string
+          group_id?: string | null
+          id?: string
+          installment_number?: number
+          installment_total?: number
+          notes?: string | null
+          paid_amount_cents?: number | null
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_method_id?: string | null
+          recurring?: boolean
+          status?: Database["public"]["Enums"]["payable_status"]
+          supplier_id?: string | null
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payables_category_id_clinic_id_fkey"
+            columns: ["category_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "payables_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payables_cost_center_id_clinic_id_fkey"
+            columns: ["cost_center_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "payables_payment_method_id_clinic_id_fkey"
+            columns: ["payment_method_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "payables_supplier_id_clinic_id_fkey"
+            columns: ["supplier_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "payables_unit_id_clinic_id_fkey"
+            columns: ["unit_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id", "clinic_id"]
           },
         ]
       }
@@ -1634,6 +1934,53 @@ export type Database = {
           },
         ]
       }
+      suppliers: {
+        Row: {
+          active: boolean
+          clinic_id: string
+          created_at: string
+          document: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          clinic_id: string
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          clinic_id?: string
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tooth_records: {
         Row: {
           clinic_id: string
@@ -1968,6 +2315,15 @@ export type Database = {
           label: string
         }[]
       }
+      pay_payable: {
+        Args: {
+          _paid_amount_cents: number
+          _paid_on: string
+          _payable_id: string
+          _payment_method_id: string
+        }
+        Returns: undefined
+      }
       receive_payment: {
         Args: {
           _paid_amount_cents: number
@@ -2007,6 +2363,10 @@ export type Database = {
         Args: { _clinic_id: string }
         Returns: undefined
       }
+      seed_finance_defaults: {
+        Args: { _clinic_id: string }
+        Returns: undefined
+      }
       seed_message_templates: {
         Args: { _clinic_id: string }
         Returns: undefined
@@ -2025,7 +2385,9 @@ export type Database = {
         | "done"
         | "no_show"
         | "canceled"
+      bank_tx_status: "unmatched" | "matched" | "ignored"
       cash_movement_type: "in" | "out"
+      category_type: "income" | "expense"
       document_kind:
         | "prescription"
         | "special_prescription"
@@ -2045,6 +2407,7 @@ export type Database = {
       patient_file_kind: "photo" | "xray" | "document" | "other"
       patient_gender: "female" | "male" | "other" | "not_informed"
       patient_source: "indicacao" | "instagram" | "google" | "site" | "outro"
+      payable_status: "open" | "paid" | "overdue" | "canceled"
       receivable_status: "open" | "paid" | "overdue" | "canceled"
       signature_purpose: "document" | "anamnesis"
       signature_status: "pending" | "signed" | "revoked"
@@ -2202,7 +2565,9 @@ export const Constants = {
         "no_show",
         "canceled",
       ],
+      bank_tx_status: ["unmatched", "matched", "ignored"],
       cash_movement_type: ["in", "out"],
+      category_type: ["income", "expense"],
       document_kind: [
         "prescription",
         "special_prescription",
@@ -2224,6 +2589,7 @@ export const Constants = {
       patient_file_kind: ["photo", "xray", "document", "other"],
       patient_gender: ["female", "male", "other", "not_informed"],
       patient_source: ["indicacao", "instagram", "google", "site", "outro"],
+      payable_status: ["open", "paid", "overdue", "canceled"],
       receivable_status: ["open", "paid", "overdue", "canceled"],
       signature_purpose: ["document", "anamnesis"],
       signature_status: ["pending", "signed", "revoked"],

@@ -62,7 +62,12 @@ export async function createTestUser(): Promise<TestUser> {
       "medications",
       "messages_log",
       "message_templates",
+      "bank_transactions",
       "cash_movements",
+      "payables",
+      "suppliers",
+      "cost_centers",
+      "finance_categories",
       "receivables",
       "treatment_plans",
       "clinical_notes",
@@ -82,6 +87,8 @@ export async function createTestUser(): Promise<TestUser> {
       for (const { clinic_id } of members ?? []) {
         const { data: files } = await client.from("patient_files").select("storage_path").eq("clinic_id", clinic_id);
         if (files?.length) await client.storage.from("clinic").remove(files.map((f) => f.storage_path));
+        const { data: bills } = await client.from("payables").select("attachment_path").eq("clinic_id", clinic_id).not("attachment_path", "is", null);
+        if (bills?.length) await client.storage.from("clinic").remove(bills.map((b) => b.attachment_path as string));
         const { data: docs } = await client.from("patient_documents").select("pdf_path").eq("clinic_id", clinic_id);
         const { data: sigs } = await client.from("signature_requests").select("signed_pdf_path, signature_path").eq("clinic_id", clinic_id);
         const docPaths = [
