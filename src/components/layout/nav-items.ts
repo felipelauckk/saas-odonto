@@ -1,6 +1,8 @@
 import {
+  BarChart3,
   CalendarDays,
   Headset,
+  Megaphone,
   FileText,
   LayoutDashboard,
   Settings,
@@ -24,7 +26,9 @@ export const navItems: readonly NavItem[] = [
   { href: "/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/pacientes", label: "Pacientes", icon: Users },
   { href: "/crc", label: "CRC", icon: Headset, frontDeskOnly: true },
+  { href: "/crm", label: "CRM", icon: Megaphone, frontDeskOnly: true },
   { href: "/orcamentos", label: "Orçamentos", icon: FileText },
   { href: "/financeiro", label: "Financeiro", icon: Wallet },
+  { href: "/relatorios", label: "Relatórios", icon: BarChart3, managersOnly: true },
   { href: "/configuracoes", label: "Configurações", icon: Settings, managersOnly: true },
 ];
