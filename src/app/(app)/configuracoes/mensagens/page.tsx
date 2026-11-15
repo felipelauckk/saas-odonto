@@ -4,6 +4,7 @@ import { Info, MessageCircle } from "lucide-react";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { SubpageHeader } from "@/components/layout/subpage-header";
 import { Badge } from "@/components/ui/badge";
+import { CrcTemplatesEditor } from "@/features/crc/components/crc-templates-editor";
 import { TemplatesEditor } from "@/features/messaging/components/templates-editor";
 import { requireManager } from "@/features/tenancy/guards";
 import { formatPhone } from "@/lib/documents";
@@ -14,20 +15,21 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Mensagens" };
 
-const order: MessageKind[] = ["appointment_reminder", "appointment_confirmation", "birthday"];
+const order: MessageKind[] = ["appointment_reminder", "appointment_confirmation", "return_reminder", "birthday"];
 const statusLabel = { sent: "Enviada", simulated: "Simulada", failed: "Falhou", received: "Recebida" } as const;
-const kindLabel: Record<MessageKind, string> = { appointment_reminder: "Lembrete", appointment_confirmation: "Confirmação", birthday: "Aniversário" };
+const kindLabel: Record<MessageKind, string> = { appointment_reminder: "Lembrete", appointment_confirmation: "Confirmação", birthday: "Aniversário", return_reminder: "Retorno" };
 
 export default async function Page() {
   await requireManager();
   const supabase = await createClient();
-  const [{ data: templates }, { data: logs }] = await Promise.all([
+  const [{ data: templates }, { data: logs }, { data: crcTemplates }] = await Promise.all([
     supabase.from("message_templates").select("id, kind, body, active"),
     supabase
       .from("messages_log")
       .select("id, template_kind, status, to_phone, body, error, sent_at, patients(full_name)")
       .order("sent_at", { ascending: false })
       .limit(50),
+    supabase.from("crc_templates").select("queue, body"),
   ]);
   const configured = isMessagingConfigured();
   const sorted = (templates ?? []).sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
@@ -47,6 +49,14 @@ export default async function Page() {
       ) : null}
 
       <TemplatesEditor templates={sorted} />
+
+      <section className="space-y-3" aria-labelledby="crc-mensagens">
+        <div>
+          <h2 id="crc-mensagens" className="text-base font-medium">Mensagens da CRC</h2>
+          <p className="text-sm text-muted-foreground">Texto que já vem pronto ao abrir o WhatsApp em cada fila da CRC. Variáveis: {"{{paciente}}"}, {"{{clinica}}"} e {"{{valor}}"}.</p>
+        </div>
+        <CrcTemplatesEditor templates={crcTemplates ?? []} />
+      </section>
 
       <section className="space-y-2" aria-labelledby="envios">
         <h2 id="envios" className="text-base font-medium">

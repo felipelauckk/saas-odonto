@@ -9,6 +9,8 @@ export type TemplateVariables = {
   data?: string;
   hora?: string;
   profissional?: string;
+  /** Valor em aberto (mensagens da CRC). */
+  valor?: string;
 };
 
 export type OutgoingMessage = {

@@ -20,9 +20,10 @@ type MobileNavProps = {
   /** Ações à direita da barra (ex.: seletor de unidade). */
   actions?: ReactNode;
   canManage?: boolean;
+  isDentist?: boolean;
 };
 
-export function MobileNav({ top, bottom, actions, canManage }: MobileNavProps) {
+export function MobileNav({ top, bottom, actions, canManage, isDentist }: MobileNavProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -37,7 +38,7 @@ export function MobileNav({ top, bottom, actions, canManage }: MobileNavProps) {
           <SheetTitle className="sr-only">Menu</SheetTitle>
           <Brand />
           {top}
-          <NavLinks canManage={canManage} onNavigate={() => setOpen(false)} />
+          <NavLinks canManage={canManage} isDentist={isDentist} onNavigate={() => setOpen(false)} />
           {bottom ? <div className="mt-auto">{bottom}</div> : null}
         </SheetContent>
       </Sheet>

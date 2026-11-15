@@ -7,6 +7,8 @@ import { AgendaView } from "@/features/agenda/components/agenda-view";
 import { getAgendaData } from "@/features/agenda/queries";
 import { agendaParamsSchema } from "@/features/agenda/schemas";
 import { requireClinic } from "@/features/tenancy/guards";
+import { formatPhone } from "@/lib/documents";
+import { createClient } from "@/lib/supabase/server";
 import { todayIso } from "@/lib/dates";
 import { startOfWeek } from "@/lib/timezone";
 
@@ -37,6 +39,14 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
     isDentist,
   });
 
+  let presetPatient = null;
+  if (params.paciente) {
+    const supabase = await createClient();
+    const { data: p } = await supabase.from("patients").select("id, full_name, phone, whatsapp").eq("id", params.paciente).is("archived_at", null).maybeSingle();
+    const phone = p?.whatsapp ?? p?.phone;
+    if (p) presetPatient = { id: p.id, name: p.full_name, detail: phone ? formatPhone(phone) : null };
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -52,6 +62,7 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
         by={params.por}
         selectedId={params.id ?? null}
         isDentist={isDentist}
+        presetPatient={presetPatient}
       />
     </div>
   );

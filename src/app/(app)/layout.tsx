@@ -25,12 +25,13 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="min-h-full">
-      <Sidebar top={clinicSwitcher} bottom={userMenu} canManage={canManage} />
+      <Sidebar top={clinicSwitcher} bottom={userMenu} canManage={canManage} isDentist={clinic.role === "dentist"} />
       <MobileNav
         top={clinicSwitcher}
         bottom={userMenu}
         actions={hasUnitSwitcher ? unitSwitcher : null}
         canManage={canManage}
+        isDentist={clinic.role === "dentist"}
       />
       <main className="lg:pl-60">
         <SubscriptionBanner

@@ -8,15 +8,16 @@ import { navItems } from "./nav-items";
 
 type NavLinksProps = {
   canManage?: boolean;
+  isDentist?: boolean;
   onNavigate?: () => void;
 };
 
-export function NavLinks({ canManage = false, onNavigate }: NavLinksProps) {
+export function NavLinks({ canManage = false, isDentist = false, onNavigate }: NavLinksProps) {
   const pathname = usePathname();
 
   return (
     <nav aria-label="Menu principal" className="flex flex-col gap-0.5">
-      {navItems.filter((item) => canManage || !item.managersOnly).map(({ href, label, icon: Icon }) => {
+      {navItems.filter((item) => (canManage || !item.managersOnly) && !(isDentist && item.frontDeskOnly)).map(({ href, label, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link

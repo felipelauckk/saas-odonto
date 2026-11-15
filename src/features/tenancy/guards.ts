@@ -21,3 +21,10 @@ export async function requireManager(): Promise<ActiveSession> {
   if (!canManageClinic(session.clinic.role)) redirect("/painel");
   return session;
 }
+
+/** Recepção e gestão (dentista volta ao painel). */
+export async function requireFrontDesk(): Promise<ActiveSession> {
+  const session = await requireClinic();
+  if (session.clinic.role === "dentist") redirect("/painel");
+  return session;
+}
