@@ -63,6 +63,7 @@ export default async function Page({ params }: PageProps<"/orcamentos/[id]">) {
         receivables={receivables}
         paymentMethods={paymentMethods ?? []}
         canMarkDone={["owner", "manager", "dentist"].includes(session.clinic.role)}
+        canEditLab={["owner", "manager"].includes(session.clinic.role)}
       />
     </div>
   );

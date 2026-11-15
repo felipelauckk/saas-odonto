@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "cn";
 
-export function FinanceTabs({ showCash, showManagement = false }: { showCash: boolean; showManagement?: boolean }) {
+export function FinanceTabs({ showCash, showManagement = false, showCommissions = false }: { showCash: boolean; showManagement?: boolean; showCommissions?: boolean }) {
   const pathname = usePathname();
   const tabs = [
     { href: "/financeiro", label: "Contas a receber", active: pathname === "/financeiro" },
@@ -17,6 +17,7 @@ export function FinanceTabs({ showCash, showManagement = false }: { showCash: bo
           { href: "/financeiro/conciliacao", label: "Conciliação", active: pathname.startsWith("/financeiro/conciliacao") },
         ]
       : []),
+    ...(showCommissions ? [{ href: "/financeiro/comissoes", label: "Comissões", active: pathname.startsWith("/financeiro/comissoes") }] : []),
   ];
   if (tabs.length < 2) return null;
   return (

@@ -10,6 +10,7 @@ import {
   Landmark,
   MapPin,
   MessageCircle,
+  Percent,
   Receipt,
   ShieldCheck,
   Stethoscope,
@@ -66,6 +67,7 @@ export default async function Page() {
       meta: plural(summary.procedures, "procedimento", "procedimentos"),
       warning: summary.unpriced ? plural(summary.unpriced, "sem preço", "sem preço") : undefined,
     },
+    { href: "/configuracoes/comissoes", title: "Comissões", description: "Percentuais e exceções por profissional.", icon: Percent },
     { href: "/configuracoes/financeiro", title: "Cadastros financeiros", description: "Categorias, fornecedores e centros de custo.", icon: Landmark },
     {
       href: "/configuracoes/formas-de-pagamento",

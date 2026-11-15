@@ -18,6 +18,7 @@ import { faceLabel, type Face } from "@/features/clinical/odontogram";
 import { setItemDone, setPlanStatus } from "../actions";
 import { itemStatusLabels, OPEN_STATUSES, type ItemStatus, type PlanStatus } from "../labels";
 import { ApproveForm } from "./approve-form";
+import { LabCostInput } from "@/features/commissions/components/lab-cost-input";
 
 type Props = {
   plan: {
@@ -35,15 +36,16 @@ type Props = {
     professionalName: string;
     paymentMethodName: string | null;
   };
-  items: { id: string; description: string; tooth: number | null; faces: string[]; price_cents: number; status: ItemStatus; done_at: string | null }[];
+  items: { id: string; description: string; tooth: number | null; faces: string[]; price_cents: number; lab_cost_cents: number; status: ItemStatus; done_at: string | null }[];
   receivables: { id: string; amount_cents: number; due_date: string; installment_number: number; installment_total: number; status: string }[];
   paymentMethods: { id: string; name: string }[];
   canMarkDone: boolean;
+  canEditLab?: boolean;
 };
 
 const receivableLabels: Record<string, string> = { open: "Em aberto", paid: "Pago", overdue: "Vencido", canceled: "Cancelado" };
 
-export function PlanDetailView({ plan, items, receivables, paymentMethods, canMarkDone }: Props) {
+export function PlanDetailView({ plan, items, receivables, paymentMethods, canMarkDone, canEditLab = false }: Props) {
   const [dialog, setDialog] = useState<"approve" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -126,6 +128,9 @@ export function PlanDetailView({ plan, items, receivables, paymentMethods, canMa
                       .join(" · ")}
                   </p>
                 </div>
+                {canEditLab && (item.status === "approved" || item.status === "done") ? (
+                  <LabCostInput itemId={item.id} initialCents={item.lab_cost_cents} label={item.description} />
+                ) : null}
                 <span className="text-sm tabular-nums">{formatCurrency(item.price_cents)}</span>
               </li>
             );

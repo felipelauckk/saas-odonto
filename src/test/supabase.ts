@@ -87,6 +87,8 @@ export function createTestEnv(prefix: string) {
       "medications",
       "messages_log",
       "message_templates",
+      "commission_closings",
+      "commission_rules",
       "bank_transactions",
       "cash_movements",
       "payables",

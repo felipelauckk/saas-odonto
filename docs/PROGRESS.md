@@ -18,6 +18,7 @@
 
 | Etapa | Status | Observações |
 | --- | --- | --- |
+| 14. Comissões | Concluída (15/11/2026) | Base recebido ou executado, descontos de taxa e laboratório, percentual padrão e exceções por procedimento (percentual ou fixo) e categoria, extrato, fechamento mensal com repasse em contas a pagar e PDF. |
 | 13. Contas a pagar e fluxo de caixa | Concluída (15/11/2026) | Contas a pagar (fornecedor, categoria, centro de custo, parcelas, mensal fixa, comprovante), baixa no caixa, fluxo realizado e previsto, DRE mensal, conciliação OFX assistida, categorias padrão e cadastros. |
 | 12. Documentos e assinatura eletrônica | Concluída (14/11/2026) | Modelos com variáveis, receituário (simples e controle especial em 2 vias) com lista de medicamentos, atestado, declaração, contrato, termo, orientações; aba Documentos; assinatura por link com página de evidências e hash; anamnese por link; verificação de PDF. |
 
@@ -115,6 +116,9 @@
 - **Fluxo de caixa**: realizado = movimentos do caixa; previsto = contas a receber e a pagar em aberto pelo vencimento; por dia, semana (segunda) ou mês; unidade ou consolidado.
 - **DRE gerencial (regime de caixa)**: receita bruta = recebimentos pagos no mês; − taxas das formas de pagamento; − despesas por categoria (contas pagas + saídas avulsas do caixa).
 - **Conciliação OFX**: leitor próprio (SGML e XML, valores com ponto ou vírgula, Latin-1); não duplica (FITID por conta); sugere o par pelo mesmo valor e data até 3 dias, ninguém sugerido duas vezes; a pessoa confirma ou ignora.
+- **Comissões (Etapa 14)**: ordem das regras: exceção do procedimento (percentual ou valor fixo) → exceção da categoria → percentual padrão do profissional → zero. Base "recebido" (padrão): cada pagamento do mês é rateado entre os itens aprovados do orçamento pelo valor líquido (desconto rateado), com taxa e laboratório proporcionais; valor fixo proporcional ao quanto do item foi pago; cobrança sem orçamento usa o percentual padrão. Base "executado": itens realizados no mês. Cálculo em `src/features/commissions/calc.ts` (testado com centavos exatos).
+- **Custo de laboratório** por item do orçamento (`lab_cost_cents`), só a gestão edita, mesmo depois da aprovação. A Etapa 20 vai preencher a partir da ordem protética.
+- **Fechamento mensal**: só meses passados; copia as linhas do extrato (`lines`), lança a conta a pagar do repasse (categoria "Comissões", vence dia 5 do mês seguinte) e gera o PDF. Definitivo (sem UPDATE/DELETE pelo app); estornos depois do fechamento não alteram o mês fechado.
 - **Deploy:** GitHub (`felipelauckk/saas-odonto`) + Vercel.
 
 ## Pendências da Etapa 1

@@ -62,6 +62,8 @@ export async function createTestUser(): Promise<TestUser> {
       "medications",
       "messages_log",
       "message_templates",
+      "commission_closings",
+      "commission_rules",
       "bank_transactions",
       "cash_movements",
       "payables",

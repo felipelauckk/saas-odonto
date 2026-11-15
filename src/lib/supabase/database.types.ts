@@ -653,6 +653,9 @@ export type Database = {
           asaas_customer_id: string | null
           asaas_subscription_id: string | null
           canceled_at: string | null
+          commission_base: Database["public"]["Enums"]["commission_base"]
+          commission_deduct_fees: boolean
+          commission_deduct_lab: boolean
           created_at: string
           document_cnpj_cpf: string | null
           email: string | null
@@ -671,6 +674,9 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           canceled_at?: string | null
+          commission_base?: Database["public"]["Enums"]["commission_base"]
+          commission_deduct_fees?: boolean
+          commission_deduct_lab?: boolean
           created_at?: string
           document_cnpj_cpf?: string | null
           email?: string | null
@@ -689,6 +695,9 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           canceled_at?: string | null
+          commission_base?: Database["public"]["Enums"]["commission_base"]
+          commission_deduct_fees?: boolean
+          commission_deduct_lab?: boolean
           created_at?: string
           document_cnpj_cpf?: string | null
           email?: string | null
@@ -710,6 +719,140 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "plans"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_closings: {
+        Row: {
+          base: Database["public"]["Enums"]["commission_base"]
+          clinic_id: string
+          closed_at: string
+          closed_by: string | null
+          created_at: string
+          id: string
+          lines: Json
+          payable_id: string | null
+          pdf_path: string | null
+          period_month: string
+          professional_id: string
+          total_base_cents: number
+          total_commission_cents: number
+          total_gross_cents: number
+          updated_at: string
+        }
+        Insert: {
+          base: Database["public"]["Enums"]["commission_base"]
+          clinic_id: string
+          closed_at?: string
+          closed_by?: string | null
+          created_at?: string
+          id?: string
+          lines: Json
+          payable_id?: string | null
+          pdf_path?: string | null
+          period_month: string
+          professional_id: string
+          total_base_cents: number
+          total_commission_cents: number
+          total_gross_cents: number
+          updated_at?: string
+        }
+        Update: {
+          base?: Database["public"]["Enums"]["commission_base"]
+          clinic_id?: string
+          closed_at?: string
+          closed_by?: string | null
+          created_at?: string
+          id?: string
+          lines?: Json
+          payable_id?: string | null
+          pdf_path?: string | null
+          period_month?: string
+          professional_id?: string
+          total_base_cents?: number
+          total_commission_cents?: number
+          total_gross_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_closings_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_closings_payable_id_clinic_id_fkey"
+            columns: ["payable_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "payables"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "commission_closings_professional_id_clinic_id_fkey"
+            columns: ["professional_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
+      commission_rules: {
+        Row: {
+          category: string | null
+          clinic_id: string
+          created_at: string
+          fixed_cents: number | null
+          id: string
+          percent: number | null
+          procedure_id: string | null
+          professional_id: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          clinic_id: string
+          created_at?: string
+          fixed_cents?: number | null
+          id?: string
+          percent?: number | null
+          procedure_id?: string | null
+          professional_id: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          clinic_id?: string
+          created_at?: string
+          fixed_cents?: number | null
+          id?: string
+          percent?: number | null
+          procedure_id?: string | null
+          professional_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_rules_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_rules_procedure_id_clinic_id_fkey"
+            columns: ["procedure_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "commission_rules_professional_id_clinic_id_fkey"
+            columns: ["professional_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id", "clinic_id"]
           },
         ]
       }
@@ -2044,6 +2187,7 @@ export type Database = {
           done_by: string | null
           faces: string[]
           id: string
+          lab_cost_cents: number
           plan_id: string
           position: number
           price_cents: number
@@ -2060,6 +2204,7 @@ export type Database = {
           done_by?: string | null
           faces?: string[]
           id?: string
+          lab_cost_cents?: number
           plan_id: string
           position?: number
           price_cents: number
@@ -2076,6 +2221,7 @@ export type Database = {
           done_by?: string | null
           faces?: string[]
           id?: string
+          lab_cost_cents?: number
           plan_id?: string
           position?: number
           price_cents?: number
@@ -2388,6 +2534,7 @@ export type Database = {
       bank_tx_status: "unmatched" | "matched" | "ignored"
       cash_movement_type: "in" | "out"
       category_type: "income" | "expense"
+      commission_base: "received" | "executed"
       document_kind:
         | "prescription"
         | "special_prescription"
@@ -2568,6 +2715,7 @@ export const Constants = {
       bank_tx_status: ["unmatched", "matched", "ignored"],
       cash_movement_type: ["in", "out"],
       category_type: ["income", "expense"],
+      commission_base: ["received", "executed"],
       document_kind: [
         "prescription",
         "special_prescription",
