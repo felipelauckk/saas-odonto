@@ -60,6 +60,7 @@ describe.skipIf(!hasSupabase)("mensagens (WhatsApp simulado)", () => {
       .select("id")
       .single();
     birthdayPatient = bday!.id;
+    await admin.from("patient_returns").insert({ clinic_id: clinicId, patient_id: patient!.id, reason: "Limpeza", due_date: today });
 
     reception = await env.signIn("recepcao");
     dentist = await env.signIn("dentista");
@@ -70,12 +71,12 @@ describe.skipIf(!hasSupabase)("mensagens (WhatsApp simulado)", () => {
     await env.cleanup();
   });
 
-  it("clínica nova tem os três modelos", async () => {
+  it("clínica nova tem os quatro modelos", async () => {
     const { data } = await admin.from("message_templates").select("kind").eq("clinic_id", clinicId);
-    expect(data?.map((t) => t.kind).sort()).toEqual(["appointment_confirmation", "appointment_reminder", "birthday"]);
+    expect(data?.map((t) => t.kind).sort()).toEqual(["appointment_confirmation", "appointment_reminder", "birthday", "return_reminder"]);
   });
 
-  it("rotina diária manda o lembrete de amanhã e o parabéns de hoje (uma vez só)", async () => {
+  it("rotina diária manda o lembrete de amanhã, o parabéns e o retorno vencido (uma vez só)", async () => {
     const { runDailyMessages } = await import("./service");
     await runDailyMessages({ clinicId });
 
@@ -86,6 +87,9 @@ describe.skipIf(!hasSupabase)("mensagens (WhatsApp simulado)", () => {
     expect(reminder?.body).toContain("Olá, Ana!");
     expect(reminder?.body).toContain("09:30");
     expect(logs!.some((l) => l.template_kind === "birthday" && l.patient_id === birthdayPatient)).toBe(true);
+    expect(logs!.find((l) => l.template_kind === "return_reminder")?.body).toContain("hora do seu retorno");
+    const { data: ret } = await admin.from("patient_returns").select("notified_at").eq("clinic_id", clinicId).single();
+    expect(ret?.notified_at).not.toBeNull();
 
     const { data: appt } = await admin.from("appointments").select("reminder_sent_at").eq("id", appointmentId).single();
     expect(appt?.reminder_sent_at).not.toBeNull();

@@ -32,6 +32,7 @@ type Props = {
   columns: GridColumn[];
   range: { startMin: number; endMin: number };
   colorFor: (professionalId: string) => string;
+  tagColors?: Map<string, string>;
   onSlotClick: (column: GridColumn, startMin: number) => void;
   onAppointmentClick: (appointment: AgendaAppointment) => void;
   onBlockClick: (block: AgendaBlock) => void;
@@ -56,7 +57,7 @@ type Drag = {
   startMin: number;
 };
 
-export function AgendaGrid({ columns, range, colorFor, onSlotClick, onAppointmentClick, onBlockClick, onMove }: Props) {
+export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, onAppointmentClick, onBlockClick, onMove }: Props) {
   const gridRef = useRef<HTMLDivElement>(null);
   // Depois de arrastar, o navegador ainda dispara um clique: ele é ignorado.
   const suppressClick = useRef(false);
@@ -276,7 +277,7 @@ export function AgendaGrid({ columns, range, colorFor, onSlotClick, onAppointmen
                         }
                         onAppointmentClick(a);
                       }}
-                      aria-label={`${a.patientName}, ${minutesToTime(a.startMin)} a ${minutesToTime(a.endMin)}, ${statusLabels[a.status]}`}
+                      aria-label={`${a.patientName}, ${minutesToTime(a.startMin)} a ${minutesToTime(a.endMin)}, ${statusLabels[a.status]}${a.isFirstVisit ? ", primeira consulta" : ""}`}
                       className={cn(
                         "absolute z-[2] flex flex-col overflow-hidden rounded-md border-l-4 px-2 py-1 text-left text-xs shadow-xs outline-none transition-opacity focus-visible:ring-3 focus-visible:ring-ring/50",
                         freeing ? "z-[1] bg-muted/80 text-muted-foreground" : "bg-background",
@@ -293,7 +294,15 @@ export function AgendaGrid({ columns, range, colorFor, onSlotClick, onAppointmen
                         backgroundColor: freeing ? undefined : `color-mix(in oklab, ${color} 12%, var(--color-background))`,
                       }}
                     >
-                      <span className="truncate font-medium">{a.patientName}</span>
+                      <span className="flex items-center gap-1 truncate font-medium">
+                        {a.isFirstVisit ? (
+                          <span className="rounded bg-primary px-1 text-[10px] font-semibold text-primary-foreground" title="Primeira consulta">1ª</span>
+                        ) : null}
+                        <span className="truncate">{a.patientName}</span>
+                        {a.tagIds.map((id) => (
+                          <span key={id} className="size-2 shrink-0 rounded-full" style={{ backgroundColor: tagColors?.get(id) ?? "#64748b" }} aria-hidden />
+                        ))}
+                      </span>
                       {cardHeight > 30 ? (
                         <span className="truncate text-muted-foreground">
                           {minutesToTime(a.startMin)} · {a.type ?? statusLabels[a.status]}

@@ -108,7 +108,7 @@ describe.skipIf(!hasSupabase)("agenda (RLS, conflitos e bloqueios)", () => {
       .insert(appt({ professional_id: drBeto, starts_at: at("14:00"), ends_at: at("15:00") }))
       .select("id")
       .single();
-    await owner.from("appointments").update({ status: "canceled" }).eq("id", first!.id);
+    await owner.from("appointments").update({ status: "canceled", cancel_reason: "patient_canceled" }).eq("id", first!.id);
 
     const { error } = await owner
       .from("appointments")

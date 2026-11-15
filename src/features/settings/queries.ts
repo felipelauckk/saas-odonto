@@ -119,7 +119,7 @@ export async function listProcedures() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("procedures")
-    .select("id, name, code, category, price_cents, duration_min, applies_to_tooth, active")
+    .select("id, name, code, category, price_cents, duration_min, return_months, applies_to_tooth, active")
     .order("category", { nullsFirst: false })
     .order("name");
   if (error) throw error;

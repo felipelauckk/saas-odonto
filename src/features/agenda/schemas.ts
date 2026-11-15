@@ -24,6 +24,9 @@ export const appointmentSchema = z.object({
   durationMin: z.coerce.number().int().min(5, "Duração mínima de 5 minutos.").max(720, "Duração máxima de 12 horas."),
   type: optionalText(120),
   notes: optionalText(2000),
+  tagIds: z.array(z.uuid()).max(10).optional(),
+  repeat: z.enum(["week", "2weeks", "month"]).nullable().optional(),
+  repeatCount: z.number().int().min(2).max(52).optional(),
 });
 
 export const moveAppointmentSchema = z.object({
@@ -35,10 +38,14 @@ export const moveAppointmentSchema = z.object({
   chairId: z.uuid().nullable().optional(),
 });
 
-export const statusSchema = z.object({
-  id: z.uuid(),
-  status: z.enum(appointmentStatuses),
-});
+export const statusSchema = z
+  .object({
+    id: z.uuid(),
+    status: z.enum(appointmentStatuses),
+    cancelReason: z.enum(["patient_canceled", "clinic_canceled", "rescheduled"]).optional(),
+    cancelNote: z.string().trim().max(300).optional(),
+  })
+  .refine((s) => s.status !== "canceled" || s.cancelReason, { message: "Informe o motivo da desmarcação." });
 
 export const blockSchema = z
   .object({
@@ -59,6 +66,7 @@ export const agendaParamsSchema = z.object({
   visao: z.enum(["dia", "semana"]).catch("dia"),
   por: z.enum(["profissional", "cadeira"]).catch("profissional"),
   id: z.uuid().optional().catch(undefined),
+  paciente: z.uuid().optional().catch(undefined),
 });
 
 export type AppointmentInput = z.input<typeof appointmentSchema>;

@@ -14,6 +14,7 @@ import {
   Receipt,
   ShieldCheck,
   Stethoscope,
+  Tag,
   UserRound,
   Users,
   type LucideIcon,
@@ -67,6 +68,7 @@ export default async function Page() {
       meta: plural(summary.procedures, "procedimento", "procedimentos"),
       warning: summary.unpriced ? plural(summary.unpriced, "sem preço", "sem preço") : undefined,
     },
+    { href: "/configuracoes/marcadores", title: "Marcadores", description: "Etiquetas coloridas das consultas na agenda.", icon: Tag },
     { href: "/configuracoes/comissoes", title: "Comissões", description: "Percentuais e exceções por profissional.", icon: Percent },
     { href: "/configuracoes/financeiro", title: "Cadastros financeiros", description: "Categorias, fornecedores e centros de custo.", icon: Landmark },
     {

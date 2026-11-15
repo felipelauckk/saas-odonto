@@ -113,8 +113,95 @@ export type Database = {
           },
         ]
       }
+      appointment_tag_links: {
+        Row: {
+          appointment_id: string
+          clinic_id: string
+          created_at: string
+          tag_id: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          clinic_id: string
+          created_at?: string
+          tag_id: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          clinic_id?: string
+          created_at?: string
+          tag_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_tag_links_appointment_id_clinic_id_fkey"
+            columns: ["appointment_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "appointment_tag_links_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_tag_links_tag_id_clinic_id_fkey"
+            columns: ["tag_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_tags"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
+      appointment_tags: {
+        Row: {
+          active: boolean
+          clinic_id: string
+          color: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          clinic_id: string
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          clinic_id?: string
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_tags_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
+          arrived_at: string | null
+          cancel_note: string | null
+          cancel_reason: Database["public"]["Enums"]["cancel_reason"] | null
           chair_id: string | null
           clinic_id: string
           confirmed_at: string | null
@@ -122,11 +209,13 @@ export type Database = {
           created_by: string | null
           ends_at: string
           id: string
+          is_first_visit: boolean
           notes: string | null
           patient_id: string
           procedure_id: string | null
           professional_id: string
           reminder_sent_at: string | null
+          series_id: string | null
           starts_at: string
           status: Database["public"]["Enums"]["appointment_status"]
           type: string | null
@@ -134,6 +223,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          arrived_at?: string | null
+          cancel_note?: string | null
+          cancel_reason?: Database["public"]["Enums"]["cancel_reason"] | null
           chair_id?: string | null
           clinic_id: string
           confirmed_at?: string | null
@@ -141,11 +233,13 @@ export type Database = {
           created_by?: string | null
           ends_at: string
           id?: string
+          is_first_visit?: boolean
           notes?: string | null
           patient_id: string
           procedure_id?: string | null
           professional_id: string
           reminder_sent_at?: string | null
+          series_id?: string | null
           starts_at: string
           status?: Database["public"]["Enums"]["appointment_status"]
           type?: string | null
@@ -153,6 +247,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          arrived_at?: string | null
+          cancel_note?: string | null
+          cancel_reason?: Database["public"]["Enums"]["cancel_reason"] | null
           chair_id?: string | null
           clinic_id?: string
           confirmed_at?: string | null
@@ -160,11 +257,13 @@ export type Database = {
           created_by?: string | null
           ends_at?: string
           id?: string
+          is_first_visit?: boolean
           notes?: string | null
           patient_id?: string
           procedure_id?: string | null
           professional_id?: string
           reminder_sent_at?: string | null
+          series_id?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["appointment_status"]
           type?: string | null
@@ -891,6 +990,107 @@ export type Database = {
           },
         ]
       }
+      crc_contacts: {
+        Row: {
+          amount_cents: number | null
+          channel: Database["public"]["Enums"]["crc_channel"]
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          item_key: string
+          next_contact_on: string | null
+          notes: string | null
+          outcome: Database["public"]["Enums"]["crc_outcome"] | null
+          patient_id: string
+          queue: Database["public"]["Enums"]["crc_queue"]
+          ref_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          channel: Database["public"]["Enums"]["crc_channel"]
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_key: string
+          next_contact_on?: string | null
+          notes?: string | null
+          outcome?: Database["public"]["Enums"]["crc_outcome"] | null
+          patient_id: string
+          queue: Database["public"]["Enums"]["crc_queue"]
+          ref_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number | null
+          channel?: Database["public"]["Enums"]["crc_channel"]
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_key?: string
+          next_contact_on?: string | null
+          notes?: string | null
+          outcome?: Database["public"]["Enums"]["crc_outcome"] | null
+          patient_id?: string
+          queue?: Database["public"]["Enums"]["crc_queue"]
+          ref_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crc_contacts_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crc_contacts_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
+      crc_templates: {
+        Row: {
+          body: string
+          clinic_id: string
+          created_at: string
+          id: string
+          queue: Database["public"]["Enums"]["crc_queue"]
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          clinic_id: string
+          created_at?: string
+          id?: string
+          queue: Database["public"]["Enums"]["crc_queue"]
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          queue?: Database["public"]["Enums"]["crc_queue"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crc_templates_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_templates: {
         Row: {
           active: boolean
@@ -1300,6 +1500,100 @@ export type Database = {
           },
         ]
       }
+      patient_returns: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          due_date: string
+          id: string
+          notified_at: string | null
+          patient_id: string
+          procedure_id: string | null
+          professional_id: string | null
+          reason: string
+          scheduled_appointment_id: string | null
+          source_appointment_id: string | null
+          status: Database["public"]["Enums"]["return_status"]
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          due_date: string
+          id?: string
+          notified_at?: string | null
+          patient_id: string
+          procedure_id?: string | null
+          professional_id?: string | null
+          reason: string
+          scheduled_appointment_id?: string | null
+          source_appointment_id?: string | null
+          status?: Database["public"]["Enums"]["return_status"]
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          due_date?: string
+          id?: string
+          notified_at?: string | null
+          patient_id?: string
+          procedure_id?: string | null
+          professional_id?: string | null
+          reason?: string
+          scheduled_appointment_id?: string | null
+          source_appointment_id?: string | null
+          status?: Database["public"]["Enums"]["return_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_returns_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_returns_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "patient_returns_procedure_id_clinic_id_fkey"
+            columns: ["procedure_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "patient_returns_professional_id_clinic_id_fkey"
+            columns: ["professional_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "patient_returns_scheduled_appointment_id_clinic_id_fkey"
+            columns: ["scheduled_appointment_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "patient_returns_source_appointment_id_clinic_id_fkey"
+            columns: ["source_appointment_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: Json | null
@@ -1605,6 +1899,7 @@ export type Database = {
           id: string
           name: string
           price_cents: number
+          return_months: number | null
           updated_at: string
         }
         Insert: {
@@ -1618,6 +1913,7 @@ export type Database = {
           id?: string
           name: string
           price_cents?: number
+          return_months?: number | null
           updated_at?: string
         }
         Update: {
@@ -1631,6 +1927,7 @@ export type Database = {
           id?: string
           name?: string
           price_cents?: number
+          return_months?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -2400,6 +2697,87 @@ export type Database = {
           },
         ]
       }
+      waitlist: {
+        Row: {
+          appointment_id: string | null
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          patient_id: string
+          period: Database["public"]["Enums"]["waitlist_period"]
+          professional_id: string | null
+          status: Database["public"]["Enums"]["waitlist_status"]
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          patient_id: string
+          period?: Database["public"]["Enums"]["waitlist_period"]
+          professional_id?: string | null
+          status?: Database["public"]["Enums"]["waitlist_status"]
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          period?: Database["public"]["Enums"]["waitlist_period"]
+          professional_id?: string | null
+          status?: Database["public"]["Enums"]["waitlist_status"]
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_appointment_id_clinic_id_fkey"
+            columns: ["appointment_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "waitlist_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_patient_id_clinic_id_fkey"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "waitlist_professional_id_clinic_id_fkey"
+            columns: ["professional_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "waitlist_unit_id_clinic_id_fkey"
+            columns: ["unit_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2423,6 +2801,7 @@ export type Database = {
       can_access_unit: { Args: { _unit_id: string }; Returns: boolean }
       can_operate_finance: { Args: never; Returns: boolean }
       can_read_clinical: { Args: never; Returns: boolean }
+      can_use_crc: { Args: never; Returns: boolean }
       can_write_clinical: { Args: never; Returns: boolean }
       cancel_receivable: {
         Args: { _receivable_id: string }
@@ -2430,6 +2809,28 @@ export type Database = {
       }
       clinic_access_state: { Args: { _clinic_id: string }; Returns: string }
       clinic_writable: { Args: { _clinic_id?: string }; Returns: boolean }
+      crc_items: {
+        Args: never
+        Returns: {
+          amount_cents: number
+          item_key: string
+          patient_id: string
+          patient_name: string
+          phone: string
+          queue: Database["public"]["Enums"]["crc_queue"]
+          ref_date: string
+          ref_id: string
+        }[]
+      }
+      crc_stats: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          contacted: number
+          queue: Database["public"]["Enums"]["crc_queue"]
+          recovered: number
+          recovered_cents: number
+        }[]
+      }
       current_clinic_id: { Args: never; Returns: string }
       current_professional_ids: { Args: never; Returns: string[] }
       dashboard_metrics: { Args: { _unit_id?: string }; Returns: Json }
@@ -2504,7 +2905,9 @@ export type Database = {
           whatsapp: string
         }[]
       }
+      seed_agenda_defaults: { Args: { _clinic_id: string }; Returns: undefined }
       seed_clinic_defaults: { Args: { _clinic_id: string }; Returns: undefined }
+      seed_crc_defaults: { Args: { _clinic_id: string }; Returns: undefined }
       seed_document_defaults: {
         Args: { _clinic_id: string }
         Returns: undefined
@@ -2532,9 +2935,20 @@ export type Database = {
         | "no_show"
         | "canceled"
       bank_tx_status: "unmatched" | "matched" | "ignored"
+      cancel_reason: "patient_canceled" | "clinic_canceled" | "rescheduled"
       cash_movement_type: "in" | "out"
       category_type: "income" | "expense"
       commission_base: "received" | "executed"
+      crc_channel: "call" | "whatsapp" | "other"
+      crc_outcome: "no_answer" | "thinking" | "scheduled" | "not_interested"
+      crc_queue:
+        | "open_quotes"
+        | "no_shows"
+        | "first_visit_no_shows"
+        | "untreated"
+        | "overdue_returns"
+        | "birthdays"
+        | "overdue_payments"
       document_kind:
         | "prescription"
         | "special_prescription"
@@ -2550,12 +2964,14 @@ export type Database = {
         | "appointment_reminder"
         | "appointment_confirmation"
         | "birthday"
+        | "return_reminder"
       message_status: "sent" | "simulated" | "failed" | "received"
       patient_file_kind: "photo" | "xray" | "document" | "other"
       patient_gender: "female" | "male" | "other" | "not_informed"
       patient_source: "indicacao" | "instagram" | "google" | "site" | "outro"
       payable_status: "open" | "paid" | "overdue" | "canceled"
       receivable_status: "open" | "paid" | "overdue" | "canceled"
+      return_status: "pending" | "scheduled" | "done" | "dismissed"
       signature_purpose: "document" | "anamnesis"
       signature_status: "pending" | "signed" | "revoked"
       subscription_status: "trialing" | "active" | "past_due" | "canceled"
@@ -2576,6 +2992,8 @@ export type Database = {
         | "partially_approved"
         | "rejected"
         | "completed"
+      waitlist_period: "any" | "morning" | "afternoon" | "evening"
+      waitlist_status: "waiting" | "scheduled" | "removed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2713,9 +3131,21 @@ export const Constants = {
         "canceled",
       ],
       bank_tx_status: ["unmatched", "matched", "ignored"],
+      cancel_reason: ["patient_canceled", "clinic_canceled", "rescheduled"],
       cash_movement_type: ["in", "out"],
       category_type: ["income", "expense"],
       commission_base: ["received", "executed"],
+      crc_channel: ["call", "whatsapp", "other"],
+      crc_outcome: ["no_answer", "thinking", "scheduled", "not_interested"],
+      crc_queue: [
+        "open_quotes",
+        "no_shows",
+        "first_visit_no_shows",
+        "untreated",
+        "overdue_returns",
+        "birthdays",
+        "overdue_payments",
+      ],
       document_kind: [
         "prescription",
         "special_prescription",
@@ -2732,6 +3162,7 @@ export const Constants = {
         "appointment_reminder",
         "appointment_confirmation",
         "birthday",
+        "return_reminder",
       ],
       message_status: ["sent", "simulated", "failed", "received"],
       patient_file_kind: ["photo", "xray", "document", "other"],
@@ -2739,6 +3170,7 @@ export const Constants = {
       patient_source: ["indicacao", "instagram", "google", "site", "outro"],
       payable_status: ["open", "paid", "overdue", "canceled"],
       receivable_status: ["open", "paid", "overdue", "canceled"],
+      return_status: ["pending", "scheduled", "done", "dismissed"],
       signature_purpose: ["document", "anamnesis"],
       signature_status: ["pending", "signed", "revoked"],
       subscription_status: ["trialing", "active", "past_due", "canceled"],
@@ -2761,6 +3193,8 @@ export const Constants = {
         "rejected",
         "completed",
       ],
+      waitlist_period: ["any", "morning", "afternoon", "evening"],
+      waitlist_status: ["waiting", "scheduled", "removed"],
     },
   },
 } as const

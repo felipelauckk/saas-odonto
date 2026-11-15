@@ -24,6 +24,7 @@ export type ProcedureItem = {
   category: string | null;
   price_cents: number;
   duration_min: number;
+  return_months: number | null;
   applies_to_tooth: boolean;
   active: boolean;
 };
@@ -60,6 +61,14 @@ function ProcedureFields({ procedure, state }: { procedure?: ProcedureItem; stat
           placeholder="Ex.: Dentística"
           defaultValue={v?.category ?? procedure?.category ?? ""}
           errors={e?.category}
+        />
+        <FormField
+          label="Retorno em (meses)"
+          name="returnMonths"
+          inputMode="numeric"
+          placeholder="Sem retorno"
+          defaultValue={v?.returnMonths ?? (procedure?.return_months ? String(procedure.return_months) : "")}
+          errors={e?.returnMonths}
         />
         <FormField
           label="Código (opcional)"
@@ -188,7 +197,7 @@ export function ProceduresList({ procedures }: { procedures: ProcedureItem[] }) 
                   {!p.active ? <StatusBadge active={false} /> : null}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {[p.category, `${p.duration_min} min`, p.applies_to_tooth ? "por dente" : null, p.code].filter(Boolean).join(" · ")}
+                  {[p.category, `${p.duration_min} min`, p.applies_to_tooth ? "por dente" : null, p.return_months ? `retorno em ${p.return_months} meses` : null, p.code].filter(Boolean).join(" · ")}
                 </p>
               </div>
               <div className="shrink-0 text-right text-sm tabular-nums">

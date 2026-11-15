@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 import { saveAppointment, type PatientOption } from "../actions";
+import { repeatLabels, type Repeat } from "../advanced";
 import { DURATION_OPTIONS } from "../labels";
 import { PatientPicker } from "./patient-picker";
 
@@ -24,6 +25,7 @@ export type AppointmentFormValues = {
   durationMin: number;
   type: string;
   notes: string;
+  tagIds: string[];
 };
 
 type Props = {
@@ -31,7 +33,8 @@ type Props = {
   professionals: { id: string; name: string }[];
   chairs: { id: string; name: string }[];
   procedures: { id: string; name: string; duration_min: number }[];
-  onDone: () => void;
+  tags: { id: string; name: string; color: string }[];
+  onDone: (message?: string) => void;
   onCancel: () => void;
 };
 
@@ -42,11 +45,13 @@ function durationLabel(min: number) {
   return m ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
 }
 
-export function AppointmentForm({ initial, professionals, chairs, procedures, onDone, onCancel }: Props) {
+export function AppointmentForm({ initial, professionals, chairs, procedures, tags, onDone, onCancel }: Props) {
   const [values, setValues] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [patientError, setPatientError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
+  const [repeat, setRepeat] = useState<"none" | Repeat>("none");
+  const [repeatCount, setRepeatCount] = useState("4");
   const set = <K extends keyof AppointmentFormValues>(key: K, value: AppointmentFormValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }));
 
@@ -71,9 +76,14 @@ export function AppointmentForm({ initial, professionals, chairs, procedures, on
         durationMin: values.durationMin,
         type: values.type,
         notes: values.notes,
+        tagIds: values.tagIds,
+        repeat: repeat === "none" ? null : repeat,
+        repeatCount: repeat === "none" ? undefined : Number(repeatCount),
       });
-      if (result.error) setError(result.error);
-      else onDone();
+      if (result.error) setError(result.failed?.length ? `${result.error} Nenhuma data da série foi marcada.` : result.error);
+      else if (result.failed?.length) {
+        onDone(`${result.created} consultas marcadas. Não deu para marcar: ${result.failed.map((f) => `${f.date.split("-").reverse().join("/")} (${f.reason})`).join("; ")}`);
+      } else onDone(result.created && result.created > 1 ? `${result.created} consultas marcadas.` : undefined);
     });
   }
 
@@ -151,6 +161,48 @@ export function AppointmentForm({ initial, professionals, chairs, procedures, on
           onChange={(v) => set("chairId", v === "none" ? null : v)}
           options={[{ value: "none", label: "Sem cadeira definida" }, ...chairs.map((c) => ({ value: c.id, label: c.name }))]}
         />
+      ) : null}
+
+      {tags.length ? (
+        <div className="space-y-1.5">
+          <span className="text-sm font-medium" id="appt-tags">Marcadores</span>
+          <div className="flex flex-wrap gap-2" role="group" aria-labelledby="appt-tags">
+            {tags.map((t) => {
+              const on = values.tagIds.includes(t.id);
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => set("tagIds", on ? values.tagIds.filter((x) => x !== t.id) : [...values.tagIds, t.id])}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm pointer-coarse:h-11"
+                  style={on ? { backgroundColor: `color-mix(in oklab, ${t.color} 18%, transparent)`, borderColor: t.color } : undefined}
+                >
+                  <span className="size-2.5 rounded-full" style={{ backgroundColor: t.color }} aria-hidden />
+                  {t.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {!values.id ? (
+        <div className="grid grid-cols-2 gap-4">
+          <SimpleSelect
+            id="appt-repeat"
+            label="Repetir"
+            value={repeat}
+            onChange={(v) => setRepeat(v as "none" | Repeat)}
+            options={[{ value: "none", label: "Não repetir" }, ...(Object.keys(repeatLabels) as Repeat[]).map((r) => ({ value: r, label: repeatLabels[r] }))]}
+          />
+          {repeat !== "none" ? (
+            <div className="space-y-1.5">
+              <Label htmlFor="appt-repeat-count">Quantas consultas</Label>
+              <Input id="appt-repeat-count" inputMode="numeric" value={repeatCount} onChange={(e) => setRepeatCount(e.target.value)} />
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="space-y-1.5">

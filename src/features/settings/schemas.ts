@@ -106,6 +106,9 @@ export const procedureSchema = z.object({
     return cents;
   }),
   durationMin: integer(5, 600, "Duração entre 5 e 600 minutos."),
+  returnMonths: text
+    .refine((v) => v === "" || (/^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= 60), "Entre 1 e 60 meses.")
+    .transform((v) => (v === "" ? null : Number(v))),
   appliesToTooth: checkbox,
   active: checkbox,
 });

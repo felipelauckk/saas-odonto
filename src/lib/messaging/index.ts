@@ -20,6 +20,7 @@ export function getMessagingProvider(): MessagingProvider {
         appointment_reminder: env.WHATSAPP_TEMPLATE_REMINDER || "lembrete_consulta",
         appointment_confirmation: env.WHATSAPP_TEMPLATE_CONFIRMATION || "consulta_confirmada",
         birthday: env.WHATSAPP_TEMPLATE_BIRTHDAY || "aniversario",
+        return_reminder: env.WHATSAPP_TEMPLATE_RETURN || "retorno",
       },
     });
   }

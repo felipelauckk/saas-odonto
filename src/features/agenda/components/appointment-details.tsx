@@ -12,7 +12,9 @@ import { formatLongDate, minutesToTime, utcToZoned } from "@/lib/timezone";
 
 import { sendReminderNow } from "@/features/messaging/actions";
 
-import { setAppointmentStatus } from "../actions";
+import { createReturn, fillFromWaitlist, findWaitlistMatches, setAppointmentStatus } from "../actions";
+import { cancelReasonLabels, type CancelReason } from "../advanced";
+import { Input } from "@/components/ui/input";
 import { statusLabels, type AppointmentStatus } from "../labels";
 import type { AgendaAppointment } from "../queries";
 
@@ -26,28 +28,43 @@ type Props = {
   onEdit: () => void;
   onDone: () => void;
   canSendReminder?: boolean;
+  procedures?: { id: string; return_months: number | null }[];
+  unitId?: string;
 };
 
-export function AppointmentDetails({ appointment: a, professionalName, chairName, onEdit, onDone, canSendReminder = false }: Props) {
+export function AppointmentDetails({ appointment: a, professionalName, chairName, onEdit, onDone, canSendReminder = false, procedures = [] }: Props) {
   const [status, setStatus] = useState(a.status);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [asking, setAsking] = useState<"cancel" | "return" | null>(null);
+  const [reason, setReason] = useState<CancelReason>("patient_canceled");
+  const [note, setNote] = useState("");
+  const defaultMonths = procedures.find((p) => p.id === a.procedureId)?.return_months ?? 6;
+  const [months, setMonths] = useState(String(defaultMonths));
+  const [matches, setMatches] = useState<{ id: string; patientName: string; notes: string | null }[] | null>(null);
   const start = utcToZoned(a.startsAt);
   const end = utcToZoned(a.endsAt);
 
-  function changeStatus(next: AppointmentStatus) {
+  function changeStatus(next: AppointmentStatus, extra?: { cancelReason?: CancelReason; cancelNote?: string }) {
     if (next === status) return;
+    if (next === "canceled" && !extra) {
+      setAsking("cancel");
+      return;
+    }
     const previous = status;
     setStatus(next);
     setError(null);
     startTransition(async () => {
-      const result = await setAppointmentStatus({ id: a.id, status: next });
+      const result = await setAppointmentStatus({ id: a.id, status: next, ...extra });
       if (result.error) {
         setStatus(previous);
         setError(result.error);
       } else if (next === "canceled") {
-        onDone();
+        setAsking(null);
+        setMatches(await findWaitlistMatches(a.id));
+      } else if (next === "done") {
+        setAsking("return");
       }
     });
   }
@@ -96,6 +113,60 @@ export function AppointmentDetails({ appointment: a, professionalName, chairName
           ))}
         </div>
       </div>
+
+      {asking === "cancel" ? (
+        <div className="space-y-3 rounded-lg border p-3">
+          <p className="text-sm font-medium">Motivo da desmarcação</p>
+          <div className="grid gap-2 sm:grid-cols-3" role="group" aria-label="Motivo">
+            {(Object.keys(cancelReasonLabels) as CancelReason[]).map((r) => (
+              <button key={r} type="button" aria-pressed={reason === r} onClick={() => setReason(r)}
+                className={cn("h-9 rounded-lg border px-2 text-sm pointer-coarse:h-11", reason === r ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted")}>
+                {cancelReasonLabels[r]}
+              </button>
+            ))}
+          </div>
+          <Input aria-label="Observação da desmarcação" placeholder="Observação (opcional)" value={note} onChange={(e) => setNote(e.target.value)} />
+          <div className="flex gap-2">
+            <Button size="sm" variant="destructive" disabled={pending} onClick={() => changeStatus("canceled", { cancelReason: reason, cancelNote: note })}>Desmarcar consulta</Button>
+            <Button size="sm" variant="ghost" onClick={() => setAsking(null)}>Voltar</Button>
+          </div>
+        </div>
+      ) : null}
+
+      {matches ? (
+        <div className="space-y-2 rounded-lg border p-3">
+          <p className="text-sm font-medium">{matches.length ? "Da lista de espera, cabem neste horário:" : "Ninguém da lista de espera cabe neste horário."}</p>
+          {matches.map((m) => (
+            <div key={m.id} className="flex items-center justify-between gap-2 text-sm">
+              <span>{m.patientName}{m.notes ? <span className="text-muted-foreground"> · {m.notes}</span> : null}</span>
+              <Button size="sm" disabled={pending} onClick={() => startTransition(async () => {
+                const r = await fillFromWaitlist(m.id, a.id);
+                if (r.error) setError(r.error); else onDone();
+              })}>Encaixar</Button>
+            </div>
+          ))}
+          <Button size="sm" variant="ghost" onClick={onDone}>Fechar</Button>
+        </div>
+      ) : null}
+
+      {asking === "return" ? (
+        <div className="space-y-3 rounded-lg border p-3">
+          <p className="text-sm font-medium">Definir alerta de retorno?</p>
+          <div className="flex items-end gap-2">
+            <div className="space-y-1.5">
+              <label htmlFor="return-months" className="text-sm">Retorno em (meses)</label>
+              <Input id="return-months" inputMode="numeric" className="w-24" value={months} onChange={(e) => setMonths(e.target.value)} />
+            </div>
+            <Button size="sm" disabled={pending} onClick={() => startTransition(async () => {
+              const n = Number(months);
+              if (!Number.isInteger(n) || n < 1 || n > 60) return setError("Meses entre 1 e 60.");
+              const r = await createReturn({ patientId: a.patientId, months: n, reason: a.type || "Retorno", professionalId: a.professionalId, procedureId: a.procedureId, sourceAppointmentId: a.id });
+              if (r.error) setError(r.error); else setAsking(null);
+            })}>Agendar alerta</Button>
+            <Button size="sm" variant="ghost" onClick={() => setAsking(null)}>Sem retorno</Button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button type="button" variant="outline" onClick={onEdit}>

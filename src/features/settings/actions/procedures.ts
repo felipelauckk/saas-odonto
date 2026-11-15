@@ -15,13 +15,14 @@ export async function saveProcedure(_prev: ActionState, formData: FormData): Pro
   const ctx = await managerContext();
   if (!ctx.ok) return ctx.state;
 
-  const { id, name, code, category, price, durationMin, appliesToTooth, active } = parsed.data;
+  const { id, name, code, category, price, durationMin, returnMonths, appliesToTooth, active } = parsed.data;
   const row = {
     name,
     code,
     category,
     price_cents: price,
     duration_min: durationMin,
+    return_months: returnMonths,
     applies_to_tooth: appliesToTooth,
     active,
   };

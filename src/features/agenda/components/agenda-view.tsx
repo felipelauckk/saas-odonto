@@ -22,7 +22,7 @@ import {
   weekdayOf,
 } from "@/lib/timezone";
 
-import { deleteBlock, moveAppointment } from "../actions";
+import { deleteBlock, moveAppointment, type PatientOption } from "../actions";
 import { visibleRange } from "../layout";
 import type { AgendaAppointment, AgendaBlock, AgendaData } from "../queries";
 import { AgendaGrid, type GridColumn, type MoveTarget } from "./agenda-grid";
@@ -42,6 +42,8 @@ type Props = {
   by: By;
   selectedId: string | null;
   isDentist: boolean;
+  /** Abre "Nova consulta" já com o paciente (vindo da CRC ou da ficha). */
+  presetPatient?: PatientOption | null;
 };
 
 type DialogState =
@@ -101,11 +103,31 @@ function useAgendaRealtime(unitId: string) {
   return live;
 }
 
-export function AgendaView({ data, unitId, date, today, view, by, selectedId, isDentist }: Props) {
+export function AgendaView({ data, unitId, date, today, view, by, selectedId, isDentist, presetPatient = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const [dialog, setDialog] = useState<DialogState>(null);
+  const [dialog, setDialog] = useState<DialogState>(() =>
+    presetPatient
+      ? {
+          kind: "new",
+          initial: {
+            patient: presetPatient,
+            professionalId: data.professionals[0]?.id ?? "",
+            chairId: null,
+            procedureId: null,
+            date: date < today ? today : date,
+            time: "09:00",
+            durationMin: 30,
+            type: "",
+            notes: "",
+            tagIds: [],
+          },
+        }
+      : null,
+  );
   const [message, setMessage] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [tagFilter, setTagFilter] = useState<string>("all");
   const live = useAgendaRealtime(unitId);
 
   useEffect(() => {
@@ -145,7 +167,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
   const days = view === "semana" ? Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)) : [date];
 
   const columns: GridColumn[] = useMemo(() => {
-    const appts = data.appointments;
+    const appts = tagFilter === "all" ? data.appointments : data.appointments.filter((a) => a.tagIds.includes(tagFilter));
     const blocksFor = (day: string, professionalId: string | null) =>
       data.blocks.filter((b) => b.date === day && (b.professionalId === null || b.professionalId === professionalId));
 
@@ -221,7 +243,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
       working: workingFor(p.id, date),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, view, by, selectedId, date, today, workingFor]);
+  }, [data, view, by, selectedId, date, today, workingFor, tagFilter]);
 
   const range = useMemo(
     () =>
@@ -249,6 +271,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
         durationMin: 30,
         type: "",
         notes: "",
+        tagIds: [],
       },
     });
   }
@@ -280,6 +303,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
       durationMin: Math.round((new Date(a.endsAt).getTime() - new Date(a.startsAt).getTime()) / 60_000),
       type: a.type ?? "",
       notes: a.notes ?? "",
+      tagIds: a.tagIds,
     };
   }
 
@@ -361,6 +385,16 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
               className="w-48 data-[size=default]:h-10 pointer-coarse:data-[size=default]:h-11"
             />
           ) : null}
+          {data.tags.length ? (
+            <SimpleSelect
+              id="agenda-tag-filter"
+              aria-label="Filtrar por marcador"
+              value={tagFilter}
+              onChange={setTagFilter}
+              options={[{ value: "all", label: "Todos os marcadores" }, ...data.tags.map((t) => ({ value: t.id, label: t.name }))]}
+              className="w-48 data-[size=default]:h-10 pointer-coarse:data-[size=default]:h-11"
+            />
+          ) : null}
           <Button variant="outline" onClick={() => setDialog({ kind: "block" })} disabled={!data.professionals.length}>
             <Ban aria-hidden />
             Bloquear
@@ -373,6 +407,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
       </div>
 
       {message ? <FormMessage state={{ status: "error", message }} /> : null}
+      {notice ? <FormMessage state={{ status: "success", message: notice }} /> : null}
 
       {noColumns ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
@@ -406,6 +441,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
           columns={columns}
           range={range}
           colorFor={(id) => colorById.get(id) ?? "#64748b"}
+          tagColors={new Map(data.tags.map((t) => [t.id, t.color]))}
           onSlotClick={openNew}
           onAppointmentClick={(appointment) => setDialog({ kind: "details", appointment })}
           onBlockClick={(block) => setDialog({ kind: "blockInfo", block })}
@@ -421,9 +457,13 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
           </span>
         ) : null}
         Clique num horário livre para marcar. No computador, arraste a consulta para remarcar.{" "}
-        <Link href="/agenda/faltas" className="underline underline-offset-4 hover:text-foreground">
-          Relatório de faltas
-        </Link>
+        <Link href="/agenda/sala-de-espera" className="underline underline-offset-4 hover:text-foreground">Sala de espera</Link>
+        {" · "}
+        <Link href="/agenda/espera" className="underline underline-offset-4 hover:text-foreground">Lista de espera</Link>
+        {" · "}
+        <Link href="/agenda/retornos" className="underline underline-offset-4 hover:text-foreground">Retornos</Link>
+        {" · "}
+        <Link href="/agenda/faltas" className="underline underline-offset-4 hover:text-foreground">Faltas e desmarcações</Link>
       </p>
 
       {/* Janelas */}
@@ -440,7 +480,11 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
                 professionals={data.professionals}
                 chairs={data.chairs}
                 procedures={data.procedures}
-                onDone={closeDialog}
+                tags={data.tags}
+                onDone={(text) => {
+                  closeDialog();
+                  if (text) setNotice(text);
+                }}
                 onCancel={closeDialog}
               />
             </>
@@ -455,6 +499,8 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
                 appointment={dialog.appointment}
                 professionalName={nameById.get(dialog.appointment.professionalId) ?? "Profissional"}
                 chairName={dialog.appointment.chairId ? (chairName.get(dialog.appointment.chairId) ?? null) : null}
+                procedures={data.procedures}
+                unitId={unitId}
                 onEdit={() => setDialog({ kind: "edit", appointment: dialog.appointment })}
                 onDone={closeDialog}
                 canSendReminder={!isDentist}

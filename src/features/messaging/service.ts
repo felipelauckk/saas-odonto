@@ -116,7 +116,7 @@ export async function runDailyMessages({ now = new Date(), clinicId }: { now?: D
   const admin = createAdminClient();
   const today = todayIso(now);
   const tomorrow = addDays(today, 1);
-  const summary = { reminders: 0, birthdays: 0, failed: 0 };
+  const summary = { reminders: 0, birthdays: 0, returns: 0, failed: 0 };
 
   let appointmentsQuery = admin
     .from("appointments")
@@ -169,6 +169,31 @@ export async function runDailyMessages({ now = new Date(), clinicId }: { now?: D
       else summary.birthdays++;
     }
   }
+  // Alertas de retorno que vencem hoje (ou venceram e ainda não foram avisados).
+  let returnsQuery = admin
+    .from("patient_returns")
+    .select("id, clinic_id, patient_id, patients(full_name, whatsapp, phone), clinics(name)")
+    .eq("status", "pending")
+    .is("notified_at", null)
+    .lte("due_date", today);
+  if (clinicId) returnsQuery = returnsQuery.eq("clinic_id", clinicId);
+  const { data: dueReturns } = await returnsQuery;
+  for (const r of dueReturns ?? []) {
+    const body = await templateFor(admin, r.clinic_id, "return_reminder");
+    if (!body) continue;
+    const status = await deliver(admin, {
+      clinicId: r.clinic_id,
+      patientId: r.patient_id,
+      kind: "return_reminder",
+      phone: r.patients?.whatsapp ?? r.patients?.phone ?? null,
+      body,
+      variables: { paciente: firstName(r.patients?.full_name ?? ""), clinica: r.clinics?.name ?? "" },
+    });
+    if (status !== "failed") await admin.from("patient_returns").update({ notified_at: new Date().toISOString() }).eq("id", r.id);
+    if (status === "failed") summary.failed++;
+    else summary.returns++;
+  }
+
   return summary;
 }
 

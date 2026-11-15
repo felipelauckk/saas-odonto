@@ -81,6 +81,8 @@ export function createTestEnv(prefix: string) {
   async function cleanup() {
     const tables = [
       "audit_log",
+      "crc_contacts",
+      "crc_templates",
       "signature_requests",
       "patient_documents",
       "document_templates",
@@ -101,6 +103,10 @@ export function createTestEnv(prefix: string) {
       "anamneses",
       "tooth_records",
       "patient_files",
+      "patient_returns",
+      "waitlist",
+      "appointment_tag_links",
+      "appointment_tags",
       "appointments",
       "schedule_blocks",
       "professional_schedules",
