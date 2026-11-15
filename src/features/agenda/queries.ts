@@ -20,6 +20,8 @@ export type AgendaAppointment = {
   isFirstVisit: boolean;
   arrivedAt: string | null;
   cancelReason: string | null;
+  bookedOnline: boolean;
+  rescheduleRequestedAt: string | null;
   /** Horário de parede em São Paulo. */
   date: string;
   startMin: number;
@@ -95,7 +97,7 @@ export async function getAgendaData({
     supabase
       .from("appointments")
       .select(
-        "id, patient_id, professional_id, chair_id, procedure_id, starts_at, ends_at, status, type, notes, is_first_visit, arrived_at, cancel_reason, patients(full_name, phone, whatsapp), appointment_tag_links(tag_id)",
+        "id, patient_id, professional_id, chair_id, procedure_id, starts_at, ends_at, status, type, notes, is_first_visit, arrived_at, cancel_reason, booked_online, reschedule_requested_at, patients(full_name, phone, whatsapp), appointment_tag_links(tag_id)",
       )
       .eq("unit_id", unitId)
       .lt("starts_at", rangeEnd)
@@ -133,6 +135,8 @@ export async function getAgendaData({
       isFirstVisit: a.is_first_visit,
       arrivedAt: a.arrived_at,
       cancelReason: a.cancel_reason,
+      bookedOnline: a.booked_online,
+      rescheduleRequestedAt: a.reschedule_requested_at,
       startsAt: a.starts_at,
       endsAt: a.ends_at,
       ...piece,

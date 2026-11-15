@@ -11,7 +11,7 @@ import type { Patient } from "../queries";
 import { MINOR_AGE } from "../schemas";
 import { ArchiveButton } from "./archive-button";
 
-export function PatientHeader({ patient, canExport = false }: { patient: Patient; canExport?: boolean }) {
+export function PatientHeader({ patient, canExport = false, portal = null }: { patient: Patient; canExport?: boolean; portal?: React.ReactNode }) {
   const age = patient.birth_date ? ageFromBirthDate(patient.birth_date) : null;
   const contact = patient.whatsapp ?? patient.phone;
 
@@ -63,6 +63,7 @@ export function PatientHeader({ patient, canExport = false }: { patient: Patient
               Exportar dados
             </a>
           ) : null}
+          {portal}
           <ArchiveButton patientId={patient.id} archived={Boolean(patient.archived_at)} name={patient.full_name} />
         </div>
       </div>

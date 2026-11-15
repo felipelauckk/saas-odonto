@@ -15,6 +15,8 @@ export type TemplateVariables = {
   vencimento?: string;
   /** Link de pagamento (régua de cobrança). */
   link?: string;
+  /** Código de confirmação (agendamento online). */
+  codigo?: string;
 };
 
 export type OutgoingMessage = {

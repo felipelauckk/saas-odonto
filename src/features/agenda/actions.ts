@@ -65,7 +65,7 @@ export async function saveAppointment(input: z.input<typeof appointmentSchema>):
   const row = { professional_id: professionalId, chair_id: chairId, procedure_id: procedureId, type, notes };
 
   if (id) {
-    const { data, error } = await ctx.supabase.from("appointments").update({ ...row, ...interval(date, time, durationMin) }).eq("id", id).select("id");
+    const { data, error } = await ctx.supabase.from("appointments").update({ ...row, ...interval(date, time, durationMin), reschedule_requested_at: null }).eq("id", id).select("id");
     if (error) return { error: agendaError(error) };
     if (!data.length) return { error: "Consulta não encontrada ou sem permissão." };
     await setTags(ctx.supabase, ctx.clinicId, id, tagIds);
@@ -116,6 +116,8 @@ export async function moveAppointment(input: z.input<typeof moveAppointmentSchem
     .from("appointments")
     .update({
       ...interval(date, time, duration),
+      // Remarcada pela clínica: o pedido de remarcação do portal está atendido.
+      reschedule_requested_at: null,
       ...(professionalId ? { professional_id: professionalId } : {}),
       ...(chairId !== undefined ? { chair_id: chairId } : {}),
     })

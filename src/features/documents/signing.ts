@@ -23,7 +23,7 @@ export async function createSignatureRequest(input: {
   documentId?: string | null;
   anamnesisTemplateId?: string | null;
   days: number;
-  createdBy: string;
+  createdBy: string | null;
 }): Promise<{ token: string; expiresAt: string }> {
   const admin = createAdminClient();
   if (input.documentId) {

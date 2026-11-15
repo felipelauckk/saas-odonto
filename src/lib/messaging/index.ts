@@ -22,6 +22,7 @@ export function getMessagingProvider(): MessagingProvider {
         birthday: env.WHATSAPP_TEMPLATE_BIRTHDAY || "aniversario",
         return_reminder: env.WHATSAPP_TEMPLATE_RETURN || "retorno",
         payment_reminder: env.WHATSAPP_TEMPLATE_PAYMENT || "lembrete_cobranca",
+        booking_code: env.WHATSAPP_TEMPLATE_CODE || "codigo_agendamento",
       },
     });
   }

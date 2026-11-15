@@ -6,7 +6,7 @@ import { getPublicEnv, hasPublicEnv } from "@/lib/env";
 import type { Database } from "./database.types";
 
 /** Abertas sem login (as rotas /api se autenticam sozinhas, por segredo ou assinatura). */
-const PUBLIC_PATHS = ["/entrar", "/cadastro", "/recuperar-senha", "/auth", "/api/cron", "/api/whatsapp", "/api/asaas", "/assinar", "/captacao"];
+const PUBLIC_PATHS = ["/entrar", "/cadastro", "/recuperar-senha", "/auth", "/api/cron", "/api/whatsapp", "/api/asaas", "/assinar", "/captacao", "/agendar", "/checkin", "/portal"];
 /** Telas que quem já está logado não precisa ver. */
 const GUEST_ONLY_PATHS = ["/entrar", "/cadastro"];
 

@@ -82,6 +82,12 @@ export function AppointmentDetails({ appointment: a, professionalName, chairName
           {[professionalName, chairName, a.type].filter(Boolean).join(" · ")}
         </p>
         {a.notes ? <p className="whitespace-pre-line pt-1 text-sm">{a.notes}</p> : null}
+        {a.bookedOnline || a.rescheduleRequestedAt ? (
+          <p className="flex flex-wrap gap-2 pt-1 text-xs">
+            {a.bookedOnline ? <span className="rounded-full border px-2 py-0.5">Agendada online</span> : null}
+            {a.rescheduleRequestedAt ? <span className="rounded-full border border-amber-400 px-2 py-0.5 text-amber-800 dark:text-amber-300">O paciente pediu remarcação pelo portal</span> : null}
+          </p>
+        ) : null}
       </div>
 
       {error ? <FormMessage state={{ status: "error", message: error }} /> : null}
