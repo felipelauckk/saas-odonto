@@ -40,9 +40,11 @@ test("painel mostra indicadores e a agenda de hoje; auditoria registra a abertur
   });
 
   await signIn(page, user);
-  await expect(page.getByRole("heading", { level: 1, name: "Olá, Pessoa" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Consultas hoje\s*1/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: /A receber.*R\$\s250,00/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /^(Bom dia|Boa tarde|Boa noite), Pessoa$/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Consultas hoje\s*1/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /A receber.*R\$\s250\b/i })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Resumo do dia" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Faturamento de" })).toContainText("Projeção do mês");
   await expect(page.getByRole("link", { name: "Paciente Agenda" })).toBeVisible();
 
   // Abrir o prontuário fica na auditoria.

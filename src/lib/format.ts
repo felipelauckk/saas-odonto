@@ -30,6 +30,13 @@ export function formatCurrency(cents: number): string {
   return currencyFormatter.format(cents / 100);
 }
 
+const wholeCurrencyFormatter = new Intl.NumberFormat(APP_LOCALE, { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+
+/** Valor em centavos arredondado para reais inteiros (indicadores e estimativas). */
+export function formatCurrencyWhole(cents: number): string {
+  return wholeCurrencyFormatter.format(Math.round(cents) / 100);
+}
+
 /** Data no fuso de São Paulo, ex.: 13/11/2026. */
 export function formatDate(value: Date | string): string {
   return dateFormatter.format(toDate(value));
