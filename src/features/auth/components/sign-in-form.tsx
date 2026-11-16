@@ -38,13 +38,13 @@ export function SignInForm({ next }: { next?: string }) {
         <div className="text-right">
           <Link
             href="/recuperar-senha"
-            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="text-sm font-semibold text-primary underline-offset-4 hover:text-primary-hover hover:underline"
           >
             Esqueci minha senha
           </Link>
         </div>
       </div>
-      <SubmitButton className="w-full" size="lg" pendingLabel="Entrando...">
+      <SubmitButton className="h-12 w-full text-[0.9375rem]" size="lg" pendingLabel="Entrando...">
         Entrar
       </SubmitButton>
     </form>

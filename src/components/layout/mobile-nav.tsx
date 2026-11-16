@@ -12,18 +12,16 @@ import {
 } from "@/components/ui/sheet";
 
 import { Brand } from "./brand";
-import { NavLinks } from "./nav-links";
+import { SidebarContent } from "./sidebar";
 
 type MobileNavProps = {
   top?: ReactNode;
   bottom?: ReactNode;
-  /** Ações à direita da barra (ex.: seletor de unidade). */
-  actions?: ReactNode;
   canManage?: boolean;
   isDentist?: boolean;
 };
 
-export function MobileNav({ top, bottom, actions, canManage, isDentist }: MobileNavProps) {
+export function MobileNav({ top, bottom, canManage, isDentist }: MobileNavProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -34,16 +32,21 @@ export function MobileNav({ top, bottom, actions, canManage, isDentist }: Mobile
         >
           <Menu />
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 gap-6 bg-sidebar px-3 py-5">
+        <SheetContent
+          side="left"
+          className="w-72 gap-4.5 border-none bg-sidebar px-3 py-5.5 text-sidebar-foreground [&_[data-slot=sheet-close]]:text-sidebar-foreground [&_[data-slot=sheet-close]]:hover:bg-sidebar-accent"
+        >
           <SheetTitle className="sr-only">Menu</SheetTitle>
-          <Brand />
-          {top}
-          <NavLinks canManage={canManage} isDentist={isDentist} onNavigate={() => setOpen(false)} />
-          {bottom ? <div className="mt-auto">{bottom}</div> : null}
+          <SidebarContent
+            top={top}
+            bottom={bottom}
+            canManage={canManage}
+            isDentist={isDentist}
+            onNavigate={() => setOpen(false)}
+          />
         </SheetContent>
       </Sheet>
       <Brand />
-      {actions ? <div className="ml-auto">{actions}</div> : null}
     </header>
   );
 }

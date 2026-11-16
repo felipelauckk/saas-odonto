@@ -21,6 +21,8 @@ export type SessionContext = {
         trialEndsAt: string | null;
         /** ok | grace (atraso dentro da carência) | read_only */
         accessState: "ok" | "grace" | "read_only";
+        /** CRO do profissional ligado ao usuário nesta clínica, se houver. */
+        cro: string | null;
       })
     | null;
   units: UnitOption[];
@@ -39,7 +41,7 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
 
   const [profileRes, membershipsRes, clinicsRes, currentRes] = await Promise.all([
     supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
-    supabase.from("clinic_members").select("clinic_id, role").eq("user_id", userId).eq("active", true),
+    supabase.from("clinic_members").select("id, clinic_id, role").eq("user_id", userId).eq("active", true),
     supabase.from("clinics").select("id, name, subscription_status, trial_ends_at").order("name"),
     supabase.rpc("current_clinic_id"),
   ]);
@@ -62,10 +64,15 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
   const current = clinicRows.find((c) => c.id === currentId);
   if (!current) return { user, clinics, clinic: null, units: [], activeUnit: null };
 
+  const memberId = (membershipsRes.data ?? []).find((m) => m.clinic_id === current.id)?.id;
+
   // A RLS já devolve só as unidades permitidas da clínica ativa.
-  const [{ data: unitRows }, { data: accessState }] = await Promise.all([
+  const [{ data: unitRows }, { data: accessState }, { data: professional }] = await Promise.all([
     supabase.from("units").select("id, name").eq("active", true).order("created_at"),
     supabase.rpc("clinic_access_state", { _clinic_id: current.id }),
+    memberId
+      ? supabase.from("professionals").select("cro").eq("member_id", memberId).limit(1).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
   const units = unitRows ?? [];
 
@@ -83,6 +90,7 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
       subscriptionStatus: current.subscription_status,
       trialEndsAt: current.trial_ends_at,
       accessState: accessState === "read_only" || accessState === "grace" ? accessState : "ok",
+      cro: professional?.cro ?? null,
     },
     units,
     activeUnit,

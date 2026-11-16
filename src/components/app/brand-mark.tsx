@@ -20,11 +20,12 @@ export function BrandMark({ variant = "dark", className, title }: { variant?: "d
   );
 }
 
-export function BrandLogo({ className }: { className?: string }) {
+/** Símbolo + nome. Use variant "light" sobre fundos escuros (menu lateral, painel de login). */
+export function BrandLogo({ className, variant = "dark" }: { className?: string; variant?: "dark" | "light" }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <BrandMark />
-      <span className="text-lg font-black tracking-tight">{BRAND.name}</span>
+      <BrandMark variant={variant} />
+      <span className="text-xl font-black tracking-tight">{BRAND.name}</span>
     </span>
   );
 }

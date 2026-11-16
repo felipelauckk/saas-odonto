@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cn } from "cn";
 
+import { buttonVariants } from "@/components/ui/button";
 import { AuthHeader } from "@/components/layout/auth-header";
 import { SignInForm } from "@/features/auth/components/sign-in-form";
 import { safeRedirectPath } from "@/lib/safe-redirect";
@@ -13,14 +15,16 @@ export default async function Page({ searchParams }: PageProps<"/entrar">) {
 
   return (
     <>
-      <AuthHeader title="Entrar" description="Acesse a gestão da sua clínica." />
+      <AuthHeader title="Bem-vindo de volta" description="Entre com o e-mail cadastrado na sua clínica." />
       <SignInForm next={nextPath} />
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        Ainda não tem conta?{" "}
-        <Link href="/cadastro" className="font-medium text-foreground underline-offset-4 hover:underline">
-          Cadastre sua clínica
-        </Link>
-      </p>
+      <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground" aria-hidden>
+        <span className="h-px flex-1 bg-border" />
+        ou
+        <span className="h-px flex-1 bg-border" />
+      </div>
+      <Link href="/cadastro" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 w-full text-[0.9375rem]")}>
+        Criar conta da clínica · 14 dias grátis
+      </Link>
     </>
   );
 }

@@ -97,15 +97,15 @@
   --chart-4: #a3560f;
   --chart-5: #4a515c;
   --radius: 0.625rem;
-  /* Menu lateral claro até a R2, quando passa a usar --brand-deep. */
-  --sidebar: #fbfaf8;
-  --sidebar-foreground: #14181f;
-  --sidebar-primary: #17707f;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e3f0f1;
-  --sidebar-accent-foreground: #0c3640;
-  --sidebar-border: #e8e6e1;
-  --sidebar-ring: #17707f;
+  /* Menu lateral escuro em petróleo profundo: a assinatura visual do produto. */
+  --sidebar: #0c3640;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #3fb8a8;
+  --sidebar-primary-foreground: #0c3640;
+  --sidebar-accent: rgb(255 255 255 / 0.12);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(255 255 255 / 0.12);
+  --sidebar-ring: #3fb8a8;
 }
 
 /* Modo escuro: não exposto na interface; mantido só para não quebrar classes dark:. */

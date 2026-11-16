@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
 
+import { CommandMenu } from "@/components/layout/command-menu";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { SubscriptionBanner } from "@/features/billing/components/subscription-banner";
 import { Sidebar } from "@/components/layout/sidebar";
 import { NoClinicAccess } from "@/features/tenancy/components/no-clinic-access";
 import { UserMenu } from "@/features/auth/components/user-menu";
-import { ClinicSwitcher } from "@/features/tenancy/components/clinic-switcher";
-import { UnitSwitcher } from "@/features/tenancy/components/unit-switcher";
+import { WorkspaceSwitcher } from "@/features/tenancy/components/workspace-switcher";
 import { getSessionContext } from "@/features/tenancy/queries";
-import { canManageClinic } from "@/features/tenancy/roles";
+import { canManageClinic, roleLabels } from "@/features/tenancy/roles";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const session = await getSessionContext();
@@ -18,31 +18,25 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   if (!clinic) return <NoClinicAccess email={user.email} />;
 
   const canManage = canManageClinic(clinic.role);
-  const clinicSwitcher = <ClinicSwitcher clinics={clinics} currentId={clinic.id} />;
-  const userMenu = <UserMenu name={user.fullName} email={user.email} />;
-  const unitSwitcher = <UnitSwitcher units={units} activeId={activeUnit?.id ?? null} />;
-  const hasUnitSwitcher = units.length > 1;
+  const isDentist = clinic.role === "dentist";
+  const switcher = (
+    <WorkspaceSwitcher clinics={clinics} currentClinicId={clinic.id} units={units} activeUnitId={activeUnit?.id ?? null} />
+  );
+  const userSubtitle = [roleLabels[clinic.role], clinic.cro ? `CRO ${clinic.cro}` : null].filter(Boolean).join(" · ");
+  const userMenu = <UserMenu name={user.fullName} email={user.email} subtitle={userSubtitle} />;
 
   return (
     <div className="min-h-full">
-      <Sidebar top={clinicSwitcher} bottom={userMenu} canManage={canManage} isDentist={clinic.role === "dentist"} />
-      <MobileNav
-        top={clinicSwitcher}
-        bottom={userMenu}
-        actions={hasUnitSwitcher ? unitSwitcher : null}
-        canManage={canManage}
-        isDentist={clinic.role === "dentist"}
-      />
-      <main className="lg:pl-60">
+      <Sidebar top={switcher} bottom={userMenu} canManage={canManage} isDentist={isDentist} />
+      <MobileNav top={switcher} bottom={userMenu} canManage={canManage} isDentist={isDentist} />
+      <CommandMenu canManage={canManage} isDentist={isDentist} />
+      <main className="lg:pl-62">
         <SubscriptionBanner
           accessState={clinic.accessState}
           subscriptionStatus={clinic.subscriptionStatus}
           trialEndsAt={clinic.trialEndsAt}
           canManage={canManage}
         />
-        {hasUnitSwitcher ? (
-          <div className="hidden h-14 items-center justify-end border-b px-8 lg:flex">{unitSwitcher}</div>
-        ) : null}
         <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 lg:py-10">{children}</div>
       </main>
     </div>

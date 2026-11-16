@@ -7,7 +7,7 @@ test.skip(!hasSupabase, "Precisa do Supabase configurado no .env.local");
 test("sem login, o painel manda para a tela de entrar", async ({ page }) => {
   await page.goto("/painel");
   await expect(page).toHaveURL(/\/entrar$/);
-  await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bem-vindo de volta" })).toBeVisible();
 });
 
 test("guarda a página pedida para depois do login", async ({ page }) => {

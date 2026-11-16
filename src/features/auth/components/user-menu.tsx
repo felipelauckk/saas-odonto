@@ -16,7 +16,12 @@ import {
 
 import { signOut } from "../actions";
 
-type UserMenuProps = { name: string | null; email: string };
+type UserMenuProps = {
+  name: string | null;
+  email: string;
+  /** Linha de apoio, ex.: "Gestor · CRO-RS 18.204". Sem ela, mostra o e-mail. */
+  subtitle?: string;
+};
 
 function initials(name: string | null, email: string) {
   const source = name?.trim() || email;
@@ -25,7 +30,7 @@ function initials(name: string | null, email: string) {
   return letters.toUpperCase();
 }
 
-export function UserMenu({ name, email }: UserMenuProps) {
+export function UserMenu({ name, email, subtitle }: UserMenuProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -34,19 +39,21 @@ export function UserMenu({ name, email }: UserMenuProps) {
       <DropdownMenuTrigger
         aria-label="Menu do usuário"
         disabled={pending}
-        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 outline-none hover:bg-sidebar-accent focus-visible:ring-3 focus-visible:ring-sidebar-ring/40 pointer-coarse:min-h-11"
+        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring pointer-coarse:min-h-11"
       >
         <span
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-medium text-accent-foreground"
+          className="flex size-8.5 shrink-0 items-center justify-center rounded-full bg-brand-highlight text-xs font-bold text-brand-deep"
           aria-hidden
         >
           {initials(name, email)}
         </span>
         <span className="min-w-0 flex-1 text-left">
-          <span className="block truncate text-sm font-medium">{name ?? email}</span>
-          {name ? <span className="block truncate text-xs text-muted-foreground">{email}</span> : null}
+          <span className="block truncate text-sm font-semibold">{name ?? email}</span>
+          {subtitle || name ? (
+            <span className="block truncate text-xs text-sidebar-foreground/70">{subtitle ?? email}</span>
+          ) : null}
         </span>
-        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        <ChevronsUpDown className="size-4 shrink-0 text-sidebar-foreground/70" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" className="min-w-56">
         <DropdownMenuGroup>

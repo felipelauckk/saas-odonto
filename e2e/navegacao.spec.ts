@@ -45,3 +45,15 @@ test("rota inexistente mostra a página 404", async ({ page }) => {
   await page.goto("/nao-existe");
   await expect(page.getByRole("heading", { name: "Página não encontrada" })).toBeVisible();
 });
+
+test("busca global com Ctrl/⌘+K leva à página escolhida", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Atalho de teclado só no computador");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.keyboard.press("ControlOrMeta+k");
+  const search = page.getByRole("combobox", { name: "Buscar paciente, página ou ação" });
+  await expect(search).toBeFocused();
+  await search.fill("finan");
+  await expect(page.getByRole("option", { name: "Financeiro" })).toBeVisible();
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/financeiro$/);
+});

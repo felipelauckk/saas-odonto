@@ -15,7 +15,7 @@ export default function Page() {
       />
       <RecoverPasswordForm />
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        <Link href="/entrar" className="font-medium text-foreground underline-offset-4 hover:underline">
+        <Link href="/entrar" className="font-semibold text-primary underline-offset-4 hover:text-primary-hover hover:underline">
           Voltar para o login
         </Link>
       </p>
