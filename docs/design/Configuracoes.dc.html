@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Arcada — configurações</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#17707F}a:hover{color:#125866}
+</style>
+</helmet>
+<div style="min-height: 1000px; background: #F7F6F3; font-family: Inter, system-ui, sans-serif; color: #14181F; display: flex; flex-wrap: wrap">
+
+<nav aria-label="Menu principal" style="flex: 1 1 248px; max-width: 100%; box-sizing: border-box; background: #0C3640; color: #FFFFFF; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px">
+<svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#FFFFFF"></rect><path d="M13 33 C13 18.5, 35 18.5, 35 33" fill="none" stroke="#0C3640" stroke-width="4.2" stroke-linecap="round"></path><circle cx="24" cy="33.2" r="2.6" fill="#3FB8A8"></circle></svg>
+<span style="font-family: 'Instrument Serif', Georgia, serif; font-size: 28px; letter-spacing: -0.01em">Arcada</span>
+</div>
+<button type="button" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); color: #FFFFFF; text-align: left; font-family: Inter, sans-serif">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 600">Clínica Sorriso</span><span style="font-size: 12px; color: rgba(255,255,255,0.72)">Todas as unidades</span></span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.72)" stroke-width="2" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"></path></svg>
+</button>
+<button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-radius: 10px; border: 0; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.78); font: 500 13px Inter, sans-serif">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>Buscar ou ir para…<span style="margin-left: auto; font-size: 11px; padding: 1px 6px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.2)">⌘K</span>
+</button>
+<sc-for list="{{sections}}" as="s" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="padding: 0 12px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.6)">{{s.title}}</div>
+<sc-for list="{{s.items}}" as="n" hint-placeholder-count="3">
+<a href="{{n.href}}" style="display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: {{n.weight}}; color: {{n.fg}}; background: {{n.bg}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.icon}}"></path></svg>{{n.label}}<sc-if value="{{n.count}}" hint-placeholder-val="{{false}}"><span style="margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #3FB8A8; color: #0C3640; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{n.count}}</span></sc-if></a>
+</sc-for>
+</div>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 32px 36px; display: flex; flex-direction: column; gap: 22px">
+
+<h1 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 44px; line-height: 1">Configurações</h1>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+<section aria-label="Seções" style="flex: 1 1 230px; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{menu}}" as="m" hint-placeholder-count="10">
+<button type="button" aria-pressed="{{m.pressed}}" style="display: flex; flex-direction: column; gap: 1px; min-height: 48px; padding: 6px 12px; border: 0; border-radius: 10px; background: {{m.bg}}; text-align: left; font-family: Inter, sans-serif; color: #14181F; justify-content: center"><span style="font-size: 14px; font-weight: {{m.weight}}; color: {{m.fg}}">{{m.label}}</span><span style="font-size: 12px; color: #4A515C">{{m.sub}}</span></button>
+</sc-for>
+</section>
+
+<section style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 3px"><h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Equipe e permissões</h2><span style="font-size: 13px; color: #4A515C">Quem acessa o sistema, com que papel e em quais unidades</span></div>
+<button type="button" style="height: 40px; padding: 0 16px; border-radius: 10px; border: 0; background: #17707F; color: #FFFFFF; font: 600 14px Inter, sans-serif">Convidar pessoa</button>
+</div>
+
+<div style="background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; overflow: hidden">
+<div style="overflow-x: auto"><div style="min-width: 680px">
+<div style="display: grid; grid-template-columns: minmax(200px, 1.6fr) 150px minmax(140px, 1fr) 100px 40px; gap: 12px; padding: 10px 20px; background: #FAF9F7; border-bottom: 1px solid #E8E6E1; font-size: 11px; font-weight: 600; color: #4A515C; text-transform: uppercase; letter-spacing: 0.06em"><span>Pessoa</span><span>Papel</span><span>Unidades</span><span>Situação</span><span></span></div>
+<sc-for list="{{members}}" as="u" hint-placeholder-count="6">
+<div style="display: grid; grid-template-columns: minmax(200px, 1.6fr) 150px minmax(140px, 1fr) 100px 40px; gap: 12px; align-items: center; padding: 12px 20px; border-top: 1px solid #F0EEEA; font-size: 14px">
+<span style="display: flex; align-items: center; gap: 12px; min-width: 0"><span style="width: 34px; height: 34px; border-radius: 999px; background: {{u.avBg}}; color: {{u.avFg}}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex: 0 0 auto">{{u.ini}}</span><span style="display: flex; flex-direction: column; gap: 1px; min-width: 0"><span style="font-weight: 600">{{u.name}}</span><span style="font-size: 12px; color: #4A515C">{{u.email}}</span></span></span>
+<label style="display: flex"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Papel de {{u.name}}</span><select style="height: 36px; width: 100%; padding: 0 10px; border-radius: 9px; border: 1px solid #DAD7D0; background: #FFFFFF; font: 500 13px Inter, sans-serif; color: #14181F"><option>{{u.role}}</option></select></label>
+<span style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{u.units}}" as="x" hint-placeholder-count="1"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: #F0EEEA">{{x}}</span></sc-for></span>
+<span style="font-size: 12px; font-weight: 600; color: {{u.stFg}}">{{u.status}}</span>
+<button type="button" aria-label="Mais ações para {{u.name}}" style="width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; font-size: 18px; color: #4A515C">⋯</button>
+</div>
+</sc-for>
+</div></div>
+</div>
+
+<div style="display: flex; gap: 12px; padding: 14px 16px; border-radius: 12px; background: #E3F0F1; font-size: 13px; line-height: 1.5; color: #0C3640">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17707F" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: 0 0 auto; margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+<span><strong>Recepção</strong> vê agenda, cadastro, orçamentos e o caixa do dia, mas não o prontuário. <strong>Dentista</strong> vê a própria agenda e o próprio extrato de comissões. As permissões valem também no banco de dados, não só na tela.</span>
+</div>
+</section>
+
+<aside style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<section style="background: #0C3640; color: #FFFFFF; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 12px; color: rgba(255,255,255,0.72)">Seu plano</span>
+<span style="font-family: 'Instrument Serif', Georgia, serif; font-size: 34px; line-height: 1">Profissional</span>
+<span style="font-size: 13px; color: rgba(255,255,255,0.8)">Renova em 02/12 · Pix automático</span>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: rgba(255,255,255,0.8)">Unidades</span><span style="font-variant-numeric: tabular-nums">2 de 3</span></div>
+<span style="height: 6px; border-radius: 6px; background: rgba(255,255,255,0.14); overflow: hidden"><span style="display: block; width: 66%; height: 100%; background: #3FB8A8"></span></span>
+</div>
+<div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: rgba(255,255,255,0.8)">Usuários</span><span>ilimitados</span></div>
+<button type="button" style="height: 38px; border-radius: 10px; border: 0; background: rgba(255,255,255,0.1); color: #FFFFFF; font: 600 13px Inter, sans-serif">Ver planos</button>
+</section>
+<section style="background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 4px">
+<h2 style="margin: 0 0 8px; font-size: 15px; font-weight: 600">Integrações</h2>
+<sc-for list="{{integrations}}" as="g" hint-placeholder-count="4">
+<div style="display: flex; justify-content: space-between; align-items: center; min-height: 48px; border-top: 1px solid #F0EEEA"><span style="display: flex; flex-direction: column; gap: 1px"><span style="font-size: 14px; font-weight: 500">{{g.name}}</span><span style="font-size: 12px; color: #4A515C">{{g.sub}}</span></span><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}"><span style="width: 6px; height: 6px; border-radius: 999px; background: {{g.fg}}"></span>{{g.status}}</span></div>
+</sc-for>
+</section>
+</aside>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+navSections(active) {
+const I = {
+Painel: 'M3 3h7v9H3z M14 3h7v5h-7z M14 12h7v9h-7z M3 16h7v5H3z',
+Agenda: 'M3 5h18v16H3z M3 10h18 M8 3v4 M16 3v4',
+Pacientes: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8z M22 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75',
+CRC: 'M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-4-1L3 20l1.2-4.4A8.4 8.4 0 1121 11.5z',
+CRM: 'M3 4h18l-7 8v6l-4 2v-8z',
+'Orçamentos': 'M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z M14 3v6h6 M8 13h8 M8 17h5',
+Financeiro: 'M3 7h18v13H3z M3 7l3-4h12l3 4 M16 13.5h2',
+'Relatórios': 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2',
+'Configurações': 'M4 6h10 M18 6h2 M4 12h4 M12 12h8 M4 18h12 M16 4v4 M8 10v4 M16 16v4'
+};
+const href = { Painel: 'Painel.dc.html', Agenda: 'Agenda.dc.html', Pacientes: 'Pacientes.dc.html', CRC: 'CRC.dc.html', CRM: 'CRM.dc.html', 'Orçamentos': 'Orcamento.dc.html', Financeiro: 'Financeiro.dc.html', 'Relatórios': 'Relatorios.dc.html', 'Configurações': 'Configuracoes.dc.html' };
+const item = (label, count) => { const on = label === active; return { label, href: href[label] || '#', icon: I[label], count: count || false, bg: on ? 'rgba(255,255,255,0.12)' : 'transparent', fg: on ? '#FFFFFF' : 'rgba(255,255,255,0.78)', weight: on ? 600 : 500 }; };
+return [
+{ title: 'Clínica', items: [item('Painel'), item('Agenda'), item('Pacientes')] },
+{ title: 'Crescimento', items: [item('CRC', 23), item('CRM')] },
+{ title: 'Gestão', items: [item('Orçamentos'), item('Financeiro'), item('Relatórios'), item('Configurações')] }
+];
+}
+renderVals() {
+const sel = 'Equipe e permissões';
+const menu = [
+['Dados da clínica', 'nome, CNPJ, logo'], ['Unidades', '2 unidades'], ['Equipe e permissões', '6 pessoas'], ['Profissionais e horários', 'grade de atendimento'], ['Procedimentos e preços', '84 procedimentos'], ['Formas de pagamento', 'taxas e prazos'], ['Documentos', 'receitas, atestados, termos'], ['Mensagens automáticas', 'lembretes e cobrança'], ['Agendamento online', 'página pública'], ['Plano e assinatura', 'Profissional']
+].map(([label, sub]) => { const on = label === sel; return { label, sub, pressed: on ? 'true' : 'false', bg: on ? '#FFFFFF' : 'transparent', fg: on ? '#0C3640' : '#14181F', weight: on ? 600 : 500 }; });
+const AV = [['#E3F0F1', '#0C3640'], ['#EFECF9', '#3F3285'], ['#FBF0E3', '#7A400B'], ['#EAF5EE', '#1F5C39']];
+const members = [
+['Dra. Helena Martins', 'helena@clinicasorriso.com.br', 'Dona', ['Todas'], 'Ativa'],
+['Dr. Paulo Ramos', 'paulo@clinicasorriso.com.br', 'Dentista', ['Centro'], 'Ativo'],
+['Dr. Marcos Silva', 'marcos@clinicasorriso.com.br', 'Dentista', ['Centro', 'Zona Sul'], 'Ativo'],
+['Júlia Andrade', 'julia@clinicasorriso.com.br', 'Recepção', ['Centro'], 'Ativa'],
+['Renata Costa', 'renata@clinicasorriso.com.br', 'Gestora', ['Todas'], 'Ativa'],
+['Bianca Lopes', 'bianca.lopes@gmail.com', 'Recepção', ['Zona Sul'], 'Convite enviado']
+].map(([name, email, role, units, status], i) => { const p = name.replace('Dra. ', '').replace('Dr. ', '').split(' '); const av = AV[i % 4]; return { name, email, role, units, status, stFg: status === 'Convite enviado' ? '#9A5B0A' : '#157A4C', ini: p[0][0] + p[p.length - 1][0], avBg: av[0], avFg: av[1] }; });
+const ok = ['#E5F4EC', '#157A4C'], warn = ['#FBF0DD', '#9A5B0A'];
+const integrations = [
+['WhatsApp', '(51) 3541-2200 · API oficial', 'Conectado', ok],
+['Asaas', 'Cobrança de pacientes', 'Conectado', ok],
+['Nota fiscal (NFS-e)', 'Falta o certificado A1', 'Pendente', warn],
+['Google Agenda', 'Sincroniza a agenda dos dentistas', 'Desligado', ['#F0EEEA', '#4A515C']]
+].map(([name, sub, status, c]) => ({ name, sub, status, bg: c[0], fg: c[1] }));
+return { sections: this.navSections('Configurações'), menu, members, integrations };
+}
+}
+</script>
+</body>
+</html>

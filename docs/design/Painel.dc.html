@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Arcada — painel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#17707F}a:hover{color:#125866}
+</style>
+</helmet>
+<div style="min-height: 1120px; background: #F7F6F3; font-family: Inter, system-ui, sans-serif; color: #14181F; display: flex; flex-wrap: wrap">
+
+<nav aria-label="Menu principal" style="flex: 1 1 248px; max-width: 100%; box-sizing: border-box; background: #0C3640; color: #FFFFFF; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px">
+<svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#FFFFFF"></rect><path d="M13 33 C13 18.5, 35 18.5, 35 33" fill="none" stroke="#0C3640" stroke-width="4.2" stroke-linecap="round"></path><circle cx="24" cy="33.2" r="2.6" fill="#3FB8A8"></circle></svg>
+<span style="font-family: 'Instrument Serif', Georgia, serif; font-size: 28px; letter-spacing: -0.01em">Arcada</span>
+</div>
+<button type="button" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); color: #FFFFFF; text-align: left; font-family: Inter, sans-serif">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 600">Clínica Sorriso</span><span style="font-size: 12px; color: rgba(255,255,255,0.72)">Todas as unidades</span></span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.72)" stroke-width="2" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"></path></svg>
+</button>
+<button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-radius: 10px; border: 0; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.78); font: 500 13px Inter, sans-serif">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>Buscar ou ir para…<span style="margin-left: auto; font-size: 11px; padding: 1px 6px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.2)">⌘K</span>
+</button>
+<sc-for list="{{sections}}" as="s" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="padding: 0 12px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.6)">{{s.title}}</div>
+<sc-for list="{{s.items}}" as="n" hint-placeholder-count="3">
+<a href="{{n.href}}" style="display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: {{n.weight}}; color: {{n.fg}}; background: {{n.bg}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.icon}}"></path></svg>{{n.label}}<sc-if value="{{n.count}}" hint-placeholder-val="{{false}}"><span style="margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #3FB8A8; color: #0C3640; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{n.count}}</span></sc-if></a>
+</sc-for>
+</div>
+</sc-for>
+<div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 14px 8px 0; border-top: 1px solid rgba(255,255,255,0.12)">
+<div style="width: 34px; height: 34px; border-radius: 999px; background: #3FB8A8; color: #0C3640; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">HM</div>
+<div style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 600">Dra. Helena Martins</span><span style="font-size: 12px; color: rgba(255,255,255,0.72)">Gestora · CRO-RS 18.204</span></div>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 36px 40px 40px; display: flex; flex-direction: column; gap: 24px">
+
+<header style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 13px; color: #4A515C">Sábado, 14 de novembro · 15:12</div>
+<h1 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 46px; line-height: 1; letter-spacing: -0.01em">Boa tarde, Helena</h1>
+</div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<button type="button" style="height: 42px; padding: 0 16px; border-radius: 10px; border: 1px solid #DAD7D0; background: #FFFFFF; font: 600 14px Inter, sans-serif; color: #14181F">Novo paciente</button>
+<button type="button" style="height: 42px; padding: 0 16px; border-radius: 10px; border: 0; background: #17707F; color: #FFFFFF; font: 600 14px Inter, sans-serif; display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nova consulta</button>
+</div>
+</header>
+
+<section aria-label="Resumo do dia" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px 18px; border-radius: 14px; background: #0C3640; color: #FFFFFF">
+<span style="width: 34px; height: 34px; border-radius: 10px; background: rgba(63,184,168,0.18); display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3FB8A8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"></path></svg></span>
+<p style="margin: 0; flex: 1 1 320px; font-size: 14px; line-height: 1.55; color: rgba(255,255,255,0.88)">O mês está <strong style="color: #FFFFFF">10% acima do ritmo da meta</strong>. Para hoje: 5 consultas de amanhã ainda sem confirmação e 3 orçamentos de implante parados há mais de 20 dias.</p>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<a href="Agenda.dc.html" style="display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border-radius: 10px; background: rgba(255,255,255,0.1); color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: 600">Confirmar amanhã</a>
+<a href="CRC.dc.html" style="display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border-radius: 10px; background: #3FB8A8; color: #0C3640; text-decoration: none; font-size: 13px; font-weight: 700">Abrir orçamentos parados</a>
+</div>
+</section>
+
+<section aria-label="Indicadores" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; overflow: hidden">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+<div style="padding: 20px 22px; border-right: 1px solid #F0EEEA; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: #4A515C"><span>{{k.label}}</span><span style="font-weight: 600; color: {{k.deltaColor}}">{{k.delta}}</span></div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 10px">
+<span style="font-size: 30px; font-weight: 600; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; line-height: 1">{{k.value}}</span>
+<svg width="88" height="32" viewBox="0 0 88 32" aria-hidden="true"><polyline points="{{k.spark}}" fill="none" stroke="{{k.sparkColor}}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline></svg>
+</div>
+<div style="font-size: 12px; color: #4A515C">{{k.note}}</div>
+</div>
+</sc-for>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+
+<section style="flex: 999 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: flex-start">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Faturamento de novembro</h2><span style="font-size: 13px; color: #4A515C">Acumulado recebido contra o ritmo necessário para a meta de R$ 95 mil</span></div>
+<div style="display: flex; gap: 16px; font-size: 12px; color: #4A515C">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 3px; border-radius: 2px; background: #17707F"></span>Recebido</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; border-top: 2px dashed #9A5B0A"></span>Ritmo da meta</span>
+</div>
+</div>
+<svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Faturamento acumulado: R$ 48.920 até dia 14, acima do ritmo da meta" style="display: block">
+<path d="{{gridPath}}" stroke="#F0EEEA" stroke-width="1" fill="none"></path>
+<text x="40" y="214" text-anchor="end" font-size="11" fill="#4A515C" font-family="Inter, sans-serif">0</text>
+<text x="40" y="166.5" text-anchor="end" font-size="11" fill="#4A515C" font-family="Inter, sans-serif">25 mil</text>
+<text x="40" y="119" text-anchor="end" font-size="11" fill="#4A515C" font-family="Inter, sans-serif">50 mil</text>
+<text x="40" y="71.5" text-anchor="end" font-size="11" fill="#4A515C" font-family="Inter, sans-serif">75 mil</text>
+<text x="40" y="24" text-anchor="end" font-size="11" fill="#4A515C" font-family="Inter, sans-serif">100 mil</text>
+<path d="{{area}}" fill="#17707F" fill-opacity="0.08"></path>
+<line x1="48" y1="210" x2="628" y2="{{paceEndY}}" stroke="#9A5B0A" stroke-width="1.5" stroke-dasharray="5 5"></line>
+<path d="{{line}}" fill="none" stroke="#17707F" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>
+<line x1="{{todayX}}" x2="{{todayX}}" y1="20" y2="210" stroke="#14181F" stroke-opacity="0.25" stroke-width="1"></line>
+<circle cx="{{todayX}}" cy="{{todayY}}" r="5" fill="#FFFFFF" stroke="#17707F" stroke-width="2.5"></circle>
+<rect x="{{labelX}}" y="{{labelY}}" width="112" height="44" rx="8" fill="#14181F"></rect>
+<text x="{{labelTX}}" y="{{labelT1}}" font-size="11" fill="#FFFFFF" fill-opacity="0.75" font-family="Inter, sans-serif">Hoje, dia 14</text>
+<text x="{{labelTX}}" y="{{labelT2}}" font-size="14" font-weight="600" fill="#FFFFFF" font-family="Inter, sans-serif">R$ 48.920</text>
+<text x="48" y="232" font-size="11" fill="#4A515C" font-family="Inter, sans-serif">1 nov</text>
+<text x="628" y="232" text-anchor="end" font-size="11" fill="#4A515C" font-family="Inter, sans-serif">30 nov</text>
+</svg>
+<div style="display: flex; flex-wrap: wrap; gap: 24px; padding-top: 12px; border-top: 1px solid #F0EEEA; font-size: 13px">
+<span><span style="color: #4A515C">Projeção do mês </span><strong style="font-variant-numeric: tabular-nums">R$ 104,8 mil</strong></span>
+<span><span style="color: #4A515C">Ritmo necessário </span><strong style="font-variant-numeric: tabular-nums">R$ 3.290/dia útil</strong></span>
+<span><span style="color: #4A515C">Melhor dia </span><strong>quinta, 5 nov</strong></span>
+</div>
+</section>
+
+<section style="flex: 1 1 320px; min-width: 0; background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; padding: 22px 22px 14px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Hoje na clínica</h2><a href="Agenda.dc.html" style="font-size: 13px; font-weight: 600; text-decoration: none">Agenda</a></div>
+<sc-for list="{{today}}" as="a" hint-placeholder-count="7">
+<sc-if value="{{a.now}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: center; gap: 8px; margin: 2px 0"><span style="font-size: 11px; font-weight: 700; color: #B3261E; font-variant-numeric: tabular-nums">15:12</span><span style="flex: 1; height: 2px; background: #B3261E; border-radius: 2px"></span></div>
+</sc-if>
+<div style="display: grid; grid-template-columns: 44px 12px minmax(0, 1fr); gap: 10px; align-items: start; padding: 6px 0; opacity: {{a.opacity}}">
+<span style="font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; padding-top: 1px">{{a.time}}</span>
+<span style="width: 10px; height: 10px; margin-top: 4px; border-radius: 999px; background: {{a.dot}}; box-shadow: 0 0 0 3px {{a.ring}}"></span>
+<div style="display: flex; flex-direction: column; gap: 1px; min-width: 0"><span style="font-size: 14px; font-weight: 500">{{a.patient}}</span><span style="font-size: 12px; color: #4A515C">{{a.detail}}</span></div>
+</div>
+</sc-for>
+</section>
+
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+
+<section style="flex: 1 1 420px; min-width: 0; background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Do primeiro contato ao tratamento fechado</h2><span style="font-size: 13px; color: #4A515C">Novembro, todas as origens</span></div>
+<sc-for list="{{funnel}}" as="f" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: 150px minmax(0, 1fr) 70px; gap: 12px; align-items: center">
+<span style="font-size: 13px">{{f.label}}</span>
+<span style="height: 26px; border-radius: 6px; background: #F0EEEA; overflow: hidden"><span style="display: block; height: 100%; width: {{f.width}}; background: {{f.color}}; border-radius: 6px"></span></span>
+<span style="font-size: 13px; text-align: right; font-variant-numeric: tabular-nums"><strong>{{f.n}}</strong><span style="color: #4A515C"> {{f.rate}}</span></span>
+</div>
+</sc-for>
+<div style="font-size: 13px; color: #4A515C; padding-top: 6px; border-top: 1px solid #F0EEEA">A maior perda está entre <strong style="color: #14181F">orçamento e fechamento</strong>: 9 orçamentos sem resposta somam R$ 38.200.</div>
+</section>
+
+<section style="flex: 1 1 420px; min-width: 0; background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; padding: 22px 24px 12px; display: flex; flex-direction: column">
+<div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Para recuperar</h2><a href="CRC.dc.html" style="font-size: 13px; font-weight: 600; text-decoration: none">Abrir CRC</a></div>
+<sc-for list="{{crc}}" as="q" hint-placeholder-count="5">
+<a href="CRC.dc.html" style="display: grid; grid-template-columns: 4px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 52px; border-top: 1px solid #F0EEEA; text-decoration: none; color: #14181F">
+<span style="width: 4px; height: 28px; border-radius: 4px; background: {{q.pressure}}"></span>
+<span style="display: flex; flex-direction: column; gap: 1px"><span style="font-size: 14px; font-weight: 500">{{q.label}}</span><span style="font-size: 12px; color: #4A515C">{{q.sub}}</span></span>
+<span style="font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums">{{q.count}}</span>
+</a>
+</sc-for>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+navSections(active) {
+const I = {
+Painel: 'M3 3h7v9H3z M14 3h7v5h-7z M14 12h7v9h-7z M3 16h7v5H3z',
+Agenda: 'M3 5h18v16H3z M3 10h18 M8 3v4 M16 3v4',
+Pacientes: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8z M22 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75',
+CRC: 'M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-4-1L3 20l1.2-4.4A8.4 8.4 0 1121 11.5z',
+CRM: 'M3 4h18l-7 8v6l-4 2v-8z',
+'Orçamentos': 'M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z M14 3v6h6 M8 13h8 M8 17h5',
+Financeiro: 'M3 7h18v13H3z M3 7l3-4h12l3 4 M16 13.5h2',
+'Relatórios': 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2',
+'Configurações': 'M4 6h10 M18 6h2 M4 12h4 M12 12h8 M4 18h12 M16 4v4 M8 10v4 M16 16v4'
+};
+const href = { Painel: 'Painel.dc.html', Agenda: 'Agenda.dc.html', Pacientes: 'Pacientes.dc.html', CRC: 'CRC.dc.html', CRM: 'CRM.dc.html', 'Orçamentos': 'Orcamento.dc.html', Financeiro: 'Financeiro.dc.html', 'Relatórios': 'Relatorios.dc.html', 'Configurações': 'Configuracoes.dc.html' };
+const item = (label, count) => { const on = label === active; return { label, href: href[label] || '#', icon: I[label], count: count || false, bg: on ? 'rgba(255,255,255,0.12)' : 'transparent', fg: on ? '#FFFFFF' : 'rgba(255,255,255,0.78)', weight: on ? 600 : 500 }; };
+return [
+{ title: 'Clínica', items: [item('Painel'), item('Agenda'), item('Pacientes')] },
+{ title: 'Crescimento', items: [item('CRC', 23), item('CRM')] },
+{ title: 'Gestão', items: [item('Orçamentos'), item('Financeiro'), item('Relatórios'), item('Configurações')] }
+];
+}
+spark(vals) {
+const max = Math.max(...vals), min = Math.min(...vals);
+return vals.map((v, i) => (i * 88 / (vals.length - 1)).toFixed(1) + ',' + (28 - (v - min) / ((max - min) || 1) * 24).toFixed(1)).join(' ');
+}
+renderVals() {
+const daily = [0, 3800, 4200, 2900, 7100, 3600, 1900, 0, 4400, 3700, 5300, 6100, 3900, 2020];
+let acc = 0;
+const X = (d) => 48 + (d - 1) / 29 * 580;
+const Y = (v) => 210 - v / 100000 * 190;
+const pts = daily.map((v, i) => { acc += v; return [X(i + 1), Y(acc)]; });
+const line = 'M' + pts.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L');
+const last = pts[pts.length - 1];
+const area = line + ' L' + last[0].toFixed(1) + ' 210 L48 210 Z';
+const st = { done: ['#4A515C', '#F0EEEA'], miss: ['#B3261E', '#FBE9E7'], live: ['#17707F', '#E3F0F1'], next: ['#157A4C', '#E5F4EC'], wait: ['#9A5B0A', '#FBF0DD'] };
+const tl = [
+['08:00', 'Rafael Souza', 'Limpeza · Dra. Helena · concluída', 'done'],
+['09:00', 'Ana Beatriz Lima', 'Ortodontia · Dr. Paulo · faltou', 'miss'],
+['14:00', 'Luciana Ferreira', 'Implante 46 · Dr. Marcos · em atendimento', 'live'],
+['15:30', 'Carlos Henrique', 'Avaliação · primeira vez · na sala de espera', 'wait'],
+['16:30', 'Paula Rezende', 'Clareamento · Dra. Helena · confirmada', 'next'],
+['17:00', 'Bruna Teixeira', 'Ortodontia · Dr. Paulo · confirmada', 'next']
+];
+const today = [];
+tl.forEach(([time, patient, detail, s], i) => {
+today.push({ time, patient, detail, dot: st[s][0], ring: st[s][1], opacity: s === 'done' || s === 'miss' ? 0.62 : 1, now: i === 3 });
+});
+return {
+sections: this.navSections('Painel'),
+kpis: [
+{ label: 'Consultas hoje', value: '18', delta: '2 encaixes', deltaColor: '#4A515C', note: '3 primeiras consultas · 1 falta', spark: this.spark([12, 15, 14, 17, 13, 16, 18]), sparkColor: '#17707F' },
+{ label: 'Recebido no mês', value: 'R$ 48,9 mil', delta: '+12%', deltaColor: '#157A4C', note: 'vs. mesmo período de outubro', spark: this.spark([30, 33, 31, 38, 40, 44, 49]), sparkColor: '#17707F' },
+{ label: 'Vencido', value: 'R$ 3.180', delta: '+R$ 900', deltaColor: '#B3261E', note: '2 pacientes · régua de cobrança ativa', spark: this.spark([1.2, 1.4, 2.1, 2.0, 2.3, 2.9, 3.2]), sparkColor: '#B3261E' },
+{ label: 'Conversão de orçamentos', value: '59%', delta: '+4 p.p.', deltaColor: '#157A4C', note: '17 de 29 fechados em novembro', spark: this.spark([48, 51, 50, 55, 54, 57, 59]), sparkColor: '#17707F' }
+],
+gridPath: [0, 25000, 50000, 75000, 100000].map((v) => 'M48 ' + Y(v).toFixed(1) + ' H628').join(' '),
+line, area,
+paceEndY: Y(95000).toFixed(1),
+todayX: last[0].toFixed(1), todayY: last[1].toFixed(1),
+labelX: (last[0] + 12).toFixed(1), labelY: (last[1] - 56).toFixed(1), labelTX: (last[0] + 24).toFixed(1), labelT1: (last[1] - 38).toFixed(1), labelT2: (last[1] - 20).toFixed(1),
+today,
+funnel: [
+{ label: 'Novos contatos', n: 64, rate: '', width: '100%', color: '#0C3640' },
+{ label: 'Avaliações', n: 38, rate: '59%', width: '59%', color: '#125866' },
+{ label: 'Orçamentos', n: 29, rate: '76%', width: '45%', color: '#17707F' },
+{ label: 'Fechados', n: 17, rate: '59%', width: '27%', color: '#3FB8A8' }
+],
+crc: [
+{ label: 'Orçamentos em aberto', sub: 'R$ 38.200 · 3 parados há mais de 20 dias', count: 9, pressure: '#B3261E' },
+{ label: 'Tratamentos sem agendamento', sub: 'R$ 12.900 a executar', count: 5, pressure: '#9A5B0A' },
+{ label: 'Faltas sem remarcar', sub: '1 na primeira consulta', count: 4, pressure: '#9A5B0A' },
+{ label: 'Retornos vencidos', sub: 'limpeza e revisão semestral', count: 3, pressure: '#DAD7D0' },
+{ label: 'Parcelas vencidas', sub: 'R$ 3.180 · em régua de cobrança', count: 2, pressure: '#DAD7D0' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

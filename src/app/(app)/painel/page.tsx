@@ -13,6 +13,7 @@ import { canManageClinic } from "@/features/tenancy/roles";
 import { todayIso } from "@/lib/dates";
 import { formatCurrency } from "@/lib/format";
 import { formatLongDate, utcToZoned } from "@/lib/timezone";
+import { professionalColor } from "@/lib/professional-colors";
 
 export const metadata: Metadata = { title: "Painel" };
 
@@ -116,7 +117,7 @@ export default async function Page({ searchParams }: PageProps<"/painel">) {
             {today.map((a) => (
               <li key={a.id} className="flex items-center gap-4 px-4 py-3 sm:px-5">
                 <span className="w-12 text-sm font-medium tabular-nums">{utcToZoned(a.starts_at).time}</span>
-                <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: a.professionals?.color ?? "#64748b" }} aria-hidden />
+                <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: a.professionals ? professionalColor(a.professionals.color).value : "var(--input)" }} aria-hidden />
                 <span className="min-w-0 flex-1">
                   <Link href={`/pacientes/${a.patient_id}`} className="block truncate text-sm font-medium hover:underline">
                     {a.patients?.full_name}

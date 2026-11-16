@@ -18,12 +18,12 @@ export function ErrorState({
   return (
     <div
       role="alert"
-      className="flex flex-col items-center justify-center rounded-xl border px-6 py-16 text-center"
+      className="flex flex-col items-center justify-center rounded-card border border-border bg-card px-6 py-14 text-center"
     >
-      <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-        <AlertCircle className="size-5" aria-hidden />
+      <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-destructive-soft text-destructive">
+        <AlertCircle className="size-5" strokeWidth={1.75} aria-hidden />
       </div>
-      <h2 className="text-base font-medium">{title}</h2>
+      <h2 className="type-section">{title}</h2>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
       {onRetry ? (
         <Button variant="outline" className="mt-6" onClick={onRetry}>

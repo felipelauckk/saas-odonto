@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Arcada — entrar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#17707F}a:hover{color:#125866}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #F7F6F3; font-family: Inter, system-ui, sans-serif; color: #14181F; display: flex; flex-wrap: wrap">
+
+<section aria-label="Arcada" style="flex: 1 1 520px; min-height: 420px; box-sizing: border-box; background: #0C3640; color: #FFFFFF; padding: 56px 64px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden">
+<svg aria-hidden="true" viewBox="0 0 600 600" width="640" height="640" style="position: absolute; right: -180px; bottom: -220px; opacity: 0.1"><path d="M70 560 C70 160, 530 160, 530 560" fill="none" stroke="#FFFFFF" stroke-width="64" stroke-linecap="round"></path><circle cx="300" cy="560" r="34" fill="#3FB8A8"></circle></svg>
+<div style="display: flex; align-items: center; gap: 12px; position: relative">
+<svg width="40" height="40" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#FFFFFF"></rect><path d="M13 33 C13 18.5, 35 18.5, 35 33" fill="none" stroke="#0C3640" stroke-width="4.2" stroke-linecap="round"></path><circle cx="24" cy="33.2" r="2.6" fill="#3FB8A8"></circle></svg>
+<span style="font-family: 'Instrument Serif', Georgia, serif; font-size: 34px">Arcada</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 20px; position: relative; max-width: 520px">
+<p style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 56px; line-height: 1.02; letter-spacing: -0.01em">Menos papel na recepção. <em style="color: #3FB8A8">Mais sorrisos</em> na cadeira.</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: rgba(255,255,255,0.8)">Agenda, prontuário, orçamentos, financeiro e relacionamento com o paciente, num sistema só.</p>
+</div>
+<div style="display: flex; gap: 28px; flex-wrap: wrap; font-size: 13px; color: rgba(255,255,255,0.72); position: relative">
+<span>Dados protegidos conforme a LGPD</span><span>Suporte em português</span><span>Sem fidelidade</span>
+</div>
+</section>
+
+<section style="flex: 1 1 440px; box-sizing: border-box; padding: 56px 48px; display: flex; align-items: center; justify-content: center">
+<form style="width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 44px; line-height: 1">Bem-vindo de volta</h1>
+<p style="margin: 0; font-size: 14px; color: #4A515C">Entre com o e-mail cadastrado na sua clínica.</p>
+</div>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">E-mail<input type="email" value="helena@clinicasorriso.com.br" style="height: 46px; box-sizing: border-box; border: 1px solid #DAD7D0; border-radius: 10px; padding: 0 14px; font: 400 15px Inter, sans-serif; color: #14181F; background: #FFFFFF"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600"><span style="display: flex; justify-content: space-between"><span>Senha</span><a href="#" style="font-weight: 600; text-decoration: none">Esqueci a senha</a></span><input type="password" value="senhasegura" style="height: 46px; box-sizing: border-box; border: 2px solid #17707F; border-radius: 10px; padding: 0 14px; font: 400 15px Inter, sans-serif; color: #14181F; background: #FFFFFF"></label>
+<label style="display: flex; align-items: center; gap: 10px; font-size: 14px; min-height: 44px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #17707F">Manter conectado neste computador</label>
+<button type="submit" style="height: 48px; border-radius: 10px; border: 0; background: #17707F; color: #FFFFFF; font: 600 15px Inter, sans-serif">Entrar</button>
+<div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: #4A515C"><span style="flex: 1; height: 1px; background: #E8E6E1"></span>ou<span style="flex: 1; height: 1px; background: #E8E6E1"></span></div>
+<a href="#" style="display: flex; align-items: center; justify-content: center; height: 48px; border-radius: 10px; border: 1px solid #DAD7D0; background: #FFFFFF; color: #14181F; text-decoration: none; font-size: 15px; font-weight: 600">Criar conta da clínica · 14 dias grátis</a>
+</form>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

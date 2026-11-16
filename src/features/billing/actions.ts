@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { cancelSubscription, createCustomer, createSubscription, isAsaasConfigured, nextInvoiceUrl, updateSubscriptionValue } from "@/lib/asaas";
 import { todayIso } from "@/lib/dates";
+import { BRAND } from "@/lib/brand";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/features/tenancy/queries";
@@ -47,7 +48,7 @@ export async function subscribeToPlan(planId: string): Promise<Result> {
   }
 
   try {
-    const description = `Odonto SaaS — plano ${plan.name}`;
+    const description = `${BRAND.name} — plano ${plan.name}`;
     let customerId = clinic.asaas_customer_id;
     if (!customerId) {
       customerId = (

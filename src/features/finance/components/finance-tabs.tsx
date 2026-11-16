@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "cn";
+import { TabNav } from "@/components/app/tab-nav";
 
 export function FinanceTabs({ showCash, showManagement = false, showCommissions = false }: { showCash: boolean; showManagement?: boolean; showCommissions?: boolean }) {
   const pathname = usePathname();
@@ -21,24 +20,5 @@ export function FinanceTabs({ showCash, showManagement = false, showCommissions 
     ...(showCommissions ? [{ href: "/financeiro/comissoes", label: "Comissões", active: pathname.startsWith("/financeiro/comissoes") }] : []),
   ];
   if (tabs.length < 2) return null;
-  return (
-    <nav aria-label="Financeiro" className="-mx-4 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0">
-      <ul className="flex min-w-max gap-1">
-        {tabs.map((t) => (
-          <li key={t.href}>
-            <Link
-              href={t.href}
-              aria-current={t.active ? "page" : undefined}
-              className={cn(
-                "-mb-px flex h-10 items-center border-b-2 px-3 text-sm font-medium pointer-coarse:h-11",
-                t.active ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
+  return <TabNav label="Financeiro" tabs={tabs} />;
 }

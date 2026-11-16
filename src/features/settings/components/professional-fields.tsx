@@ -4,20 +4,8 @@ import { FormField } from "@/components/forms/form-field";
 import { SelectField } from "@/components/forms/select-field";
 import { SwitchField } from "@/components/forms/switch-field";
 import type { ActionState } from "@/lib/action-state";
+import { PROFESSIONAL_COLORS, professionalColor } from "@/lib/professional-colors";
 
-/** Cores bem distintas entre si, legíveis com texto branco na agenda. */
-export const PROFESSIONAL_COLORS = [
-  { value: "#0e7490", label: "Petróleo" },
-  { value: "#2563eb", label: "Azul" },
-  { value: "#7c3aed", label: "Violeta" },
-  { value: "#c026d3", label: "Magenta" },
-  { value: "#db2777", label: "Rosa" },
-  { value: "#dc2626", label: "Vermelho" },
-  { value: "#ea580c", label: "Laranja" },
-  { value: "#ca8a04", label: "Mostarda" },
-  { value: "#16a34a", label: "Verde" },
-  { value: "#475569", label: "Grafite" },
-];
 
 export type ProfessionalData = {
   id: string;
@@ -38,7 +26,7 @@ type Props = {
 export function ProfessionalFields({ professional, members, state }: Props) {
   const v = state.status === "error" ? state.values : undefined;
   const e = state.fieldErrors;
-  const color = v?.color ?? professional?.color ?? PROFESSIONAL_COLORS[0]!.value;
+  const color = v?.color ?? professionalColor(professional?.color).value;
 
   return (
     <>

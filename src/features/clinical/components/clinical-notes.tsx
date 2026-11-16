@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/format";
 
 import { VoiceDictation } from "@/features/ai/components/voice-dictation";
+import { professionalColor } from "@/lib/professional-colors";
 
 import { addClinicalNote } from "../actions";
 
@@ -108,7 +109,7 @@ function NoteCard({ note, complements, canComplement, onComplement }: { note: No
   return (
     <article className="space-y-3 px-4 py-4 sm:px-5">
       <header className="flex flex-wrap items-center gap-x-2 text-sm">
-        <span className="size-2.5 rounded-full" style={{ backgroundColor: note.professionals?.color ?? "#64748b" }} aria-hidden />
+        <span className="size-2.5 rounded-full" style={{ backgroundColor: note.professionals ? professionalColor(note.professionals.color).value : "var(--input)" }} aria-hidden />
         <span className="font-medium">{note.professionals?.name ?? "Profissional"}</span>
         <span className="text-muted-foreground">{formatDateTime(note.created_at)}</span>
       </header>

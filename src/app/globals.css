@@ -26,7 +26,16 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-track: var(--track);
   --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-highlight: var(--brand-highlight);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -35,6 +44,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -46,75 +56,141 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-card: 1rem;
+  --radius-avatar: 22%;
+  --shadow-segment: 0 1px 2px rgb(20 24 31 / 0.08);
 }
 
+/* Arcada — clínico editorial (docs/REDESIGN.md). */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.47 0.075 218);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.96 0.012 218);
-  --accent-foreground: oklch(0.38 0.07 218);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.47 0.075 218);
-  --chart-1: oklch(0.47 0.075 218);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --background: #f7f6f3;
+  --foreground: #14181f;
+  --card: #ffffff;
+  --card-foreground: #14181f;
+  --popover: #ffffff;
+  --popover-foreground: #14181f;
+  --primary: #17707f;
+  --primary-hover: #125866;
+  --primary-foreground: #ffffff;
+  --secondary: #f0eeea;
+  --secondary-foreground: #14181f;
+  --muted: #f0eeea;
+  --muted-foreground: #4a515c;
+  --accent: #e3f0f1;
+  --accent-foreground: #0c3640;
+  --destructive: #b3261e;
+  --destructive-soft: #fbe9e7;
+  --success: #157a4c;
+  --success-soft: #e5f4ec;
+  --warning: #9a5b0a;
+  --warning-soft: #fbf0dd;
+  --brand-deep: #0c3640;
+  --brand-highlight: #3fb8a8;
+  --border: #e8e6e1;
+  --border-soft: #f0eeea;
+  --track: #eceae5;
+  --input: #dad7d0;
+  --ring: #17707f;
+  --chart-1: #17707f;
+  --chart-2: #3fb8a8;
+  --chart-3: #5b49a8;
+  --chart-4: #a3560f;
+  --chart-5: #4a515c;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0.002 218);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.47 0.075 218);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.95 0.014 218);
-  --sidebar-accent-foreground: oklch(0.36 0.07 218);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.47 0.075 218);
+  /* Menu lateral claro até a R2, quando passa a usar --brand-deep. */
+  --sidebar: #fbfaf8;
+  --sidebar-foreground: #14181f;
+  --sidebar-primary: #17707f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e3f0f1;
+  --sidebar-accent-foreground: #0c3640;
+  --sidebar-border: #e8e6e1;
+  --sidebar-ring: #17707f;
 }
 
+/* Modo escuro: não exposto na interface; mantido só para não quebrar classes dark:. */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.72 0.09 210);
-  --primary-foreground: oklch(0.2 0.03 218);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.72 0.09 210);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.72 0.09 210);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.72 0.09 210);
+  --background: #0f1318;
+  --foreground: #f2f1ee;
+  --card: #171c22;
+  --card-foreground: #f2f1ee;
+  --popover: #171c22;
+  --popover-foreground: #f2f1ee;
+  --primary: #4fb3c2;
+  --primary-hover: #6cc3d0;
+  --primary-foreground: #0c3640;
+  --secondary: #232a32;
+  --secondary-foreground: #f2f1ee;
+  --muted: #232a32;
+  --muted-foreground: #b4b9c0;
+  --accent: #173b43;
+  --accent-foreground: #e3f0f1;
+  --destructive: #f2867e;
+  --destructive-soft: #3a1d1b;
+  --success: #6fcf9f;
+  --success-soft: #16301f;
+  --warning: #e8b263;
+  --warning-soft: #33270f;
+  --brand-deep: #0a2c34;
+  --brand-highlight: #3fb8a8;
+  --border: rgb(255 255 255 / 0.1);
+  --border-soft: rgb(255 255 255 / 0.06);
+  --track: #232a32;
+  --input: rgb(255 255 255 / 0.15);
+  --ring: #4fb3c2;
+  --chart-1: #4fb3c2;
+  --chart-2: #3fb8a8;
+  --chart-3: #a99be6;
+  --chart-4: #e3a466;
+  --chart-5: #b4b9c0;
+  --sidebar: #0a2c34;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #3fb8a8;
+  --sidebar-primary-foreground: #0c3640;
+  --sidebar-accent: rgb(255 255 255 / 0.12);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(255 255 255 / 0.1);
+  --sidebar-ring: #3fb8a8;
+}
+
+/* Tipografia: Montserrat em tudo. Black (900) nos títulos, pesos finos no resto. */
+@utility type-display {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  @media (width >= 40rem) {
+    font-size: 2.375rem;
+  }
+}
+
+@utility type-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+@utility type-section {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+@utility type-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+@utility type-kpi {
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
 }
 
 @layer base {
@@ -123,6 +199,13 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-weight: 400;
+  }
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+  td, th, input, .tabular {
+    font-variant-numeric: tabular-nums;
   }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Clínica Sorriso — agendar consulta</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#17707F}a:hover{color:#125866}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F7F6F3; font-family: Inter, system-ui, sans-serif; color: #14181F; display: flex; flex-direction: column; overflow: hidden; position: relative">
+
+<header style="background: #0C3640; color: #FFFFFF; padding: 28px 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; color: #0C3640; display: flex; align-items: center; justify-content: center; font-family: 'Instrument Serif', Georgia, serif; font-size: 22px">CS</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 600">Clínica Sorriso</span><span style="font-size: 12px; color: rgba(255,255,255,0.75)">Rua Independência, 840 · Igrejinha</span></div>
+</div>
+<h1 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 34px; line-height: 1.05">Agende sua consulta</h1>
+<div style="display: flex; gap: 6px" aria-label="Etapa 3 de 4">
+<span style="flex: 1; height: 4px; border-radius: 4px; background: #3FB8A8"></span><span style="flex: 1; height: 4px; border-radius: 4px; background: #3FB8A8"></span><span style="flex: 1; height: 4px; border-radius: 4px; background: #3FB8A8"></span><span style="flex: 1; height: 4px; border-radius: 4px; background: rgba(255,255,255,0.2)"></span>
+</div>
+</header>
+
+<div style="flex: 1; overflow: hidden; padding: 18px 20px 120px; display: flex; flex-direction: column; gap: 18px">
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; color: #4A515C; text-transform: uppercase; letter-spacing: 0.06em">Você escolheu</span>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E8E6E1">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Avaliação</span><span style="font-size: 13px; color: #4A515C">Dra. Helena Martins · 45 min · sem custo</span></span>
+<a href="#" style="font-size: 13px; font-weight: 600; text-decoration: none">Trocar</a>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 16px; font-weight: 600">Novembro</span><span style="font-size: 12px; color: #4A515C">deslize para ver mais dias</span></div>
+<div style="display: flex; gap: 8px">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="5">
+<button type="button" aria-pressed="{{d.pressed}}" style="flex: 1; min-width: 0; height: 68px; border-radius: 14px; border: {{d.border}}; background: {{d.bg}}; color: {{d.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-family: Inter, sans-serif; opacity: {{d.opacity}}"><span style="font-size: 11px; font-weight: 600; text-transform: uppercase">{{d.wd}}</span><span style="font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums">{{d.n}}</span></button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 16px; font-weight: 600">Horários livres na segunda, 16</span>
+<sc-for list="{{periods}}" as="p" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; color: #4A515C">{{p.label}}</span>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{p.slots}}" as="s" hint-placeholder-count="4">
+<button type="button" aria-pressed="{{s.pressed}}" style="height: 44px; border-radius: 12px; border: {{s.border}}; background: {{s.bg}}; color: {{s.fg}}; font: 600 14px Inter, sans-serif; font-variant-numeric: tabular-nums">{{s.t}}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 20px 26px; background: #FFFFFF; border-top: 1px solid #E8E6E1; display: flex; flex-direction: column; gap: 8px">
+<button type="button" style="height: 52px; border-radius: 14px; border: 0; background: #17707F; color: #FFFFFF; font: 600 16px Inter, sans-serif">Continuar · seg, 16/11 às 09:30</button>
+<span style="text-align: center; font-size: 11px; color: #4A515C">Agendamento por Arcada · seus dados ficam protegidos (LGPD)</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const days = [['sáb', 14, false, false], ['dom', 15, false, true], ['seg', 16, true, false], ['ter', 17, false, false], ['qua', 18, false, false]].map(([wd, n, on, closed]) => ({ wd, n, pressed: on ? 'true' : 'false', bg: on ? '#0C3640' : '#FFFFFF', fg: on ? '#FFFFFF' : '#14181F', border: on ? '0' : '1px solid #E8E6E1', opacity: closed ? 0.4 : 1 }));
+const slot = (t, on) => ({ t, pressed: on ? 'true' : 'false', bg: on ? '#17707F' : '#FFFFFF', fg: on ? '#FFFFFF' : '#14181F', border: on ? '0' : '1px solid #DAD7D0' });
+return {
+days,
+periods: [
+{ label: 'Manhã', slots: [slot('08:00'), slot('08:45'), slot('09:30', true), slot('11:00')] },
+{ label: 'Tarde', slots: [slot('13:30'), slot('14:15'), slot('16:00'), slot('17:30')] }
+]
+};
+}
+}
+</script>
+</body>
+</html>

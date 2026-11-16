@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 import { formatCurrency, formatDate } from "@/lib/format";
+import { professionalColor } from "@/lib/professional-colors";
 
 import type { PlanStatus } from "../labels";
 import { PlanStatusBadge } from "./plan-status-badge";
@@ -22,7 +23,7 @@ export function PlansList({ plans, showPatient = true }: { plans: Row[]; showPat
       {plans.map((p) => (
         <li key={p.id}>
           <Link href={`/orcamentos/${p.id}`} className="flex items-center gap-4 px-4 py-3 outline-none transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 sm:px-5">
-            <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: p.professionals?.color ?? "#64748b" }} aria-hidden />
+            <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: p.professionals ? professionalColor(p.professionals.color).value : "var(--input)" }} aria-hidden />
             <span className="min-w-0 flex-1">
               <span className="block truncate font-medium">{showPatient ? p.patients?.full_name : `Orçamento de ${formatDate(p.created_at)}`}</span>
               <span className="block truncate text-sm text-muted-foreground">

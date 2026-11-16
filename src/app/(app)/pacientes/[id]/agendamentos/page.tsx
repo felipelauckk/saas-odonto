@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { AppointmentStatusBadge } from "@/features/agenda/components/status-badge";
 import { listPatientAppointments } from "@/features/agenda/queries";
 import { formatLongDate, utcToZoned } from "@/lib/timezone";
+import { professionalColor } from "@/lib/professional-colors";
 
 export const metadata: Metadata = { title: "Agendamentos" };
 
@@ -35,7 +36,7 @@ export default async function Page({ params }: PageProps<"/pacientes/[id]/agenda
         const end = utcToZoned(a.ends_at);
         return (
           <li key={a.id} className="flex items-center gap-4 px-4 py-3 sm:px-5">
-            <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: a.professionals?.color ?? "#64748b" }} aria-hidden />
+            <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: a.professionals ? professionalColor(a.professionals.color).value : "var(--input)" }} aria-hidden />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium first-letter:uppercase">
                 {formatLongDate(start.date)} · {start.time}–{end.time}

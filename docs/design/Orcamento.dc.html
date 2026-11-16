@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Arcada — orçamento</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#17707F}a:hover{color:#125866}
+</style>
+</helmet>
+<div style="min-height: 1060px; background: #F7F6F3; font-family: Inter, system-ui, sans-serif; color: #14181F; display: flex; flex-wrap: wrap">
+
+<nav aria-label="Menu principal" style="flex: 1 1 248px; max-width: 100%; box-sizing: border-box; background: #0C3640; color: #FFFFFF; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px">
+<svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#FFFFFF"></rect><path d="M13 33 C13 18.5, 35 18.5, 35 33" fill="none" stroke="#0C3640" stroke-width="4.2" stroke-linecap="round"></path><circle cx="24" cy="33.2" r="2.6" fill="#3FB8A8"></circle></svg>
+<span style="font-family: 'Instrument Serif', Georgia, serif; font-size: 28px; letter-spacing: -0.01em">Arcada</span>
+</div>
+<button type="button" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); color: #FFFFFF; text-align: left; font-family: Inter, sans-serif">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 600">Clínica Sorriso</span><span style="font-size: 12px; color: rgba(255,255,255,0.72)">Unidade Centro</span></span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.72)" stroke-width="2" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"></path></svg>
+</button>
+<button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-radius: 10px; border: 0; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.78); font: 500 13px Inter, sans-serif">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>Buscar ou ir para…<span style="margin-left: auto; font-size: 11px; padding: 1px 6px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.2)">⌘K</span>
+</button>
+<sc-for list="{{sections}}" as="s" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="padding: 0 12px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.6)">{{s.title}}</div>
+<sc-for list="{{s.items}}" as="n" hint-placeholder-count="3">
+<a href="{{n.href}}" style="display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: {{n.weight}}; color: {{n.fg}}; background: {{n.bg}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.icon}}"></path></svg>{{n.label}}<sc-if value="{{n.count}}" hint-placeholder-val="{{false}}"><span style="margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #3FB8A8; color: #0C3640; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{n.count}}</span></sc-if></a>
+</sc-for>
+</div>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px">
+
+<div style="font-size: 13px; color: #4A515C"><a href="Pacientes.dc.html" style="text-decoration: none; font-weight: 500">Pacientes</a> / <a href="Paciente.dc.html" style="text-decoration: none; font-weight: 500">Juliana Prado</a> / Novo orçamento</div>
+
+<header style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 12px"><h1 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 42px; line-height: 1">Orçamento #0482</h1><span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: #F0EEEA; color: #4A515C">Rascunho</span></div>
+<span style="font-size: 14px; color: #4A515C">Juliana Prado · 38 anos · Dra. Helena Martins · válido até 15/12/2026</span>
+</div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<button type="button" style="height: 42px; padding: 0 14px; border-radius: 10px; border: 1px solid #DAD7D0; background: #FFFFFF; font: 600 14px Inter, sans-serif">Pré-visualizar PDF</button>
+<button type="button" style="height: 42px; padding: 0 16px; border-radius: 10px; border: 0; background: #17707F; color: #FFFFFF; font: 600 14px Inter, sans-serif">Apresentar à paciente</button>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+<section aria-label="Procedimentos" style="flex: 1 1 280px; min-width: 0; background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<label style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid #DAD7D0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A515C" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg><input type="search" placeholder="Buscar procedimento" aria-label="Buscar procedimento" style="flex: 1; border: 0; outline: 0; font: 400 14px Inter, sans-serif"></label>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="5">
+<button type="button" aria-pressed="{{c.pressed}}" style="height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid {{c.border}}; background: {{c.bg}}; color: {{c.fg}}; font: 600 12px Inter, sans-serif">{{c.label}}</button>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{catalog}}" as="p" hint-placeholder-count="7">
+<button type="button" style="display: grid; grid-template-columns: minmax(0, 1fr) auto 28px; gap: 10px; align-items: center; min-height: 48px; padding: 6px 4px; border: 0; border-top: 1px solid #F0EEEA; background: transparent; text-align: left; font-family: Inter, sans-serif; color: #14181F">
+<span style="display: flex; flex-direction: column; gap: 1px"><span style="font-size: 13px; font-weight: 500">{{p.name}}</span><span style="font-size: 12px; color: #4A515C">{{p.meta}}</span></span>
+<span style="font-size: 13px; font-variant-numeric: tabular-nums; color: #4A515C">{{p.price}}</span>
+<span style="width: 28px; height: 28px; border-radius: 8px; background: #E3F0F1; color: #0C3640; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600" aria-hidden="true">+</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<section aria-label="Itens do orçamento" style="flex: 999 1 460px; min-width: 0; background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #E8E6E1"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Plano proposto</h2><span style="font-size: 13px; color: #4A515C">6 procedimentos · 3 sessões estimadas</span></div>
+<div style="overflow-x: auto">
+<div style="min-width: 560px">
+<div style="display: grid; grid-template-columns: 28px minmax(160px, 1.6fr) 110px 110px 36px; gap: 12px; padding: 10px 20px; background: #FAF9F7; font-size: 11px; font-weight: 600; color: #4A515C; text-transform: uppercase; letter-spacing: 0.06em"><span>Fase</span><span>Procedimento</span><span>Dente</span><span style="text-align: right">Valor</span><span></span></div>
+<sc-for list="{{items}}" as="it" hint-placeholder-count="6">
+<div style="display: grid; grid-template-columns: 28px minmax(160px, 1.6fr) 110px 110px 36px; gap: 12px; align-items: center; padding: 12px 20px; border-top: 1px solid #F0EEEA; font-size: 14px">
+<span style="width: 24px; height: 24px; border-radius: 7px; background: {{it.phaseBg}}; color: {{it.phaseFg}}; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{it.phase}}</span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">{{it.name}}</span><span style="font-size: 12px; color: #4A515C">{{it.note}}</span></span>
+<span style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{it.teeth}}" as="t" hint-placeholder-count="2"><span style="font-size: 12px; font-weight: 600; padding: 2px 7px; border-radius: 6px; background: #F0EEEA; font-variant-numeric: tabular-nums">{{t}}</span></sc-for></span>
+<span style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums">{{it.price}}</span>
+<button type="button" aria-label="Remover item" style="width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: #4A515C; font-size: 18px">×</button>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; gap: 12px; padding: 14px 20px; border-top: 1px solid #E8E6E1; background: #FAF9F7; font-size: 13px; color: #4A515C; align-items: center">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17707F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"></path></svg>
+<span>O odontograma tem cárie registrada no <strong style="color: #14181F">dente 24</strong> que não está neste orçamento.</span>
+<button type="button" style="margin-left: auto; height: 32px; padding: 0 10px; border-radius: 8px; border: 0; background: #E3F0F1; color: #0C3640; font: 600 12px Inter, sans-serif">Incluir</button>
+</div>
+</section>
+
+<aside style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<section style="background: #0C3640; color: #FFFFFF; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; font-size: 14px; color: rgba(255,255,255,0.78)"><span>Subtotal</span><span style="font-variant-numeric: tabular-nums">R$ 8.720</span></div>
+<div style="display: flex; justify-content: space-between; font-size: 14px; color: rgba(255,255,255,0.78)"><span>Desconto à vista (5%)</span><span style="font-variant-numeric: tabular-nums; color: #3FB8A8">− R$ 436</span></div>
+<div style="height: 1px; background: rgba(255,255,255,0.14)"></div>
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 14px">Total</span><span style="font-size: 34px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">R$ 8.284</span></div>
+</section>
+<section style="background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0 0 4px; font-size: 15px; font-weight: 600">Forma de pagamento</h2>
+<sc-for list="{{pay}}" as="p" hint-placeholder-count="4">
+<label style="display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 52px; padding: 8px 12px; border-radius: 12px; border: {{p.border}}; background: {{p.bg}}; cursor: pointer">
+<input type="radio" name="pagamento" checked="{{p.checked}}" style="width: 18px; height: 18px; accent-color: #17707F; margin: 0">
+<span style="display: flex; flex-direction: column; gap: 1px"><span style="font-size: 14px; font-weight: 600">{{p.label}}</span><span style="font-size: 12px; color: #4A515C">{{p.sub}}</span></span>
+<span style="font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums">{{p.value}}</span>
+</label>
+</sc-for>
+</section>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<button type="button" style="height: 44px; border-radius: 10px; border: 1px solid #DAD7D0; background: #FFFFFF; font: 600 14px Inter, sans-serif">Enviar por WhatsApp</button>
+<button type="button" style="height: 44px; border-radius: 10px; border: 0; background: #157A4C; color: #FFFFFF; font: 600 14px Inter, sans-serif">Aprovar</button>
+</div>
+</aside>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+navSections(active) {
+const I = {
+Painel: 'M3 3h7v9H3z M14 3h7v5h-7z M14 12h7v9h-7z M3 16h7v5H3z',
+Agenda: 'M3 5h18v16H3z M3 10h18 M8 3v4 M16 3v4',
+Pacientes: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8z M22 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75',
+CRC: 'M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-4-1L3 20l1.2-4.4A8.4 8.4 0 1121 11.5z',
+CRM: 'M3 4h18l-7 8v6l-4 2v-8z',
+'Orçamentos': 'M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z M14 3v6h6 M8 13h8 M8 17h5',
+Financeiro: 'M3 7h18v13H3z M3 7l3-4h12l3 4 M16 13.5h2',
+'Relatórios': 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2',
+'Configurações': 'M4 6h10 M18 6h2 M4 12h4 M12 12h8 M4 18h12 M16 4v4 M8 10v4 M16 16v4'
+};
+const href = { Painel: 'Painel.dc.html', Agenda: 'Agenda.dc.html', Pacientes: 'Pacientes.dc.html', CRC: 'CRC.dc.html', CRM: 'CRM.dc.html', 'Orçamentos': 'Orcamento.dc.html', Financeiro: 'Financeiro.dc.html', 'Relatórios': 'Relatorios.dc.html', 'Configurações': 'Configuracoes.dc.html' };
+const item = (label, count) => { const on = label === active; return { label, href: href[label] || '#', icon: I[label], count: count || false, bg: on ? 'rgba(255,255,255,0.12)' : 'transparent', fg: on ? '#FFFFFF' : 'rgba(255,255,255,0.78)', weight: on ? 600 : 500 }; };
+return [
+{ title: 'Clínica', items: [item('Painel'), item('Agenda'), item('Pacientes')] },
+{ title: 'Crescimento', items: [item('CRC', 23), item('CRM')] },
+{ title: 'Gestão', items: [item('Orçamentos'), item('Financeiro'), item('Relatórios'), item('Configurações')] }
+];
+}
+renderVals() {
+const cats = ['Todos', 'Estética', 'Dentística', 'Periodontia', 'Implante'].map((label, i) => ({ label, pressed: i === 1 ? 'true' : 'false', bg: i === 1 ? '#0C3640' : '#FFFFFF', fg: i === 1 ? '#FFFFFF' : '#14181F', border: i === 1 ? '#0C3640' : '#DAD7D0' }));
+const catalog = [
+['Faceta em porcelana', 'Por dente · 2 sessões', 'R$ 1.150'],
+['Faceta em resina', 'Por dente · 1 sessão', 'R$ 480'],
+['Clareamento a laser', 'Arcadas superior e inferior', 'R$ 1.200'],
+['Clareamento caseiro', 'Moldeiras + gel', 'R$ 690'],
+['Gengivoplastia', 'Por região', 'R$ 950'],
+['Lente de contato dental', 'Por dente', 'R$ 1.400'],
+['Mock-up estético', 'Ensaio da forma', 'R$ 300']
+].map(([name, meta, price]) => ({ name, meta, price }));
+const ph = { 1: ['#E3F0F1', '#0C3640'], 2: ['#EFECF9', '#3F3285'], 3: ['#FBF0E3', '#7A400B'] };
+const items = [
+[1, 'Raspagem e profilaxia', 'Antes da parte estética', ['Todos'], 'R$ 320'],
+[1, 'Clareamento a laser', 'Sessão única', ['Sup', 'Inf'], 'R$ 1.200'],
+[2, 'Mock-up estético', 'Aprovação da forma com a paciente', ['13–23'], 'R$ 300'],
+[3, 'Faceta em porcelana', '4 unidades', ['12', '11', '21', '22'], 'R$ 4.600'],
+[3, 'Faceta em porcelana', '2 unidades', ['13', '23'], 'R$ 2.300'],
+[3, 'Ajuste oclusal', 'Após cimentação', ['—'], 'R$ 0 · cortesia']
+].map(([phase, name, note, teeth, price]) => ({ phase, name, note, teeth, price, phaseBg: ph[phase][0], phaseFg: ph[phase][1] }));
+const pay = [
+['Pix à vista', '5% de desconto', 'R$ 8.284', true],
+['Cartão de crédito', 'até 12× sem juros', '12× R$ 726,67', false],
+['Boleto parcelado', 'entrada + 6 parcelas', '7× R$ 1.245,71', false],
+['Carnê da clínica', 'até 10×, sem consulta', '10× R$ 872', false]
+].map(([label, sub, value, on]) => ({ label, sub, value, checked: on, border: on ? '2px solid #17707F' : '1px solid #E8E6E1', bg: on ? '#F3F9F9' : '#FFFFFF' }));
+return { sections: this.navSections('Orçamentos'), cats, catalog, items, pay };
+}
+}
+</script>
+</body>
+</html>

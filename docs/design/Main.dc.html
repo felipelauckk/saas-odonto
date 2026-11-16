@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Arcada — identidade e componentes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#17707F}a:hover{color:#125866}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1000px; box-sizing: border-box; background: #F7F6F3; font-family: Inter, system-ui, sans-serif; color: #14181F; display: grid; grid-template-columns: 420px minmax(0, 1fr)">
+
+<div style="background: #0C3640; color: #FFFFFF; padding: 56px 48px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden">
+<svg aria-hidden="true" width="520" height="520" viewBox="0 0 520 520" style="position: absolute; right: -200px; bottom: -160px; opacity: 0.08"><path d="M60 460 C60 140, 460 140, 460 460" fill="none" stroke="#FFFFFF" stroke-width="56" stroke-linecap="round"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 28px; position: relative">
+<svg width="64" height="64" viewBox="0 0 48 48" role="img" aria-label="Símbolo Arcada"><rect width="48" height="48" rx="13" fill="#FFFFFF"></rect><path d="M13 33 C13 18.5, 35 18.5, 35 33" fill="none" stroke="#0C3640" stroke-width="4.2" stroke-linecap="round"></path><circle cx="24" cy="33.2" r="2.6" fill="#3FB8A8"></circle></svg>
+<div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 88px; line-height: 0.9; letter-spacing: -0.02em">Arcada</div>
+<div style="font-size: 17px; line-height: 1.55; color: rgba(255,255,255,0.78); max-width: 300px">A clínica inteira em um lugar: agenda, prontuário, vendas e financeiro.</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: rgba(255,255,255,0.72); position: relative">
+<span style="font-weight: 600; color: #FFFFFF; letter-spacing: 0.08em; text-transform: uppercase; font-size: 11px">Princípios</span>
+<span>Calma transmite confiança.</span>
+<span>Cor só onde há urgência.</span>
+<span>A tabela é a verdade; o gráfico, o resumo.</span>
+<span>A IA aparece dentro do trabalho, nunca num chat solto.</span>
+</div>
+</div>
+
+<div style="padding: 48px 48px; display: flex; flex-direction: column; gap: 28px; overflow: hidden">
+
+<section style="display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 11px; font-weight: 600; color: #4A515C; text-transform: uppercase; letter-spacing: 0.08em">Cor</div>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{brand}}" as="c" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="height: 64px; border-radius: 10px; background: {{c.hex}}; border: 1px solid #E8E6E1"></div>
+<div style="font-size: 12px; font-weight: 600">{{c.name}}</div>
+<div style="font-size: 11px; color: #4A515C; font-variant-numeric: tabular-nums">{{c.hex}}</div>
+</div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{states}}" as="s" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: {{s.soft}}"><span style="width: 10px; height: 10px; border-radius: 999px; background: {{s.hex}}"></span><span style="font-size: 12px; font-weight: 600; color: {{s.hex}}">{{s.name}}</span></div>
+</sc-for>
+</div>
+</section>
+
+<section style="display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 11px; font-weight: 600; color: #4A515C; text-transform: uppercase; letter-spacing: 0.08em">Tipografia</div>
+<div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 44px; line-height: 1.05; letter-spacing: -0.01em">Boa tarde, Helena</div>
+<div style="font-size: 12px; color: #4A515C">Instrument Serif — títulos de página e saudações, nunca em tabelas</div>
+<div style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em; margin-top: 6px">Agenda de hoje</div>
+<div style="font-size: 14px; line-height: 1.55; color: #14181F">Inter para toda a interface: rótulos, tabelas, formulários e números.</div>
+<div style="font-size: 32px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">R$ 48.920,00</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 11px; font-weight: 600; color: #4A515C; text-transform: uppercase; letter-spacing: 0.08em">Ícones · traço 1.75</div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{icons}}" as="i" hint-placeholder-count="10">
+<div style="height: 52px; border-radius: 10px; background: #FFFFFF; border: 1px solid #E8E6E1; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#14181F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="{{i.name}}"><path d="{{i.d}}"></path></svg></div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 11px; font-weight: 600; color: #4A515C; text-transform: uppercase; letter-spacing: 0.08em">Componentes</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<button type="button" style="height: 40px; padding: 0 16px; border-radius: 10px; border: 0; background: #17707F; color: #FFFFFF; font: 600 14px Inter, sans-serif; display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nova consulta</button>
+<button type="button" style="height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid #DAD7D0; background: #FFFFFF; color: #14181F; font: 600 14px Inter, sans-serif">Exportar</button>
+<button type="button" style="height: 40px; padding: 0 16px; border-radius: 10px; border: 0; background: #E3F0F1; color: #0C3640; font: 600 14px Inter, sans-serif">Ver ficha</button>
+<button type="button" style="height: 40px; padding: 0 12px; border-radius: 10px; border: 0; background: transparent; color: #17707F; font: 600 14px Inter, sans-serif">Ver tudo</button>
+<label style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid #DAD7D0; background: #FFFFFF; font-size: 14px; color: #4A515C; min-width: 220px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A515C" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg><input type="search" placeholder="Buscar paciente" aria-label="Buscar paciente" style="border: 0; outline: 0; background: transparent; font: 400 14px Inter, sans-serif; flex: 1"></label>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+<div style="background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-size: 13px; color: #4A515C"><span>Faturamento</span><span style="color: #157A4C; font-weight: 600">+12%</span></div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 8px"><span style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">R$ 48,9 mil</span><svg width="84" height="30" viewBox="0 0 84 30" aria-hidden="true"><polyline points="0,24 12,22 24,25 36,16 48,18 60,10 72,12 84,4" fill="none" stroke="#17707F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline></svg></div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; color: #4A515C">Status</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{badges}}" as="b" hint-placeholder-count="5">
+<span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{b.bg}}; color: {{b.fg}}"><span style="width: 6px; height: 6px; border-radius: 999px; background: {{b.fg}}"></span>{{b.label}}</span>
+</sc-for>
+</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 14px; padding: 16px 18px; display: flex; gap: 12px">
+<span style="width: 28px; height: 28px; border-radius: 8px; background: #E3F0F1; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0C3640" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; font-weight: 600">Sugestão da Arcada</span><span style="font-size: 13px; color: #4A515C; line-height: 1.5">3 orçamentos de implante estão parados há mais de 20 dias.</span></div>
+</div>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {
+brand: [
+{ name: 'Petróleo profundo', hex: '#0C3640' },
+{ name: 'Petróleo', hex: '#17707F' },
+{ name: 'Água', hex: '#3FB8A8' },
+{ name: 'Névoa', hex: '#E3F0F1' },
+{ name: 'Papel', hex: '#F7F6F3' },
+{ name: 'Tinta', hex: '#14181F' }
+],
+states: [
+{ name: 'Confirmado · pago', hex: '#157A4C', soft: '#E5F4EC' },
+{ name: 'Atenção · aguardando', hex: '#9A5B0A', soft: '#FBF0DD' },
+{ name: 'Urgente · vencido', hex: '#B3261E', soft: '#FBE9E7' },
+{ name: 'Neutro · concluído', hex: '#4A515C', soft: '#F0EEEA' }
+],
+icons: [
+{ name: 'Painel', d: 'M3 3h7v9H3z M14 3h7v5h-7z M14 12h7v9h-7z M3 16h7v5H3z' },
+{ name: 'Agenda', d: 'M3 5h18v16H3z M3 10h18 M8 3v4 M16 3v4' },
+{ name: 'Pacientes', d: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8z M22 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75' },
+{ name: 'CRC', d: 'M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-4-1L3 20l1.2-4.4A8.4 8.4 0 1121 11.5z' },
+{ name: 'CRM', d: 'M3 4h18l-7 8v6l-4 2v-8z' },
+{ name: 'Orçamentos', d: 'M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z M14 3v6h6 M8 13h8 M8 17h5' },
+{ name: 'Financeiro', d: 'M3 7h18v13H3z M3 7l3-4h12l3 4 M16 13.5h2' },
+{ name: 'Relatórios', d: 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2' },
+{ name: 'Dente', d: 'M7 3c-2 0-3.5 1.6-3.5 4 0 3 1.5 5 2 8 .5 3 1 6 2.5 6 1.6 0 1.6-5 4-5s2.4 5 4 5c1.5 0 2-3 2.5-6 .5-3 2-5 2-8 0-2.4-1.5-4-3.5-4-2 0-3 1-5 1S9 3 7 3z' },
+{ name: 'Configurações', d: 'M4 6h10 M18 6h2 M4 12h4 M12 12h8 M4 18h12 M16 4v4 M8 10v4 M16 16v4' }
+],
+badges: [
+{ label: 'Confirmada', bg: '#E5F4EC', fg: '#157A4C' },
+{ label: 'Na espera', bg: '#FBF0DD', fg: '#9A5B0A' },
+{ label: 'Faltou', bg: '#FBE9E7', fg: '#B3261E' },
+{ label: 'Primeira vez', bg: '#E3F0F1', fg: '#0C3640' },
+{ label: 'Concluída', bg: '#F0EEEA', fg: '#4A515C' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

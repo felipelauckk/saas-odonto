@@ -8,6 +8,7 @@ import { ScheduleEditor } from "@/features/settings/components/schedule-editor";
 import { StatusBadge } from "@/features/settings/components/status-badge";
 import { getProfessional, listLinkableMembers, listUnits } from "@/features/settings/queries";
 import { requireManager } from "@/features/tenancy/guards";
+import { professionalColor } from "@/lib/professional-colors";
 
 export const metadata: Metadata = { title: "Profissional" };
 
@@ -34,7 +35,7 @@ export default async function Page({ params }: PageProps<"/configuracoes/profiss
         actions={<EditProfessionalButton professional={professional} members={members} />}
       />
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span className="size-3 rounded-full" style={{ backgroundColor: professional.color }} aria-hidden />
+        <span className="size-3 rounded-full" style={{ backgroundColor: professionalColor(professional.color).value }} aria-hidden />
         Cor na agenda
         {!professional.active ? <StatusBadge active={false} /> : null}
       </div>

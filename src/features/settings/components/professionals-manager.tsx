@@ -6,6 +6,7 @@ import { ChevronRight, Plus, UserRound } from "lucide-react";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { FormDialog } from "@/components/forms/form-dialog";
 import { Button } from "@/components/ui/button";
+import { professionalColor } from "@/lib/professional-colors";
 
 import { saveProfessional } from "../actions/professionals";
 import { ProfessionalFields, type ProfessionalData } from "./professional-fields";
@@ -63,7 +64,7 @@ export function ProfessionalsList({ professionals }: { professionals: Profession
             href={`/configuracoes/profissionais/${p.id}`}
             className="flex items-center gap-4 px-4 py-3 outline-none transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 sm:px-5"
           >
-            <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: p.color }} aria-hidden />
+            <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: professionalColor(p.color).value }} aria-hidden />
             <span className="min-w-0 flex-1">
               <span className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{p.name}</span>

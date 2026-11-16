@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Arcada — financeiro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#17707F}a:hover{color:#125866}
+</style>
+</helmet>
+<div style="min-height: 1040px; background: #F7F6F3; font-family: Inter, system-ui, sans-serif; color: #14181F; display: flex; flex-wrap: wrap">
+
+<nav aria-label="Menu principal" style="flex: 1 1 248px; max-width: 100%; box-sizing: border-box; background: #0C3640; color: #FFFFFF; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px">
+<svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#FFFFFF"></rect><path d="M13 33 C13 18.5, 35 18.5, 35 33" fill="none" stroke="#0C3640" stroke-width="4.2" stroke-linecap="round"></path><circle cx="24" cy="33.2" r="2.6" fill="#3FB8A8"></circle></svg>
+<span style="font-family: 'Instrument Serif', Georgia, serif; font-size: 28px; letter-spacing: -0.01em">Arcada</span>
+</div>
+<button type="button" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); color: #FFFFFF; text-align: left; font-family: Inter, sans-serif">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 600">Clínica Sorriso</span><span style="font-size: 12px; color: rgba(255,255,255,0.72)">Todas as unidades</span></span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.72)" stroke-width="2" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"></path></svg>
+</button>
+<button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-radius: 10px; border: 0; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.78); font: 500 13px Inter, sans-serif">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>Buscar ou ir para…<span style="margin-left: auto; font-size: 11px; padding: 1px 6px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.2)">⌘K</span>
+</button>
+<sc-for list="{{sections}}" as="s" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="padding: 0 12px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.6)">{{s.title}}</div>
+<sc-for list="{{s.items}}" as="n" hint-placeholder-count="3">
+<a href="{{n.href}}" style="display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: {{n.weight}}; color: {{n.fg}}; background: {{n.bg}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.icon}}"></path></svg>{{n.label}}<sc-if value="{{n.count}}" hint-placeholder-val="{{false}}"><span style="margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #3FB8A8; color: #0C3640; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{n.count}}</span></sc-if></a>
+</sc-for>
+</div>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 32px 36px; display: flex; flex-direction: column; gap: 20px">
+
+<header style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 6px"><h1 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 44px; line-height: 1">Financeiro</h1><span style="font-size: 14px; color: #4A515C">Novembro de 2026 · todas as unidades</span></div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<button type="button" style="height: 42px; padding: 0 14px; border-radius: 10px; border: 1px solid #DAD7D0; background: #FFFFFF; font: 600 14px Inter, sans-serif">Importar extrato (OFX)</button>
+<button type="button" style="height: 42px; padding: 0 14px; border-radius: 10px; border: 1px solid #DAD7D0; background: #FFFFFF; font: 600 14px Inter, sans-serif">Nova despesa</button>
+<button type="button" style="height: 42px; padding: 0 16px; border-radius: 10px; border: 0; background: #17707F; color: #FFFFFF; font: 600 14px Inter, sans-serif">Receber pagamento</button>
+</div>
+</header>
+
+<div role="tablist" aria-label="Seções do financeiro" style="display: flex; gap: 2px; border-bottom: 1px solid #E8E6E1; overflow-x: auto">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+<button type="button" role="tab" aria-selected="{{t.selected}}" style="height: 44px; padding: 0 14px; border: 0; background: transparent; border-bottom: 2px solid {{t.line}}; margin-bottom: -1px; font: {{t.weight}} 14px Inter, sans-serif; color: {{t.fg}}; white-space: nowrap">{{t.label}}</button>
+</sc-for>
+</div>
+
+<section aria-label="Resultado do mês" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; overflow: hidden">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+<div style="padding: 20px 22px; border-right: 1px solid #F0EEEA; display: flex; flex-direction: column; gap: 8px; background: {{k.bg}}">
+<span style="font-size: 13px; color: {{k.labelColor}}">{{k.label}}</span>
+<span style="font-size: 28px; font-weight: 600; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; color: {{k.color}}">{{k.value}}</span>
+<span style="font-size: 12px; color: {{k.labelColor}}">{{k.note}}</span>
+</div>
+</sc-for>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+
+<section style="flex: 999 1 480px; min-width: 0; background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px"><div style="display: flex; flex-direction: column; gap: 3px"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Entradas e saídas, últimos 6 meses</h2><span style="font-size: 13px; color: #4A515C">O resultado de cada mês aparece acima das barras</span></div>
+<div style="display: flex; gap: 14px; font-size: 12px; color: #4A515C"><span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #17707F"></span>Entradas</span><span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #C9C5BC"></span>Saídas</span></div></div>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; align-items: end; height: 240px; padding-top: 10px; border-bottom: 1px solid #E8E6E1">
+<sc-for list="{{months}}" as="m" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end">
+<span style="font-size: 12px; font-weight: 600; color: {{m.resColor}}; font-variant-numeric: tabular-nums">{{m.res}}</span>
+<div style="display: flex; gap: 4px; align-items: flex-end; height: {{m.h}}; width: 100%; justify-content: center">
+<span style="width: 38%; max-width: 28px; height: {{m.inH}}; background: {{m.inColor}}; border-radius: 5px 5px 0 0"></span>
+<span style="width: 38%; max-width: 28px; height: {{m.outH}}; background: #C9C5BC; border-radius: 5px 5px 0 0"></span>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; text-align: center; font-size: 12px; color: #4A515C">
+<sc-for list="{{months}}" as="m" hint-placeholder-count="6"><span>{{m.label}}</span></sc-for>
+</div>
+</section>
+
+<section style="flex: 1 1 300px; min-width: 0; background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; padding: 22px 22px 14px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h2 style="margin: 0; font-size: 16px; font-weight: 600">Caixa de hoje</h2><span style="font-size: 12px; color: #4A515C">Centro · aberto 07:52</span></div>
+<span style="font-size: 30px; font-weight: 600; letter-spacing: -0.025em; font-variant-numeric: tabular-nums">R$ 4.870</span>
+<sc-for list="{{cash}}" as="c" hint-placeholder-count="4">
+<div style="display: flex; justify-content: space-between; align-items: center; min-height: 36px; border-top: 1px solid #F0EEEA; font-size: 13px"><span style="color: #4A515C">{{c.label}}</span><span style="font-weight: 600; font-variant-numeric: tabular-nums; color: {{c.color}}">{{c.value}}</span></div>
+</sc-for>
+<button type="button" style="margin-top: 6px; height: 40px; border-radius: 10px; border: 1px solid #DAD7D0; background: #FFFFFF; font: 600 13px Inter, sans-serif">Fechar o caixa</button>
+</section>
+
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+<sc-for list="{{dues}}" as="d" hint-placeholder-count="2">
+<section style="flex: 1 1 420px; min-width: 0; background: #FFFFFF; border: 1px solid #E8E6E1; border-radius: 16px; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: baseline; padding: 16px 20px; border-bottom: 1px solid #E8E6E1"><h2 style="margin: 0; font-size: 16px; font-weight: 600">{{d.title}}</h2><span style="font-size: 13px; color: #4A515C; font-variant-numeric: tabular-nums">{{d.total}}</span></div>
+<sc-for list="{{d.rows}}" as="r" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: 4px 64px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 52px; padding: 0 20px 0 16px; border-top: 1px solid #F0EEEA; font-size: 14px">
+<span style="width: 4px; height: 26px; border-radius: 4px; background: {{r.pressure}}"></span>
+<span style="font-size: 12px; font-weight: 600; color: {{r.dateColor}}; font-variant-numeric: tabular-nums">{{r.date}}</span>
+<span style="display: flex; flex-direction: column; gap: 1px; min-width: 0"><span style="font-weight: 500">{{r.who}}</span><span style="font-size: 12px; color: #4A515C">{{r.what}}</span></span>
+<span style="font-weight: 600; font-variant-numeric: tabular-nums">{{r.value}}</span>
+</div>
+</sc-for>
+</section>
+</sc-for>
+</div>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+navSections(active) {
+const I = {
+Painel: 'M3 3h7v9H3z M14 3h7v5h-7z M14 12h7v9h-7z M3 16h7v5H3z',
+Agenda: 'M3 5h18v16H3z M3 10h18 M8 3v4 M16 3v4',
+Pacientes: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8z M22 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75',
+CRC: 'M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-4-1L3 20l1.2-4.4A8.4 8.4 0 1121 11.5z',
+CRM: 'M3 4h18l-7 8v6l-4 2v-8z',
+'Orçamentos': 'M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z M14 3v6h6 M8 13h8 M8 17h5',
+Financeiro: 'M3 7h18v13H3z M3 7l3-4h12l3 4 M16 13.5h2',
+'Relatórios': 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2',
+'Configurações': 'M4 6h10 M18 6h2 M4 12h4 M12 12h8 M4 18h12 M16 4v4 M8 10v4 M16 16v4'
+};
+const href = { Painel: 'Painel.dc.html', Agenda: 'Agenda.dc.html', Pacientes: 'Pacientes.dc.html', CRC: 'CRC.dc.html', CRM: 'CRM.dc.html', 'Orçamentos': 'Orcamento.dc.html', Financeiro: 'Financeiro.dc.html', 'Relatórios': 'Relatorios.dc.html', 'Configurações': 'Configuracoes.dc.html' };
+const item = (label, count) => { const on = label === active; return { label, href: href[label] || '#', icon: I[label], count: count || false, bg: on ? 'rgba(255,255,255,0.12)' : 'transparent', fg: on ? '#FFFFFF' : 'rgba(255,255,255,0.78)', weight: on ? 600 : 500 }; };
+return [
+{ title: 'Clínica', items: [item('Painel'), item('Agenda'), item('Pacientes')] },
+{ title: 'Crescimento', items: [item('CRC', 23), item('CRM')] },
+{ title: 'Gestão', items: [item('Orçamentos'), item('Financeiro'), item('Relatórios'), item('Configurações')] }
+];
+}
+renderVals() {
+const tabs = ['Visão geral', 'A receber', 'A pagar', 'Caixa', 'Comissões', 'Notas fiscais'].map((label, i) => ({ label, selected: i === 0 ? 'true' : 'false', line: i === 0 ? '#17707F' : 'transparent', fg: i === 0 ? '#0C3640' : '#4A515C', weight: i === 0 ? 600 : 500 }));
+const data = [['jun', 71, 52], ['jul', 78, 55], ['ago', 69, 58], ['set', 84, 57], ['out', 88, 60], ['nov*', 49, 31]];
+const max = 100;
+const months = data.map(([label, inn, out], i) => {
+const r = inn - out;
+return { label, inH: (inn / max * 190) + 'px', outH: (out / max * 190) + 'px', h: '190px', res: (r >= 0 ? '+' : '−') + 'R$ ' + Math.abs(r) + ' mil', resColor: r >= 0 ? '#157A4C' : '#B3261E', inColor: i === 5 ? '#9CCFD3' : '#17707F' };
+});
+const P = { late: '#B3261E', soon: '#E3A13B', ok: '#DAD7D0' };
+return {
+sections: this.navSections('Financeiro'),
+tabs,
+kpis: [
+{ label: 'Entrou em novembro', value: 'R$ 48.920', note: 'até hoje · 14 dias', color: '#14181F', labelColor: '#4A515C', bg: '#FFFFFF' },
+{ label: 'Saiu em novembro', value: 'R$ 31.240', note: 'aluguel, folha, laboratório, materiais', color: '#14181F', labelColor: '#4A515C', bg: '#FFFFFF' },
+{ label: 'Resultado do mês', value: '+ R$ 17.680', note: 'margem de 36%', color: '#157A4C', labelColor: '#4A515C', bg: '#FFFFFF' },
+{ label: 'Vencido a receber', value: 'R$ 3.180', note: '2 pacientes · régua de cobrança ativa', color: '#B3261E', labelColor: '#7A1C16', bg: '#FBE9E7' }
+],
+months,
+cash: [
+{ label: 'Pix', value: 'R$ 2.620', color: '#14181F' },
+{ label: 'Cartão (líquido de taxas)', value: 'R$ 2.170', color: '#14181F' },
+{ label: 'Dinheiro', value: 'R$ 380', color: '#14181F' },
+{ label: 'Sangria · material de limpeza', value: '− R$ 300', color: '#B3261E' }
+],
+dues: [
+{ title: 'A receber nos próximos 7 dias', total: 'R$ 5.110', rows: [
+{ date: 'Venc. 09/11', dateColor: '#B3261E', who: 'Marcelo Duarte', what: 'Parcela 2 de 3 · canal + coroa', value: 'R$ 1.590', pressure: P.late },
+{ date: 'Venc. 11/11', dateColor: '#B3261E', who: 'Ana Beatriz Lima', what: 'Mensalidade ortodôntica', value: 'R$ 1.590', pressure: P.late },
+{ date: '16/11', dateColor: '#14181F', who: 'Mariana Costa', what: 'Parcela 3 de 6 · cartão', value: 'R$ 730', pressure: P.soon },
+{ date: '18/11', dateColor: '#14181F', who: 'Luciana Ferreira', what: 'Implante · boleto', value: 'R$ 1.200', pressure: P.ok }
+] },
+{ title: 'A pagar nos próximos 7 dias', total: 'R$ 14.310', rows: [
+{ date: '16/11', dateColor: '#14181F', who: 'Laboratório Dental Arte', what: 'Coroas e facetas de outubro', value: 'R$ 3.480', pressure: P.soon },
+{ date: '18/11', dateColor: '#14181F', who: 'Dental Cremer', what: 'Pedido 88213 · resinas e anestésicos', value: 'R$ 1.230', pressure: P.ok },
+{ date: '20/11', dateColor: '#14181F', who: 'Imobiliária Central', what: 'Aluguel · unidade Centro', value: 'R$ 6.800', pressure: P.ok },
+{ date: '20/11', dateColor: '#14181F', who: 'Repasse Dr. Marcos', what: 'Comissões de outubro', value: 'R$ 2.800', pressure: P.ok }
+] }
+]
+};
+}
+}
+</script>
+</body>
+</html>

@@ -34,6 +34,12 @@
 | 13. Contas a pagar e fluxo de caixa | Concluída (15/11/2026) | Contas a pagar (fornecedor, categoria, centro de custo, parcelas, mensal fixa, comprovante), baixa no caixa, fluxo realizado e previsto, DRE mensal, conciliação OFX assistida, categorias padrão e cadastros. |
 | 12. Documentos e assinatura eletrônica | Concluída (14/11/2026) | Modelos com variáveis, receituário (simples e controle especial em 2 vias) com lista de medicamentos, atestado, declaração, contrato, termo, orientações; aba Documentos; assinatura por link com página de evidências e hash; anamnese por link; verificação de PDF. |
 
+## Redesign Arcada (docs/REDESIGN.md)
+
+| Etapa | Status | Observações |
+| --- | --- | --- |
+| R1. Tokens e componentes | Concluída (15/11/2026) | Paleta Arcada em `globals.css` (papel, tinta, petróleo, petróleo profundo, verde-água, névoa, estados forte/suave, bordas e trilho); Montserrat em tudo, Black nos títulos (`type-display`, `type-title`) e pesos finos no resto (`type-section`, `type-label`, `type-kpi`); botões (principal, secundário, suave, sobre fundo escuro, perigo, perigo cheio, fantasma, link) com 40px (44px no toque); campos com foco petróleo de 2px; cartões com borda e raio de 16px, sem sombra; tabela com rótulos em caixa alta e divisórias suaves; novos `StatusBadge` (com mapa único de tons em `src/lib/status-tones.ts`), `KpiStrip` com `Sparkline`, `PressureBar`, `AiSuggestion`, `SegmentedControl`, `TabNav`, `BrandMark`; marca em `src/lib/brand.ts`, logo, favicon, ícones PWA e manifest; cores de profissional na paleta de 6 pares (cores antigas mostradas pela mais próxima, sem mudar o banco). Vitrine em `/dev/componentes` (só em desenvolvimento). Prints antes/depois em `docs/design/screens/` (`SCREENS=<rótulo> npx playwright test e2e/screens.spec.ts`). O menu lateral continua claro até a R2. |
+
 ## Decisões técnicas
 
 - **Next.js 16.4 com `cacheComponents` desligado.** O template novo liga essa opção, que guarda dados em cache no servidor. Quase todas as telas dependem da sessão e de dados por clínica (RLS), e um cache mal configurado poderia mostrar dados de uma clínica para outra. Usamos o modelo clássico (sem cache automático). Se for religar no futuro, revisar todo `use cache`.

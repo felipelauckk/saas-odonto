@@ -12,6 +12,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { professionalColor } from "@/lib/professional-colors";
 import {
   addDays,
   formatLongDate,
@@ -150,7 +151,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
     [date, view, by, selectedId, today, pathname, router],
   );
 
-  const colorById = useMemo(() => new Map(data.professionals.map((p) => [p.id, p.color])), [data.professionals]);
+  const colorById = useMemo(() => new Map(data.professionals.map((p) => [p.id, professionalColor(p.color).value])), [data.professionals]);
   const nameById = useMemo(() => new Map(data.professionals.map((p) => [p.id, p.name])), [data.professionals]);
   const chairName = useMemo(() => new Map(data.chairs.map((c) => [c.id, c.name])), [data.chairs]);
 
@@ -234,7 +235,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
     return data.professionals.map((p) => ({
       key: p.id,
       label: p.name,
-      color: p.color,
+      color: professionalColor(p.color).value,
       date,
       professionalId: p.id,
       isToday: date === today,
