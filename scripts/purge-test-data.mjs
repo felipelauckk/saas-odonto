@@ -1,16 +1,20 @@
 /**
  * Remove dados que sobraram de testes automáticos no Supabase configurado em
- * .env.local: usuários @example.com e as clínicas que só têm esses usuários.
+ * .env.local (ou no arquivo de ENV_FILE): usuários @example.com e as clínicas
+ * que só têm esses usuários.
  *
  *   node scripts/purge-test-data.mjs          # só mostra o que seria apagado
  *   node scripts/purge-test-data.mjs --apply  # apaga
+ *   ENV_FILE=.env.test.local node scripts/purge-test-data.mjs --apply  # banco de testes
  *
  * Usuários com outros e-mails e as clínicas deles nunca são tocados. A conta
  * de teste manual (clinicateste@example.com / "Clínica Teste") é protegida.
  */
 import { createClient } from "@supabase/supabase-js";
 
-process.loadEnvFile(".env.local");
+const envFile = process.env.ENV_FILE ?? ".env.local";
+process.loadEnvFile(envFile);
+console.log(`Supabase de ${envFile}: ${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname.split(".")[0]}`);
 const apply = process.argv.includes("--apply");
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
