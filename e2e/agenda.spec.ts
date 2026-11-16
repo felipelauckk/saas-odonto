@@ -144,7 +144,7 @@ test("atualiza sozinha quando outra pessoa marca (tempo real)", async ({ page })
 test("visão semanal mostra os 7 dias", async ({ page }) => {
   await insertAppointment("09:00", "09:30");
   await page.goto(`/agenda?data=${DAY}&visao=semana`);
-  await expect(page.getByRole("heading", { name: "seg., 04 – dom., 10" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "4 a 10 de março" })).toBeVisible();
   await expect(page.getByText("dom., 10", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /Paciente Agenda, 09:00/ })).toBeVisible();
 });

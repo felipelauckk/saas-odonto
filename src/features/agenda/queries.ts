@@ -1,9 +1,12 @@
 import "server-only";
 
+import { fetchAll } from "@/lib/supabase/fetch-all";
 import { createClient } from "@/lib/supabase/server";
-import { addDays, utcToZoned, zonedToUtc } from "@/lib/timezone";
+import { addDays, timeToMinutes, utcToZoned, zonedToUtc } from "@/lib/timezone";
 
+import type { Period } from "./advanced";
 import type { AppointmentStatus } from "./labels";
+import { monthOccupancy, occupancyLevel, pickFreedSlot } from "./overview";
 
 export type AgendaAppointment = {
   id: string;
@@ -213,4 +216,120 @@ export async function getAttendanceReport({ from, to, professionalId }: { from: 
     byProfessional: [...byProfessional.values()].sort((a, b) => a.name.localeCompare(b.name)),
     byTag: [...byTag.values()].sort((a, b) => b.total - a.total),
   };
+}
+
+// --- Visão geral da agenda (R4): mini calendário, sala de espera e vaga liberada. ---
+
+/**
+ * Tom de ocupação de cada dia do mês na unidade (0 a 3). Só conta os
+ * profissionais visíveis para quem pede (dentista: só os próprios).
+ */
+export async function getMonthOccupancy(unitId: string, month: string, professionalIds: string[]) {
+  const supabase = await createClient();
+  const first = `${month}-01`;
+  const next = `${addDays(first, 31).slice(0, 7)}-01`; // 1º do mês seguinte
+  const [appts, schedules] = await Promise.all([
+    fetchAll((a, b) =>
+      supabase
+        .from("appointments")
+        .select("professional_id, starts_at, ends_at, status")
+        .eq("unit_id", unitId)
+        .not("status", "in", "(canceled,no_show)")
+        .gte("starts_at", zonedToUtc(first, "00:00").toISOString())
+        .lt("starts_at", zonedToUtc(next, "00:00").toISOString())
+        .order("id")
+        .range(a, b),
+    ),
+    supabase.from("professional_schedules").select("professional_id, weekday, start_time, end_time").eq("unit_id", unitId),
+  ]);
+  if (schedules.error) throw schedules.error;
+  const allowed = new Set(professionalIds);
+  const occ = monthOccupancy(
+    month,
+    appts
+      .filter((a) => allowed.has(a.professional_id))
+      .map((a) => {
+        const start = utcToZoned(a.starts_at);
+        const end = utcToZoned(a.ends_at);
+        return { date: start.date, professionalId: a.professional_id, status: a.status, startMin: start.minutes, endMin: end.date === start.date ? end.minutes : 24 * 60 };
+      }),
+    (schedules.data ?? [])
+      .filter((s) => allowed.has(s.professional_id))
+      .map((s) => ({ professionalId: s.professional_id, weekday: s.weekday, startMin: timeToMinutes(s.start_time), endMin: timeToMinutes(s.end_time) })),
+  );
+  return new Map([...occ].map(([date, ratio]) => [date, occupancyLevel(ratio)]));
+}
+
+export type WaitingRow = { id: string; patientName: string; professionalName: string; scheduledTime: string; arrivedAt: string; isFirstVisit: boolean };
+
+/** Quem chegou hoje e aguarda atendimento na unidade. */
+export async function getWaitingRoom(unitId: string, today: string): Promise<WaitingRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("appointments")
+    .select("id, starts_at, arrived_at, is_first_visit, patients(full_name), professionals(name)")
+    .eq("unit_id", unitId)
+    .eq("status", "arrived")
+    .gte("starts_at", zonedToUtc(today, "00:00").toISOString())
+    .lt("starts_at", zonedToUtc(addDays(today, 1), "00:00").toISOString())
+    .order("arrived_at");
+  if (error) throw error;
+  return (data ?? []).map((a) => ({
+    id: a.id,
+    patientName: a.patients?.full_name ?? "",
+    professionalName: a.professionals?.name ?? "",
+    scheduledTime: utcToZoned(a.starts_at).time,
+    arrivedAt: a.arrived_at ?? a.starts_at,
+    isFirstVisit: a.is_first_visit,
+  }));
+}
+
+/** A vaga liberada mais próxima (próximos 7 dias) com quem da lista de espera cabe nela. */
+export async function getFreedSlot(unitId: string, now: Date = new Date()) {
+  const supabase = await createClient();
+  const from = now.toISOString();
+  const to = zonedToUtc(addDays(utcToZoned(now).date, 8), "00:00").toISOString();
+  const [canceledRes, busyRes, waitRes, prosRes] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select("id, professional_id, unit_id, starts_at, ends_at")
+      .eq("unit_id", unitId)
+      .eq("status", "canceled")
+      .gt("starts_at", from)
+      .lt("starts_at", to)
+      .order("starts_at")
+      .limit(50),
+    supabase
+      .from("appointments")
+      .select("professional_id, starts_at, ends_at")
+      .eq("unit_id", unitId)
+      .not("status", "in", "(canceled,no_show)")
+      .lt("starts_at", to)
+      .gt("ends_at", from)
+      .limit(2000),
+    supabase.from("waitlist").select("id, unit_id, professional_id, period, notes, patients(full_name)").eq("status", "waiting").order("created_at"),
+    supabase.from("professionals").select("id, name"),
+  ]);
+  for (const r of [canceledRes, busyRes, waitRes, prosRes]) if (r.error) throw r.error;
+
+  const toInterval = (startsAt: string, endsAt: string) => {
+    const s = utcToZoned(startsAt);
+    const e = utcToZoned(endsAt);
+    return { date: s.date, startMin: s.minutes, endMin: e.date === s.date ? e.minutes : 24 * 60 };
+  };
+  const picked = pickFreedSlot(
+    (canceledRes.data ?? []).map((c) => ({ id: c.id, unitId: c.unit_id, professionalId: c.professional_id, ...toInterval(c.starts_at, c.ends_at) })),
+    (busyRes.data ?? []).map((b) => ({ professionalId: b.professional_id, ...toInterval(b.starts_at, b.ends_at) })),
+    (waitRes.data ?? []).map((w) => ({
+      id: w.id,
+      unitId: w.unit_id,
+      professionalId: w.professional_id,
+      period: w.period as Period,
+      patientName: w.patients?.full_name ?? "Paciente",
+      notes: w.notes,
+    })),
+  );
+  if (!picked) return null;
+  const professionalName = (prosRes.data ?? []).find((p) => p.id === picked.slot.professionalId)?.name ?? "Profissional";
+  return { ...picked, professionalName };
 }

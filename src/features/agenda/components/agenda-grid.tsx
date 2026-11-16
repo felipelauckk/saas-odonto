@@ -13,7 +13,11 @@ export type GridColumn = {
   key: string;
   label: string;
   sublabel?: string;
-  color?: string;
+  /** Cor do profissional (forte e suave) para o avatar. */
+  color?: { value: string; soft: string };
+  initials?: string;
+  /** Ocupação do expediente (0–1); nulo sem expediente. */
+  occupancy?: number | null;
   date: string;
   /** Profissional da coluna (null na visão por cadeira). */
   professionalId: string | null;
@@ -31,7 +35,7 @@ export type MoveTarget = { appointment: AgendaAppointment; column: GridColumn; s
 type Props = {
   columns: GridColumn[];
   range: { startMin: number; endMin: number };
-  colorFor: (professionalId: string) => string;
+  colorFor: (professionalId: string) => { value: string; soft: string };
   tagColors?: Map<string, string>;
   onSlotClick: (column: GridColumn, startMin: number) => void;
   onAppointmentClick: (appointment: AgendaAppointment) => void;
@@ -40,6 +44,42 @@ type Props = {
 };
 
 const px = (minutes: number) => (minutes / 60) * HOUR_HEIGHT;
+
+const pct = new Intl.NumberFormat("pt-BR", { style: "percent", maximumFractionDigits: 0 });
+
+/** Texto do estado no cartão (sempre escrito: a cor nunca é o único sinal). */
+const CARD_STATUS: Record<AgendaAppointment["status"], string> = {
+  scheduled: "Não confirmada",
+  confirmed: "Confirmada",
+  arrived: "Na espera",
+  in_progress: "Em atendimento",
+  done: "Concluída",
+  no_show: "Faltou",
+  canceled: "Desmarcada",
+};
+
+/** Aparência do cartão por estado (R4). */
+function cardLook(status: AgendaAppointment["status"], color: { value: string; soft: string }) {
+  switch (status) {
+    case "scheduled":
+      return { className: "border-[1.5px] border-dashed border-warning bg-card", style: {}, sub: "text-muted-foreground" };
+    case "confirmed":
+      return { className: "border-[1.5px]", style: { backgroundColor: color.soft, borderColor: color.value }, sub: "text-muted-foreground" };
+    case "arrived":
+      return { className: "border-2 border-warning bg-card", style: {}, sub: "text-warning" };
+    case "in_progress":
+      return { className: "border text-primary-foreground", style: { backgroundColor: color.value, borderColor: color.value }, sub: "text-primary-foreground/85" };
+    case "done":
+      return { className: "border border-muted bg-muted opacity-80", style: {}, sub: "text-muted-foreground" };
+    default:
+      return {
+        className:
+          "border border-input bg-[repeating-linear-gradient(135deg,var(--color-background),var(--color-background)_5px,var(--color-card)_5px,var(--color-card)_10px)] text-muted-foreground",
+        style: {},
+        sub: "text-muted-foreground",
+      };
+  }
+}
 
 function nowInSaoPaulo() {
   return utcToZoned(new Date()).minutes;
@@ -160,23 +200,41 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
   }
 
   return (
-    <div className="overflow-auto rounded-xl border" style={{ maxHeight: "calc(100dvh - 15rem)", minHeight: "24rem" }}>
+    <div className="overflow-auto rounded-card border bg-card" style={{ maxHeight: "calc(100dvh - 15rem)", minHeight: "24rem" }}>
       <div className="relative min-w-full" style={{ width: "max-content" }} ref={gridRef}>
         {/* Cabeçalho */}
-        <div className="sticky top-0 z-20 flex border-b bg-background">
-          <div className="sticky left-0 z-10 w-14 shrink-0 border-r bg-background" />
+        <div className="sticky top-0 z-20 flex border-b bg-card">
+          <div className="sticky left-0 z-10 w-14 shrink-0 bg-card" />
           {columns.map((col) => (
             <div
               key={col.key}
               className={cn(
-                "flex min-w-40 flex-1 items-center gap-2 border-r px-3 py-2 last:border-r-0 sm:min-w-48",
+                "flex min-w-40 flex-1 items-center gap-2.5 border-l border-border-soft px-3 py-3 sm:min-w-48",
                 col.isToday && "bg-primary/5",
               )}
             >
-              {col.color ? <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: col.color }} aria-hidden /> : null}
-              <div className="min-w-0">
-                <p className={cn("truncate text-sm font-medium", col.isToday && "text-primary")}>{col.label}</p>
+              {col.color && col.initials ? (
+                <span
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold ring-2 ring-card"
+                  style={{ backgroundColor: col.color.soft, color: col.color.value, boxShadow: `0 0 0 3.5px ${col.color.value}` }}
+                  aria-hidden
+                >
+                  {col.initials}
+                </span>
+              ) : col.color ? (
+                <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: col.color.value }} aria-hidden />
+              ) : null}
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <p className={cn("truncate text-sm font-semibold first-letter:uppercase", col.isToday && "text-primary")}>{col.label}</p>
                 {col.sublabel ? <p className="truncate text-xs text-muted-foreground">{col.sublabel}</p> : null}
+                {col.occupancy !== undefined && col.occupancy !== null ? (
+                  <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="h-1 w-16 overflow-hidden rounded-full bg-track" aria-hidden>
+                      <span className="block h-full rounded-full" style={{ width: `${col.occupancy * 100}%`, backgroundColor: col.color?.value ?? "var(--color-primary)" }} />
+                    </span>
+                    {pct.format(col.occupancy)} ocupado
+                  </span>
+                ) : null}
               </div>
             </div>
           ))}
@@ -184,12 +242,21 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
 
         <div className="flex">
           {/* Horas */}
-          <div className="sticky left-0 z-10 w-14 shrink-0 border-r bg-background" style={{ height }}>
+          <div className="sticky left-0 z-10 w-14 shrink-0 bg-card" style={{ height }}>
             {hours.map((m) => (
               <div key={m} className="absolute right-2 -translate-y-1/2 text-xs text-muted-foreground tabular-nums" style={{ top: px(m - range.startMin) }}>
                 {m === range.startMin ? null : minutesToTime(m)}
               </div>
             ))}
+            {columns.some((c) => c.isToday) && now !== null && now >= range.startMin && now <= range.endMin ? (
+              <span
+                className="absolute left-1 z-[4] -translate-y-1/2 rounded-[5px] bg-destructive px-1 py-0.5 text-[0.6875rem] font-bold text-card tabular-nums"
+                style={{ top: px(now - range.startMin) }}
+              >
+                <span className="sr-only">Agora, </span>
+                {minutesToTime(now)}
+              </span>
+            ) : null}
           </div>
 
           {columns.map((col, colIndex) => {
@@ -198,7 +265,7 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
               <div
                 key={col.key}
                 data-col-index={colIndex}
-                className={cn("relative min-w-40 flex-1 border-r last:border-r-0 sm:min-w-48", col.isToday && "bg-primary/[0.02]")}
+                className={cn("relative min-w-40 flex-1 border-l border-border-soft sm:min-w-48", col.isToday && "bg-primary/[0.02]")}
                 style={{ height }}
               >
                 {/* Fora do expediente */}
@@ -223,8 +290,8 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
                     aria-label={`Marcar consulta ${col.label} às ${minutesToTime(m)}`}
                     onClick={() => onSlotClick(col, m)}
                     className={cn(
-                      "absolute inset-x-0 border-t border-border/60 hover:bg-primary/5 focus-visible:bg-primary/10 focus-visible:outline-none",
-                      m % 60 !== 0 && "border-dashed border-border/40",
+                      "absolute inset-x-0 border-t hover:bg-primary/5 focus-visible:bg-primary/10 focus-visible:outline-none",
+                      m % 60 !== 0 ? "border-border-soft" : "border-track",
                     )}
                     style={{ top: px(m - range.startMin), height: px(30) }}
                   />
@@ -260,8 +327,10 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
                   const freeing = FREEING_STATUSES.includes(a.status);
                   const lane = lanes.get(a.id) ?? { lane: 0, lanes: 1 };
                   const color = colorFor(a.professionalId);
-                  const top = px(Math.max(startMin, range.startMin) - range.startMin);
-                  const cardHeight = Math.max(px(Math.min(startMin + duration, range.endMin) - Math.max(startMin, range.startMin)), 22);
+                  const look = cardLook(a.status, color);
+                  const top = px(Math.max(startMin, range.startMin) - range.startMin) + 1;
+                  const cardHeight = Math.max(px(Math.min(startMin + duration, range.endMin) - Math.max(startMin, range.startMin)) - 2, 22);
+                  const tags = a.tagIds.map((id) => tagColors?.get(id)).filter((c): c is string => Boolean(c));
                   return (
                     <button
                       key={`${a.id}-${a.date}`}
@@ -279,39 +348,37 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
                       }}
                       aria-label={`${a.patientName}, ${minutesToTime(a.startMin)} a ${minutesToTime(a.endMin)}, ${statusLabels[a.status]}${a.isFirstVisit ? ", primeira consulta" : ""}`}
                       className={cn(
-                        "absolute z-[2] flex flex-col overflow-hidden rounded-md border-l-4 px-2 py-1 text-left text-xs shadow-xs outline-none transition-opacity focus-visible:ring-3 focus-visible:ring-ring/50",
-                        freeing ? "z-[1] bg-muted/80 text-muted-foreground" : "bg-background",
+                        "absolute z-[2] flex flex-col gap-0.5 overflow-hidden rounded-lg px-2 py-1 text-left text-xs outline-none transition-opacity focus-visible:ring-3 focus-visible:ring-ring/50",
+                        look.className,
+                        freeing && "z-[1]",
                         isDragging && "opacity-40",
-                        a.status === "canceled" && "line-through",
                         !freeing && "cursor-grab active:cursor-grabbing",
                       )}
                       style={{
+                        ...look.style,
                         top,
                         height: cardHeight,
-                        left: freeing ? "55%" : `calc(${(lane.lane / lane.lanes) * 100}% + 2px)`,
-                        width: freeing ? "calc(45% - 4px)" : `calc(${100 / lane.lanes}% - 4px)`,
-                        borderLeftColor: color,
-                        backgroundColor: freeing ? undefined : `color-mix(in oklab, ${color} 12%, var(--color-background))`,
+                        left: freeing ? "55%" : `calc(${(lane.lane / lane.lanes) * 100}% + 3px)`,
+                        width: freeing ? "calc(45% - 6px)" : `calc(${100 / lane.lanes}% - 6px)`,
                       }}
                     >
-                      <span className="flex items-center gap-1 truncate font-medium">
-                        {a.isFirstVisit ? (
-                          <span className="rounded bg-primary px-1 text-[10px] font-semibold text-primary-foreground" title="Primeira consulta">1ª</span>
-                        ) : null}
-                        <span className="truncate">{a.patientName}</span>
-                        {a.tagIds.map((id) => (
-                          <span key={id} className="size-2 shrink-0 rounded-full" style={{ backgroundColor: tagColors?.get(id) ?? "#64748b" }} aria-hidden />
-                        ))}
-                      </span>
-                      {cardHeight > 30 ? (
-                        <span className="truncate text-muted-foreground">
-                          {minutesToTime(a.startMin)} · {a.type ?? statusLabels[a.status]}
+                      {cardHeight > 40 ? (
+                        <span className={cn("flex items-center justify-between gap-1.5 text-[0.6875rem] font-semibold tabular-nums", look.sub)}>
+                          <span className="truncate">
+                            {minutesToTime(a.startMin)}–{minutesToTime(a.endMin)}
+                          </span>
+                          <span className="shrink-0">{CARD_STATUS[a.status]}</span>
                         </span>
                       ) : null}
-                      {cardHeight > 48 && a.status !== "scheduled" ? (
-                        <span className="mt-auto truncate font-medium" style={{ color: freeing ? undefined : color }}>
-                          {statusLabels[a.status]}
-                        </span>
+                      <span className={cn("flex items-center gap-1 truncate text-[0.8125rem] font-semibold", freeing && "line-through")}>
+                        <span className="truncate">{a.patientName}</span>
+                        {tags.map((c, i) => (
+                          <span key={i} className="size-2 shrink-0 rounded-full" style={{ backgroundColor: c }} aria-hidden />
+                        ))}
+                      </span>
+                      {cardHeight > 62 && a.type ? <span className={cn("truncate", look.sub)}>{a.type}</span> : null}
+                      {cardHeight > 80 && a.isFirstVisit ? (
+                        <span className="mt-0.5 self-start rounded-full bg-accent px-1.5 text-[0.6875rem] font-semibold text-accent-foreground">Primeira vez</span>
                       ) : null}
                     </button>
                   );

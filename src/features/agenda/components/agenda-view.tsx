@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Ban, CalendarX2, ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -8,6 +8,7 @@ import { cn } from "cn";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { SimpleSelect } from "@/components/forms/simple-select";
+import { SegmentedControl } from "@/components/app/segmented-control";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ import {
 
 import { deleteBlock, moveAppointment, type PatientOption } from "../actions";
 import { visibleRange } from "../layout";
+import { initials, occupancy, weekTitle } from "../overview";
 import type { AgendaAppointment, AgendaBlock, AgendaData } from "../queries";
 import { AgendaGrid, type GridColumn, type MoveTarget } from "./agenda-grid";
 import { AppointmentDetails } from "./appointment-details";
@@ -45,6 +47,10 @@ type Props = {
   isDentist: boolean;
   /** Abre "Nova consulta" já com o paciente (vindo da CRC ou da ficha). */
   presetPatient?: PatientOption | null;
+  /** Linha abaixo do título (unidade ou "Sua agenda"). */
+  subtitle?: string;
+  /** Coluna lateral (mini calendário, sala de espera, vaga liberada). */
+  aside?: ReactNode;
 };
 
 type DialogState =
@@ -104,7 +110,7 @@ function useAgendaRealtime(unitId: string) {
   return live;
 }
 
-export function AgendaView({ data, unitId, date, today, view, by, selectedId, isDentist, presetPatient = null }: Props) {
+export function AgendaView({ data, unitId, date, today, view, by, selectedId, isDentist, presetPatient = null, subtitle, aside }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [dialog, setDialog] = useState<DialogState>(() =>
@@ -151,7 +157,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
     [date, view, by, selectedId, today, pathname, router],
   );
 
-  const colorById = useMemo(() => new Map(data.professionals.map((p) => [p.id, professionalColor(p.color).value])), [data.professionals]);
+  const colorById = useMemo(() => new Map(data.professionals.map((p) => [p.id, professionalColor(p.color)])), [data.professionals]);
   const nameById = useMemo(() => new Map(data.professionals.map((p) => [p.id, p.name])), [data.professionals]);
   const chairName = useMemo(() => new Map(data.chairs.map((c) => [c.id, c.name])), [data.chairs]);
 
@@ -190,16 +196,21 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
       }
       const professionalId = selectedId ?? data.professionals[0]?.id;
       if (!professionalId) return [];
-      return days.map((day) => ({
-        key: day,
-        label: formatShortDay(day),
-        date: day,
-        professionalId,
-        isToday: day === today,
-        appointments: appts.filter((a) => a.date === day && a.professionalId === professionalId),
-        blocks: blocksFor(day, professionalId),
-        working: workingFor(professionalId, day),
-      }));
+      return days.map((day) => {
+        const dayAppts = appts.filter((a) => a.date === day && a.professionalId === professionalId);
+        const working = workingFor(professionalId, day);
+        return {
+          key: day,
+          label: formatShortDay(day),
+          date: day,
+          professionalId,
+          isToday: day === today,
+          appointments: dayAppts,
+          blocks: blocksFor(day, professionalId),
+          working,
+          occupancy: occupancy(dayAppts, working),
+        };
+      });
     }
 
     if (by === "cadeira") {
@@ -232,17 +243,23 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
       return cols;
     }
 
-    return data.professionals.map((p) => ({
-      key: p.id,
-      label: p.name,
-      color: professionalColor(p.color).value,
-      date,
-      professionalId: p.id,
-      isToday: date === today,
-      appointments: appts.filter((a) => a.date === date && a.professionalId === p.id),
-      blocks: blocksFor(date, p.id),
-      working: workingFor(p.id, date),
-    }));
+    return data.professionals.map((p) => {
+      const dayAppts = appts.filter((a) => a.date === date && a.professionalId === p.id);
+      const working = workingFor(p.id, date);
+      return {
+        key: p.id,
+        label: p.name,
+        color: professionalColor(p.color),
+        initials: initials(p.name),
+        date,
+        professionalId: p.id,
+        isToday: date === today,
+        appointments: dayAppts,
+        blocks: blocksFor(date, p.id),
+        working,
+        occupancy: occupancy(dayAppts, working),
+      };
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, view, by, selectedId, date, today, workingFor, tagFilter]);
 
@@ -312,16 +329,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
 
   // Cabeçalho -------------------------------------------------------------------------
   const step = view === "semana" ? 7 : 1;
-  const title =
-    view === "semana"
-      ? `${formatShortDay(days[0]!)} – ${formatShortDay(days[6]!)}`
-      : formatLongDate(date);
-
-  const segment = (active: boolean) =>
-    cn(
-      "h-8 rounded-md px-3 text-sm font-medium transition-colors pointer-coarse:h-11",
-      active ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground",
-    );
+  const title = view === "semana" ? weekTitle(days[0]!, days[6]!) : formatLongDate(date).replace(/^./, (c) => c.toUpperCase());
 
   const weekOptions =
     by === "cadeira"
@@ -333,48 +341,70 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
 
   return (
     <div className="space-y-4">
-      {/* Barra de ferramentas */}
-      <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center">
-            <Button variant="ghost" size="icon" aria-label={view === "semana" ? "Semana anterior" : "Dia anterior"} onClick={() => navigate({ data: addDays(date, -step) })}>
-              <ChevronLeft />
-            </Button>
-            <Button variant="ghost" size="icon" aria-label={view === "semana" ? "Próxima semana" : "Próximo dia"} onClick={() => navigate({ data: addDays(date, step) })}>
-              <ChevronRight />
-            </Button>
+      {/* Cabeçalho: a data é o título */}
+      <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <div className="min-w-0 space-y-1">
+            <h1 className="type-display">{title}</h1>
+            {subtitle ? <p className="text-sm text-muted-foreground">{subtitle}</p> : null}
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate({ data: today })} disabled={days.includes(today)}>
-            Hoje
-          </Button>
-          <h2 className="text-base font-medium first-letter:uppercase">{title}</h2>
-          <Input
-            type="date"
-            aria-label="Ir para a data"
-            value={date}
-            onChange={(e) => e.target.value && navigate({ data: e.target.value })}
-            className="h-8 w-auto pointer-coarse:h-11"
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex items-center overflow-hidden rounded-lg border border-input bg-card">
+              <button
+                type="button"
+                aria-label={view === "semana" ? "Semana anterior" : "Dia anterior"}
+                onClick={() => navigate({ data: addDays(date, -step) })}
+                className="flex size-9 items-center justify-center hover:bg-muted pointer-coarse:size-11"
+              >
+                <ChevronLeft className="size-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate({ data: today })}
+                disabled={days.includes(today)}
+                className="h-9 border-x border-border px-3 text-[0.8125rem] font-semibold hover:bg-muted disabled:text-muted-foreground disabled:hover:bg-transparent pointer-coarse:h-11"
+              >
+                Hoje
+              </button>
+              <button
+                type="button"
+                aria-label={view === "semana" ? "Próxima semana" : "Próximo dia"}
+                onClick={() => navigate({ data: addDays(date, step) })}
+                className="flex size-9 items-center justify-center hover:bg-muted pointer-coarse:size-11"
+              >
+                <ChevronRight className="size-4" aria-hidden />
+              </button>
+            </div>
+            <Input
+              type="date"
+              aria-label="Ir para a data"
+              value={date}
+              onChange={(e) => e.target.value && navigate({ data: e.target.value })}
+              className="h-9 w-auto pointer-coarse:h-11"
+            />
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-lg bg-muted p-1" role="group" aria-label="Período">
-            <button type="button" className={segment(view === "dia")} aria-pressed={view === "dia"} onClick={() => navigate({ visao: "dia" })}>
-              Dia
-            </button>
-            <button type="button" className={segment(view === "semana")} aria-pressed={view === "semana"} onClick={() => navigate({ visao: "semana" })}>
-              Semana
-            </button>
-          </div>
+          <SegmentedControl
+            label="Período"
+            value={view}
+            onChange={(v) => navigate({ visao: v })}
+            options={[
+              { value: "dia", label: "Dia" },
+              { value: "semana", label: "Semana" },
+            ]}
+          />
           {data.chairs.length ? (
-            <div className="inline-flex rounded-lg bg-muted p-1" role="group" aria-label="Ver por">
-              <button type="button" className={segment(by === "profissional")} aria-pressed={by === "profissional"} onClick={() => navigate({ por: "profissional", id: null })}>
-                Profissional
-              </button>
-              <button type="button" className={segment(by === "cadeira")} aria-pressed={by === "cadeira"} onClick={() => navigate({ por: "cadeira", id: null })}>
-                Cadeira
-              </button>
-            </div>
+            <SegmentedControl
+              label="Ver por"
+              value={by}
+              onChange={(v) => navigate({ por: v, id: null })}
+              options={[
+                { value: "profissional", label: "Profissional" },
+                { value: "cadeira", label: "Cadeira" },
+              ]}
+            />
           ) : null}
           {view === "semana" && weekOptions.length > 1 ? (
             <SimpleSelect
@@ -407,65 +437,64 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
         </div>
       </div>
 
+      <AgendaLegend />
+
       {message ? <FormMessage state={{ status: "error", message }} /> : null}
       {notice ? <FormMessage state={{ status: "success", message: notice }} /> : null}
 
-      {noColumns ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
-          <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground">
-            <CalendarX2 className="size-5" aria-hidden />
-          </div>
-          {by === "cadeira" ? (
-            <>
-              <h2 className="text-base font-medium">Nenhuma cadeira nesta unidade</h2>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">Cadastre as cadeiras para ver a agenda por cadeira.</p>
-            </>
-          ) : isDentist ? (
-            <>
-              <h2 className="text-base font-medium">Sua agenda ainda não está configurada</h2>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                Peça ao gestor da clínica para ligar o seu usuário a um profissional em Configurações → Profissionais.
-              </p>
-            </>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_17rem]">
+        <div className="min-w-0 space-y-3">
+          {noColumns ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
+              <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground">
+                <CalendarX2 className="size-5" aria-hidden />
+              </div>
+              {by === "cadeira" ? (
+                <>
+                  <h2 className="text-base font-medium">Nenhuma cadeira nesta unidade</h2>
+                  <p className="mt-1 max-w-sm text-sm text-muted-foreground">Cadastre as cadeiras para ver a agenda por cadeira.</p>
+                </>
+              ) : isDentist ? (
+                <>
+                  <h2 className="text-base font-medium">Sua agenda ainda não está configurada</h2>
+                  <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                    Peça ao gestor da clínica para ligar o seu usuário a um profissional em Configurações → Profissionais.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-base font-medium">Nenhum profissional cadastrado</h2>
+                  <p className="mt-1 max-w-sm text-sm text-muted-foreground">Cadastre os dentistas e os horários de atendimento para usar a agenda.</p>
+                  <Link href="/configuracoes/profissionais" className={cn(buttonVariants(), "mt-6")}>
+                    Cadastrar profissionais
+                  </Link>
+                </>
+              )}
+            </div>
           ) : (
-            <>
-              <h2 className="text-base font-medium">Nenhum profissional cadastrado</h2>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">Cadastre os dentistas e os horários de atendimento para usar a agenda.</p>
-              <Link href="/configuracoes/profissionais" className={cn(buttonVariants(), "mt-6")}>
-                Cadastrar profissionais
-              </Link>
-            </>
+            <AgendaGrid
+              columns={columns}
+              range={range}
+              colorFor={(id) => colorById.get(id) ?? professionalColor(null)}
+              tagColors={new Map(data.tags.map((t) => [t.id, t.color]))}
+              onSlotClick={openNew}
+              onAppointmentClick={(appointment) => setDialog({ kind: "details", appointment })}
+              onBlockClick={(block) => setDialog({ kind: "blockInfo", block })}
+              onMove={handleMove}
+            />
           )}
+          <p className="text-xs text-muted-foreground">
+            {live ? (
+              <span className="mr-2 inline-flex items-center gap-1.5" data-realtime="on" title="A agenda atualiza sozinha quando alguém marca ou muda uma consulta">
+                <span className="size-2 rounded-full bg-success" aria-hidden />
+                Ao vivo ·
+              </span>
+            ) : null}
+            Clique num horário livre para marcar. No computador, arraste a consulta para remarcar.
+          </p>
         </div>
-      ) : (
-        <AgendaGrid
-          columns={columns}
-          range={range}
-          colorFor={(id) => colorById.get(id) ?? "#64748b"}
-          tagColors={new Map(data.tags.map((t) => [t.id, t.color]))}
-          onSlotClick={openNew}
-          onAppointmentClick={(appointment) => setDialog({ kind: "details", appointment })}
-          onBlockClick={(block) => setDialog({ kind: "blockInfo", block })}
-          onMove={handleMove}
-        />
-      )}
-
-      <p className="text-xs text-muted-foreground">
-        {live ? (
-          <span className="mr-2 inline-flex items-center gap-1.5" data-realtime="on" title="A agenda atualiza sozinha quando alguém marca ou muda uma consulta">
-            <span className="size-2 rounded-full bg-emerald-500" aria-hidden />
-            Ao vivo ·
-          </span>
-        ) : null}
-        Clique num horário livre para marcar. No computador, arraste a consulta para remarcar.{" "}
-        <Link href="/agenda/sala-de-espera" className="underline underline-offset-4 hover:text-foreground">Sala de espera</Link>
-        {" · "}
-        <Link href="/agenda/espera" className="underline underline-offset-4 hover:text-foreground">Lista de espera</Link>
-        {" · "}
-        <Link href="/agenda/retornos" className="underline underline-offset-4 hover:text-foreground">Retornos</Link>
-        {" · "}
-        <Link href="/agenda/faltas" className="underline underline-offset-4 hover:text-foreground">Faltas e desmarcações</Link>
-      </p>
+        {aside ? <aside className="flex min-w-0 flex-col gap-4" aria-label="Resumo da agenda">{aside}</aside> : null}
+      </div>
 
       {/* Janelas */}
       <Dialog open={dialog !== null} onOpenChange={(open) => !open && closeDialog()}>
@@ -574,5 +603,31 @@ function BlockInfo({
         </Button>
       </DialogFooter>
     </>
+  );
+}
+
+/** Legenda dos estados da consulta (mesmas classes dos cartões). */
+function AgendaLegend() {
+  const items = [
+    { label: "Não confirmada", className: "border-[1.5px] border-dashed border-warning bg-card" },
+    { label: "Confirmada", className: "border-[1.5px] border-primary bg-accent" },
+    { label: "Na espera", className: "border-2 border-warning bg-card" },
+    { label: "Em atendimento", className: "border border-primary bg-primary" },
+    { label: "Concluída", className: "bg-muted" },
+    {
+      label: "Faltou ou desmarcou",
+      className:
+        "border border-input bg-[repeating-linear-gradient(135deg,var(--color-muted),var(--color-muted)_3px,var(--color-card)_3px,var(--color-card)_6px)]",
+    },
+  ];
+  return (
+    <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground" aria-label="Legenda dos estados">
+      {items.map((i) => (
+        <li key={i.label} className="flex items-center gap-1.5">
+          <span className={cn("h-3 w-4 rounded-[3px]", i.className)} aria-hidden />
+          {i.label}
+        </li>
+      ))}
+    </ul>
   );
 }

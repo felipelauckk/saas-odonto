@@ -26,7 +26,20 @@ test.beforeAll(async () => {
   await client.from("appointments").insert([
     { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: patientId, starts_at: at("09:00"), ends_at: at("10:00"), status: "confirmed" },
     { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: patientId, starts_at: at("14:00"), ends_at: at("14:30"), status: "scheduled" },
+    { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: patientId, starts_at: at("08:00"), ends_at: at("08:45"), status: "done", type: "Limpeza" },
+    { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: patientId, starts_at: at("10:30"), ends_at: at("11:30"), status: "in_progress", type: "Restauração 36" },
+    { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: patientId, starts_at: at("11:30"), ends_at: at("12:00"), status: "arrived", arrived_at: new Date(Date.now() - 18 * 60_000).toISOString(), is_first_visit: true, type: "Avaliação" },
+    { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: patientId, starts_at: at("15:00"), ends_at: at("15:30"), status: "no_show" },
+    { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: patientId, starts_at: at("16:00"), ends_at: at("17:00"), status: "confirmed", type: "Clareamento" },
   ]);
+  // Vaga liberada: consulta desmarcada daqui a 2 dias e alguém na lista de espera.
+  const later = new Date(Date.now() + 2 * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+  await client.from("appointments").insert({
+    clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: patientId,
+    starts_at: new Date(`${later}T09:00:00-03:00`).toISOString(), ends_at: new Date(`${later}T10:00:00-03:00`).toISOString(), status: "canceled", cancel_reason: "patient_canceled",
+  });
+  const { data: waiting } = await client.from("patients").select("id").eq("clinic_id", user.clinicId).eq("full_name", "Marina Alves").single();
+  if (waiting) await client.from("waitlist").insert({ clinic_id: user.clinicId, unit_id: unitId, patient_id: waiting.id, notes: "Prefere manhãs" });
 
   // Painel: recebimentos do mês, meta, orçamento apresentado e leads.
   const month = day.slice(0, 7);
