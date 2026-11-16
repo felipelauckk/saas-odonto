@@ -12,6 +12,7 @@ test.skip(!label || !hasSupabase, "Só com SCREENS=<rótulo>.");
 test.describe.configure({ mode: "serial" });
 
 let user: TestUser;
+let fichaId = "";
 
 test.beforeAll(async () => {
   user = await createTestUser();
@@ -69,6 +70,55 @@ test.beforeAll(async () => {
       Array.from({ length: 6 }, (_, i) => ({ clinic_id: user.clinicId, stage_id: stage.id, name: `Contato ${i + 1}`, source: "instagram" as const, patient_id: i < 2 ? patientId : null })),
     );
   }
+
+  // Ficha: paciente com alerta na anamnese, dentes registrados, plano aprovado e consultas.
+  const { data: owner } = await client.from("clinic_members").select("id").eq("clinic_id", user.clinicId).eq("role", "owner").single();
+  await client.from("professionals").update({ member_id: owner!.id }).eq("id", professionalId);
+  const { data: mariana } = await client
+    .from("patients")
+    .insert({ clinic_id: user.clinicId, full_name: "Mariana Costa", birth_date: "1992-03-12", phone: "51998124410", whatsapp: "51998124410", source: "indicacao" })
+    .select("id")
+    .single();
+  fichaId = mariana!.id;
+  await client.from("anamneses").insert({
+    clinic_id: user.clinicId,
+    patient_id: fichaId,
+    answers: [
+      { label: "Tem alergia a algum medicamento?", answer: "yes", alert: true, text: "penicilina" },
+      { label: "Tem pressão alta?", answer: "yes", alert: true, text: "usa losartana" },
+    ],
+  });
+  const tooth = (t: number, condition: string, faces: string[] = []) => ({ clinic_id: user.clinicId, patient_id: fichaId, tooth: t, condition, faces });
+  await client.from("tooth_records").insert([
+    tooth(16, "restored", ["O"]), tooth(26, "restored", ["O", "M"]), tooth(36, "caries", ["O"]), tooth(24, "caries", ["D"]),
+    tooth(45, "restored", ["V"]), tooth(46, "implant"), tooth(11, "crown"), tooth(37, "root_canal"), tooth(18, "missing"), tooth(48, "missing"),
+  ] as never);
+  const { data: plan } = await client
+    .from("treatment_plans")
+    .insert({ clinic_id: user.clinicId, unit_id: unitId, patient_id: fichaId, professional_id: professionalId, status: "draft", total_cents: 438000 })
+    .select("id")
+    .single();
+  const items = [
+    ["Coroa cerâmica", 11, [], 180000],
+    ["Clareamento a laser", null, [], 120000],
+    ["Restauração resina", 36, ["O"], 28000],
+    ["Restauração resina", 24, ["D"], 28000],
+    ["Raspagem — 4 quadrantes", null, [], 82000],
+  ] as const;
+  const { data: rows } = await client
+    .from("treatment_items")
+    .insert(items.map(([description, t, faces, price], position) => ({ clinic_id: user.clinicId, plan_id: plan!.id, description, tooth: t, faces: [...faces], price_cents: price, position })))
+    .select("id, position");
+  await client.from("treatment_plans").update({ status: "approved", approved_at: new Date().toISOString() }).eq("id", plan!.id);
+  // Só item aprovado pode virar realizado (regra do banco).
+  await client.from("treatment_items").update({ status: "approved" }).eq("plan_id", plan!.id);
+  for (const r of (rows ?? []).filter((r) => r.position < 2)) await client.from("treatment_items").update({ status: "done" }).eq("id", r.id);
+  const inDays = (n: number, hm: string) => new Date(`${new Date(Date.now() + n * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" })}T${hm}:00-03:00`).toISOString();
+  await client.from("appointments").insert([
+    { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: fichaId, starts_at: inDays(-14, "10:00"), ends_at: inDays(-14, "11:00"), status: "done", type: "Clareamento" },
+    { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: fichaId, starts_at: inDays(3, "10:00"), ends_at: inDays(3, "11:00"), status: "scheduled", type: "Restauração 36" },
+  ]);
+  await client.from("receivables").insert({ clinic_id: user.clinicId, unit_id: unitId, patient_id: fichaId, plan_id: plan!.id, description: "Parcela 3/6", amount_cents: 73000, due_date: inDays(10, "12:00").slice(0, 10), status: "open" });
 });
 
 test.afterAll(async () => {
@@ -80,12 +130,15 @@ for (const [name, path] of [
   ["pacientes", "/pacientes"],
   ["agenda", "/agenda"],
   ["componentes", "/dev/componentes"],
+  ["paciente", "/pacientes/{ficha}"],
+  ["odontograma", "/pacientes/{ficha}/odontograma"],
 ] as const) {
   test(`print ${name}`, async ({ page }, info) => {
     await signIn(page, user);
-    await page.goto(path);
+    await page.goto(path.replace("{ficha}", fichaId));
     await expect(page.getByRole("main").first()).toBeVisible();
     await page.waitForLoadState("networkidle");
+    if (name === "odontograma") await page.getByRole("button", { name: /^Dente 36 inteiro/ }).click();
     await page.screenshot({ path: `${process.env.SCREENS_DIR ?? "docs/design/screens"}/${label}-${name}-${info.project.name}.png`, fullPage: true });
   });
 }

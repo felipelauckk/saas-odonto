@@ -35,17 +35,26 @@ export const conditionLabels: Record<ToothCondition, string> = {
   other: "Outro",
 };
 
-/** Cores da legenda (fortes o bastante para ler sobre fundo claro e escuro). */
+/** Cores da legenda: tokens do tema (globals.css), fortes o bastante para ler sobre o fundo. */
 export const conditionColors: Record<ToothCondition, string> = {
   healthy: "transparent",
-  caries: "#dc2626",
-  restored: "#2563eb",
-  missing: "#64748b",
-  implant: "#7c3aed",
-  crown: "#d97706",
-  root_canal: "#db2777",
-  other: "#0d9488",
+  caries: "var(--tooth-caries)",
+  restored: "var(--tooth-restored)",
+  missing: "var(--tooth-missing)",
+  implant: "var(--tooth-implant)",
+  crown: "var(--tooth-crown)",
+  root_canal: "var(--tooth-canal)",
+  other: "var(--tooth-other)",
 };
+
+/** Preenchimento da silhueta quando a condição vale para o dente inteiro. */
+export const wholeFills: Partial<Record<ToothCondition, string>> = {
+  crown: "var(--tooth-crown-soft)",
+  implant: "var(--tooth-implant-soft)",
+  root_canal: "var(--tooth-canal-soft)",
+};
+
+export const PLANNED_COLOR = "var(--tooth-planned)";
 
 /** Condições que valem para o dente inteiro (não por face). */
 export const WHOLE_TOOTH: readonly ToothCondition[] = ["missing", "implant", "crown", "root_canal"];
@@ -96,4 +105,57 @@ export function currentState(records: RecordLike[]): Map<number, ToothState> {
     else state.set(r.tooth, tooth);
   }
   return state;
+}
+
+export type ToothKind = "incisor" | "canine" | "premolar" | "molar";
+
+/** Tipo do dente pela numeração FDI (decíduos: 4 e 5 são molares). */
+export function toothKind(tooth: number): ToothKind {
+  const quadrant = Math.floor(tooth / 10);
+  const unit = tooth % 10;
+  if (unit <= 2) return "incisor";
+  if (unit === 3) return "canine";
+  if (quadrant >= 5) return "molar";
+  return unit <= 5 ? "premolar" : "molar";
+}
+
+export function isUpperTooth(tooth: number) {
+  return [1, 2, 5, 6].includes(Math.floor(tooth / 10));
+}
+
+const ORDINAL = ["", "1º", "2º", "3º"];
+
+/** "1º molar inferior", "incisivo central superior", "canino decíduo inferior". */
+export function toothName(tooth: number): string {
+  const quadrant = Math.floor(tooth / 10);
+  const unit = tooth % 10;
+  const deciduous = quadrant >= 5;
+  const arch = isUpperTooth(tooth) ? "superior" : "inferior";
+  const kind = toothKind(tooth);
+  let name: string;
+  if (kind === "incisor") name = unit === 1 ? "incisivo central" : "incisivo lateral";
+  else if (kind === "canine") name = "canino";
+  else if (deciduous) name = `${ORDINAL[unit - 3]} molar`;
+  else if (kind === "premolar") name = `${ORDINAL[unit - 3]} pré-molar`;
+  else name = `${ORDINAL[unit - 5]} molar`;
+  return `${name}${deciduous ? " decíduo" : ""} ${arch}`;
+}
+
+type PlanItemLike = { tooth: number | null; faces: string[]; status: string };
+
+/**
+ * Faces com tratamento aprovado e ainda não feito ("planejado"), por dente.
+ * Só valem onde a face não tem outra condição registrada.
+ */
+export function plannedFaces(items: PlanItemLike[], state: Map<number, ToothState>): Map<number, Face[]> {
+  const out = new Map<number, Face[]>();
+  for (const item of items) {
+    if (item.status !== "approved" || item.tooth === null) continue;
+    const current = state.get(item.tooth);
+    if (current?.whole === "missing") continue;
+    const faces = (item.faces as Face[]).filter((f) => FACES.includes(f) && !current?.faces[f]);
+    if (!faces.length) continue;
+    out.set(item.tooth, [...new Set([...(out.get(item.tooth) ?? []), ...faces])]);
+  }
+  return out;
 }

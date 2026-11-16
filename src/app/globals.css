@@ -34,6 +34,10 @@
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
+  --color-tooth-caries: var(--tooth-caries);
+  --color-tooth-restored: var(--tooth-restored);
+  --color-tooth-planned: var(--tooth-planned);
+  --color-tooth-outline: var(--tooth-outline);
   --color-brand-deep: var(--brand-deep);
   --color-brand-deep-foreground: var(--brand-deep-foreground);
   --color-brand-highlight: var(--brand-highlight);
@@ -98,6 +102,20 @@
   --chart-3: #5b49a8;
   --chart-4: #a3560f;
   --chart-5: #4a515c;
+  /* Odontograma: condição de cada dente/face (cor + texto na legenda). */
+  --tooth-caries: #d92d20;
+  --tooth-restored: #17707f;
+  --tooth-planned: #f2a93b;
+  --tooth-crown: #a3560f;
+  --tooth-crown-soft: #fbf0e3;
+  --tooth-implant: #5b49a8;
+  --tooth-implant-soft: #efecf9;
+  --tooth-canal: #344054;
+  --tooth-canal-soft: #f0eeea;
+  --tooth-missing: #9aa1ab;
+  --tooth-other: #0d9488;
+  --tooth-outline: #b8bec6;
+  --tooth-surface: #ffffff;
   --radius: 0.625rem;
   /* Menu lateral escuro em petróleo profundo: a assinatura visual do produto. */
   --sidebar: #0c3640;
@@ -146,6 +164,19 @@
   --chart-3: #a99be6;
   --chart-4: #e3a466;
   --chart-5: #b4b9c0;
+  --tooth-caries: #f2867e;
+  --tooth-restored: #4fb3c2;
+  --tooth-planned: #e8b263;
+  --tooth-crown: #e3a466;
+  --tooth-crown-soft: #33270f;
+  --tooth-implant: #a99be6;
+  --tooth-implant-soft: #241f3d;
+  --tooth-canal: #b4b9c0;
+  --tooth-canal-soft: #232a32;
+  --tooth-missing: #7b828c;
+  --tooth-other: #5fd1c4;
+  --tooth-outline: #4a515c;
+  --tooth-surface: #171c22;
   --sidebar: #0a2c34;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #3fb8a8;

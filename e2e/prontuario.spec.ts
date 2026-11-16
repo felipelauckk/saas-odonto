@@ -52,7 +52,7 @@ test("registra cárie numa face do odontograma", async ({ page }) => {
 
   await expect(page.getByText("Dente 16: Cárie registrado.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Dente 16, face Oclusal: Cárie" })).toBeVisible();
-  await expect(page.getByText("Dente 16 (Oclusal, Mesial): Cárie")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Histórico do dente 16" })).toContainText("Cárie · Oclusal, Mesial");
 
   // Dente inteiro: ausente.
   await page.getByRole("button", { name: "Dente 48 inteiro" }).click();
@@ -60,7 +60,10 @@ test("registra cárie numa face do odontograma", async ({ page }) => {
   await page.getByRole("button", { name: "Registrar" }).click();
   await expect(page.getByRole("button", { name: "Dente 48 inteiro: Ausente" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Decíduos" }).click();
+  await page.getByRole("radio", { name: "Histórico" }).click();
+  await expect(page.getByText("Dente 16 (Oclusal, Mesial): Cárie")).toBeVisible();
+
+  await page.getByRole("radio", { name: "Decíduos" }).click();
   await expect(page.getByRole("button", { name: "Dente 55 inteiro" })).toBeVisible();
 });
 

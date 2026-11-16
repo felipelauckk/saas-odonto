@@ -27,6 +27,7 @@ import { canManageClinic } from "@/features/tenancy/roles";
 import { todayIso } from "@/lib/dates";
 import { formatCurrency, formatCurrencyWhole } from "@/lib/format";
 import { addDays, formatLongDate, utcToZoned } from "@/lib/timezone";
+import { optional, type Optional } from "@/lib/optional";
 
 export const metadata: Metadata = { title: "Painel" };
 
@@ -34,15 +35,9 @@ const percent = new Intl.NumberFormat("pt-BR", { style: "percent", maximumFracti
 const signedPercent = new Intl.NumberFormat("pt-BR", { style: "percent", maximumFractionDigits: 0, signDisplay: "exceptZero" });
 const monthLong = new Intl.DateTimeFormat("pt-BR", { month: "long", timeZone: "UTC" });
 
-/** Bloco opcional: se falhar, só ele mostra o erro (o resto do painel segue). */
-async function optional<T>(promise: Promise<T> | null): Promise<{ ok: true; value: T } | { ok: false } | null> {
-  if (!promise) return null;
-  try {
-    return { ok: true, value: await promise };
-  } catch (error) {
-    console.error("[painel]", error);
-    return { ok: false };
-  }
+/** Bloco opcional: se falhar, só ele mostra o erro (o resto do painel segue). Nulo = bloco não se aplica. */
+function block<T>(promise: Promise<T> | null): Promise<Optional<T> | null> {
+  return promise ? optional("painel", promise) : Promise.resolve(null);
 }
 
 function monthName(month: string) {
@@ -68,13 +63,13 @@ export default async function Page({ searchParams }: PageProps<"/painel">) {
   const [metrics, todayList, trend, revenue, conversion, goal, funnel, recovery] = await Promise.all([
     getDashboardMetrics(unitId),
     getTodayAppointments(unitId),
-    optional(getAppointmentTrend(unitId, today)),
-    optional(getRevenueSeries(unitId, today)),
-    optional(getQuoteConversion(unitId, today)),
+    block(getAppointmentTrend(unitId, today)),
+    block(getRevenueSeries(unitId, today)),
+    block(getQuoteConversion(unitId, today)),
     // Metas: só a gestão lê. Funil e CRC: só recepção e gestão (como no menu).
-    optional(manager ? getRevenueGoal(unitId, today) : null),
-    optional(isDentist ? null : getFunnel(`${month}-01`, today)),
-    optional(isDentist ? null : getRecoveryQueues(today)),
+    block(manager ? getRevenueGoal(unitId, today) : null),
+    block(isDentist ? null : getFunnel(`${month}-01`, today)),
+    block(isDentist ? null : getRecoveryQueues(today)),
   ]);
 
   const goalValue = goal?.ok ? goal.value : null;

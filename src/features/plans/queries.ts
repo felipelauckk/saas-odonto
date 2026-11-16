@@ -28,6 +28,29 @@ export async function listPatientPlans(patientId: string) {
   return data;
 }
 
+/** Plano aprovado mais recente do paciente, com os itens (para o odontograma). */
+export async function getActivePatientPlan(patientId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("treatment_plans")
+    .select("id, status, approved_at, total_cents, treatment_items(id, description, tooth, faces, status, price_cents, position, created_at)")
+    .eq("patient_id", patientId)
+    .in("status", ["approved", "partially_approved", "completed"])
+    .order("approved_at", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const items = [...data.treatment_items].sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at));
+  return {
+    id: data.id,
+    status: data.status as "approved" | "partially_approved" | "completed",
+    approvedAt: data.approved_at,
+    totalCents: data.total_cents,
+    items: items.map((i) => ({ id: i.id, description: i.description, tooth: i.tooth, faces: i.faces, status: i.status, priceCents: i.price_cents })),
+  };
+}
+
 export async function getPlan(id: string) {
   const supabase = await createClient();
   const [{ data: plan, error }, { data: items, error: itemsError }, { data: receivables }] = await Promise.all([

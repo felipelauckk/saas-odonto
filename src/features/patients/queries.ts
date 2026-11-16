@@ -38,3 +38,49 @@ export async function hasAnyPatient(): Promise<boolean> {
   const { count } = await supabase.from("patients").select("id", { count: "exact", head: true });
   return (count ?? 0) > 0;
 }
+
+/**
+ * Faixa de resumo da ficha: próxima consulta, última visita e o que está em aberto.
+ * O saldo só é lido quando pedido (quem opera o financeiro); o resto respeita a RLS.
+ */
+export const getPatientSummary = cache(async (patientId: string, withBalance: boolean) => {
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+  const [next, last, open] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select("starts_at, type")
+      .eq("patient_id", patientId)
+      .gte("starts_at", now)
+      .not("status", "in", "(canceled,no_show,done)")
+      .order("starts_at")
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("appointments")
+      .select("starts_at, type")
+      .eq("patient_id", patientId)
+      .eq("status", "done")
+      .lt("starts_at", now)
+      .order("starts_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    withBalance
+      ? supabase.from("receivables").select("amount_cents, status").eq("patient_id", patientId).in("status", ["open", "overdue"])
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+  if (next.error) throw next.error;
+  if (last.error) throw last.error;
+  if (open.error) throw open.error;
+  const rows = open.data ?? [];
+  return {
+    next: next.data,
+    last: last.data,
+    balance: withBalance
+      ? {
+          openCents: rows.reduce((s, r) => s + r.amount_cents, 0),
+          overdueCents: rows.filter((r) => r.status === "overdue").reduce((s, r) => s + r.amount_cents, 0),
+        }
+      : null,
+  };
+});

@@ -106,15 +106,7 @@ export function weekTitle(first: string, last: string): string {
   return `${d(first)} de ${monthShort.format(date(first))} a ${d(last)} de ${monthShort.format(date(last))}`;
 }
 
-/** Iniciais para o avatar (ignora "Dr.", "Dra."). */
-export function initials(name: string): string {
-  const words = name
-    .split(/\s+/)
-    .filter((w) => w && !/^dra?\.?$/i.test(w));
-  const first = words[0]?.[0] ?? "";
-  const last = words.length > 1 ? words[words.length - 1]![0]! : "";
-  return (first + last).toUpperCase();
-}
+export { initials } from "@/lib/initials";
 
 export type FreedCandidate = Interval & {
   id: string;

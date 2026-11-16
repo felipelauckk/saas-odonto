@@ -15,20 +15,11 @@ import { formatPhone } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/server";
 import { todayIso } from "@/lib/dates";
 import { startOfWeek } from "@/lib/timezone";
+import { optional } from "@/lib/optional";
 
 export const metadata: Metadata = { title: "Agenda" };
 
 const shortDay = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" });
-
-/** Bloco opcional da coluna lateral: se falhar, só ele mostra o aviso. */
-async function optional<T>(promise: Promise<T>): Promise<{ ok: true; value: T } | { ok: false }> {
-  try {
-    return { ok: true, value: await promise };
-  } catch (error) {
-    console.error("[agenda]", error);
-    return { ok: false };
-  }
-}
 
 function AsideError({ what }: { what: string }) {
   return (
@@ -79,9 +70,9 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
   }
 
   const [levels, waiting, freed] = await Promise.all([
-    optional(getMonthOccupancy(unit.id, date.slice(0, 7), data.professionals.map((p) => p.id))),
-    optional(getWaitingRoom(unit.id, today)),
-    optional(getFreedSlot(unit.id)),
+    optional("agenda", getMonthOccupancy(unit.id, date.slice(0, 7), data.professionals.map((p) => p.id))),
+    optional("agenda", getWaitingRoom(unit.id, today)),
+    optional("agenda", getFreedSlot(unit.id)),
   ]);
 
   const hrefFor = (day: string) => {
