@@ -1,4 +1,12 @@
+import { existsSync } from "node:fs";
+
 import { defineConfig, devices } from "@playwright/test";
+
+// Banco de testes separado: o .env.test.local (projeto Supabase só de testes)
+// vem antes do .env.local e vale também para o servidor que o Playwright sobe.
+// Variáveis já definidas não são sobrescritas pelos arquivos seguintes.
+if (existsSync(".env.test.local")) process.loadEnvFile(".env.test.local");
+if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
 const PORT = 3100;
 

@@ -17,7 +17,8 @@ export default defineConfig(({ mode }) => ({
     testTimeout: 30_000,
     hookTimeout: 60_000,
     env: {
-      // Carrega o .env.local (testes de isolamento usam o projeto Supabase).
+      // Carrega o .env.local; o .env.test.local (projeto Supabase só de testes)
+      // tem prioridade quando existe.
       ...loadEnv(mode, process.cwd(), ""),
       // Garante que os testes não dependem do fuso da máquina.
       TZ: "UTC",
