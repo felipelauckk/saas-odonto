@@ -34,6 +34,10 @@
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
+  --color-source-instagram: var(--source-instagram);
+  --color-source-instagram-soft: var(--source-instagram-soft);
+  --color-source-google: var(--source-google);
+  --color-source-google-soft: var(--source-google-soft);
   --color-tooth-caries: var(--tooth-caries);
   --color-tooth-restored: var(--tooth-restored);
   --color-tooth-planned: var(--tooth-planned);
@@ -102,6 +106,11 @@
   --chart-3: #5b49a8;
   --chart-4: #a3560f;
   --chart-5: #4a515c;
+  /* Origem do lead no CRM (sempre com o nome escrito). */
+  --source-instagram: #8f2e57;
+  --source-instagram-soft: #fbeef3;
+  --source-google: #264e94;
+  --source-google-soft: #ecf2fb;
   /* Odontograma: condição de cada dente/face (cor + texto na legenda). */
   --tooth-caries: #d92d20;
   --tooth-restored: #17707f;
@@ -164,6 +173,10 @@
   --chart-3: #a99be6;
   --chart-4: #e3a466;
   --chart-5: #b4b9c0;
+  --source-instagram: #f09cc0;
+  --source-instagram-soft: #3a1d2a;
+  --source-google: #9cbaf0;
+  --source-google-soft: #1b2638;
   --tooth-caries: #f2867e;
   --tooth-restored: #4fb3c2;
   --tooth-planned: #e8b263;

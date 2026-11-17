@@ -17,11 +17,24 @@ import { formatPhone } from "@/lib/documents";
 import { toWhatsAppNumber } from "@/lib/messaging/render";
 
 import { convertLead, moveLead, saveLead } from "../actions";
-import { sourceLabels } from "../labels";
+import { leadSources, sourceLabels, type LeadSource } from "../labels";
 import type { CrmLead, CrmStage } from "../queries";
 import { LeadFields, type LeadOptions } from "./lead-fields";
 
 type Props = { stages: CrmStage[]; leads: CrmLead[]; options: LeadOptions; now: number };
+
+const STAGE_DOT = { open: "bg-warning", won: "bg-success", lost: "bg-destructive" } as const;
+
+/** Origem do lead: cor + nome escrito (a cor nunca é o único sinal). */
+const SOURCE_PILL: Record<LeadSource, string> = {
+  instagram: "bg-source-instagram-soft text-source-instagram",
+  google: "bg-source-google-soft text-source-google",
+  indicacao: "bg-success-soft text-success",
+  site: "bg-accent text-accent-foreground",
+  anuncio: "bg-warning-soft text-warning",
+  passante: "bg-muted text-muted-foreground",
+  outro: "bg-muted text-muted-foreground",
+};
 
 function daysIn(lead: CrmLead, now: number) {
   return Math.floor((now - Date.parse(lead.stageChangedAt)) / 86_400_000);
@@ -44,10 +57,19 @@ export function CrmBoard({ stages, leads, options, now }: Props) {
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
 
+  const [source, setSource] = useState<LeadSource | null>(null);
+  const sources = useMemo(() => leadSources.filter((s) => leads.some((l) => l.source === s)), [leads]);
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? leads.filter((l) => `${l.name} ${l.phone ?? ""}`.toLowerCase().includes(q)) : leads;
-  }, [leads, query]);
+    return leads.filter((l) => (!source || l.source === source) && (!q || `${l.name} ${l.phone ?? ""}`.toLowerCase().includes(q)));
+  }, [leads, query, source]);
+  const kindOf = (l: CrmLead) => stages.find((st) => st.id === l.stageId)?.kind ?? "open";
+  const funnel = {
+    open: visible.filter((l) => kindOf(l) === "open").length,
+    won: visible.filter((l) => kindOf(l) === "won").length,
+    lost: visible.filter((l) => kindOf(l) === "lost").length,
+  };
+  const conversion = funnel.won + funnel.lost ? Math.round((funnel.won / (funnel.won + funnel.lost)) * 100) : null;
   const selected = leads.find((l) => l.id === selectedId) ?? null;
   const stageById = new Map(stages.map((s) => [s.id, s]));
   const campaignName = new Map(options.campaigns.map((c) => [c.id, c.name]));
@@ -67,7 +89,40 @@ export function CrmBoard({ stages, leads, options, now }: Props) {
 
   return (
     <div className="space-y-4">
-      <Input type="search" placeholder="Buscar lead por nome ou telefone" aria-label="Buscar lead" value={query} onChange={(e) => setQuery(e.target.value)} className="max-w-sm" />
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <Input type="search" placeholder="Buscar lead por nome ou telefone" aria-label="Buscar lead" value={query} onChange={(e) => setQuery(e.target.value)} className="lg:max-w-sm" />
+        {sources.length > 1 ? (
+          <div role="group" aria-label="Origem" className="-mx-4 flex gap-1 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+            {[null, ...sources].map((src) => (
+              <button
+                key={src ?? "todas"}
+                type="button"
+                aria-pressed={source === src}
+                onClick={() => setSource(src)}
+                className={cn(
+                  "h-9 shrink-0 rounded-lg px-3 text-[0.8125rem] font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40 pointer-coarse:h-11",
+                  source === src ? "bg-card text-foreground shadow-segment" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {src ? sourceLabels[src] : "Todas"}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      <dl aria-label="Conversão" className="grid grid-cols-2 gap-px overflow-hidden rounded-card border bg-border-soft sm:grid-cols-4">
+        {[
+          { label: "No funil", value: String(funnel.open) },
+          { label: "Fecharam", value: String(funnel.won) },
+          { label: "Perdidos", value: String(funnel.lost) },
+          { label: "Conversão", value: conversion === null ? "—" : `${conversion}%` },
+        ].map((k) => (
+          <div key={k.label} className="flex flex-col gap-0.5 bg-card px-4 py-3">
+            <dt className="type-label text-muted-foreground">{k.label}</dt>
+            <dd className="text-xl font-semibold tabular-nums">{k.value}</dd>
+          </div>
+        ))}
+      </dl>
       {error ? <FormMessage state={{ status: "error", message: error }} /> : null}
 
       <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:-mx-8 sm:px-8">
@@ -78,7 +133,7 @@ export function CrmBoard({ stages, leads, options, now }: Props) {
               <section
                 key={stage.id}
                 aria-label={`${stage.name}, ${column.length} leads`}
-                className={cn("flex w-64 shrink-0 flex-col gap-2 rounded-xl border bg-muted/30 p-2", dragOver === stage.id && "ring-2 ring-primary")}
+                className={cn("flex w-72 shrink-0 flex-col gap-2 rounded-card bg-muted/60 p-2", dragOver === stage.id && "ring-2 ring-primary")}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(stage.id); }}
                 onDragLeave={() => setDragOver((v) => (v === stage.id ? null : v))}
                 onDrop={(e) => {
@@ -88,10 +143,14 @@ export function CrmBoard({ stages, leads, options, now }: Props) {
                   if (lead) move(lead, stage.id);
                 }}
               >
-                <h2 className="flex items-center justify-between px-1 text-sm font-medium">
-                  <span>{stage.name}</span>
-                  <span className="tabular-nums text-muted-foreground">{column.length}</span>
+                <h2 className="flex items-center justify-between gap-2 px-1.5 py-1 text-sm font-semibold">
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden className={cn("size-2 rounded-full", STAGE_DOT[stage.kind])} />
+                    {stage.name}
+                  </span>
+                  <span className="rounded-full bg-card px-2 py-0.5 text-xs font-bold tabular-nums">{column.length}</span>
                 </h2>
+                {column.length === 0 ? <p className="px-1.5 py-3 text-center text-xs text-muted-foreground">Nenhum lead</p> : null}
                 {column.map((lead) => {
                   const days = daysIn(lead, now);
                   return (
@@ -101,18 +160,23 @@ export function CrmBoard({ stages, leads, options, now }: Props) {
                       draggable
                       onDragStart={(e) => e.dataTransfer.setData("text/plain", lead.id)}
                       onClick={() => setSelectedId(lead.id)}
-                      className="space-y-1 rounded-lg border bg-background p-3 text-left text-sm shadow-xs hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                      className="space-y-1.5 rounded-xl border border-border-soft bg-card p-3 text-left text-sm shadow-segment hover:border-border focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                     >
-                      <span className="block font-medium">{lead.name}</span>
-                      <span className="block text-xs text-muted-foreground">
-                        {[sourceLabels[lead.source], lead.campaignId ? campaignName.get(lead.campaignId) : null, lead.interest].filter(Boolean).join(" · ")}
+                      <span className="block font-semibold">{lead.name}</span>
+                      <span className="flex items-baseline gap-1.5 text-xs">
+                        <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 font-semibold", SOURCE_PILL[lead.source])}>{sourceLabels[lead.source]}</span>
+                        {lead.interest || lead.campaignId ? (
+                          <span className="min-w-0 text-muted-foreground">
+                            {[lead.interest, lead.campaignId ? campaignName.get(lead.campaignId) : null].filter(Boolean).join(" · ")}
+                          </span>
+                        ) : null}
                       </span>
                       <span className="flex flex-wrap items-center gap-1.5 text-xs">
                         {lead.patientId ? <Badge variant="secondary">Paciente</Badge> : null}
                         {lead.fromPublicForm ? <Badge variant="outline">Site</Badge> : null}
                         {stage.kind === "open" ? (
-                          <span className={cn("text-muted-foreground", days > 14 ? "text-destructive" : days > 7 && "text-amber-700 dark:text-amber-500")}>
-                            {days === 0 ? "hoje" : `${days} d nesta etapa`}
+                          <span className={cn("ml-auto font-medium text-muted-foreground", days > 14 ? "text-destructive" : days > 7 && "text-warning")}>
+                            {days === 0 ? "hoje" : days === 1 ? "há 1 dia" : `há ${days} dias`}
                           </span>
                         ) : null}
                         {lead.lostReason ? <span className="text-muted-foreground">{lead.lostReason}</span> : null}

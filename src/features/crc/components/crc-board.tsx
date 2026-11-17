@@ -21,6 +21,8 @@ import { formatPhone } from "@/lib/documents";
 import { logContact } from "../actions";
 import { channelLabels, outcomeLabels, queueDescriptions, queueLabels, type CrcChannel, type CrcOutcome, type CrcQueue } from "../labels";
 import { daysSince, type CrcBoardItem } from "../logic";
+import { PressureBar } from "@/components/app/pressure-bar";
+import { initials } from "@/lib/initials";
 
 type Props = {
   queue: CrcQueue;
@@ -53,14 +55,16 @@ function reasonText(item: CrcBoardItem, today: string) {
 function ageClass(item: CrcBoardItem, today: string) {
   if (item.queue === "birthdays") return "";
   const days = daysSince(item.refDate, today) ?? 0;
-  return days > 30 ? "text-destructive" : days > 7 ? "text-amber-700 dark:text-amber-500" : "";
+  return days > 20 ? "text-destructive" : days > 7 ? "text-warning" : "";
 }
 
 export function CrcBoard({ queue, items, laterCount, showingLater, template, clinicName, today }: Props) {
   const router = useRouter();
   const [registering, setRegistering] = useState<CrcBoardItem | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const selected = items.find((i) => i.itemKey === selectedKey) ?? items[0] ?? null;
 
   function quickLog(item: CrcBoardItem, channel: CrcChannel) {
     startTransition(async () => {
@@ -77,116 +81,102 @@ export function CrcBoard({ queue, items, laterCount, showingLater, template, cli
     });
   }
 
-  function whatsappHref(item: CrcBoardItem) {
-    const number = toWhatsAppNumber(item.phone);
-    if (!number) return null;
-    const text = template
+  function suggestedMessage(item: CrcBoardItem) {
+    return template
       ? renderTemplate(template, {
           paciente: firstName(item.patientName),
           clinica: clinicName,
           valor: item.amountCents ? formatCurrency(item.amountCents) : undefined,
         })
       : "";
-    return `https://wa.me/${number}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
   }
 
   return (
-    <div className="min-w-0 flex-1 space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">{queueLabels[queue]}</h2>
-          <p className="text-sm text-muted-foreground">{queueDescriptions[queue]}</p>
+    <div className="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
+      <section aria-labelledby="fila-atual" className="min-w-0 space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-0.5">
+            <h2 id="fila-atual" className="type-section">
+              {queueLabels[queue]}
+              {showingLater ? " · para depois" : ""}
+            </h2>
+            <p className="text-[0.8125rem] text-muted-foreground">{queueDescriptions[queue]}</p>
+          </div>
+          {laterCount || showingLater ? (
+            <Link href={showingLater ? `/crc?fila=${queue}` : `/crc?fila=${queue}&ver=depois`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+              {showingLater ? "Voltar para a fila" : `Para depois (${laterCount})`}
+            </Link>
+          ) : null}
         </div>
-        {laterCount || showingLater ? (
-          <Link
-            href={showingLater ? `/crc?fila=${queue}` : `/crc?fila=${queue}&ver=depois`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            {showingLater ? "Voltar para a fila" : `Para depois (${laterCount})`}
-          </Link>
-        ) : null}
-      </div>
 
-      {error ? <FormMessage state={{ status: "error", message: error }} /> : null}
+        {error ? <FormMessage state={{ status: "error", message: error }} /> : null}
 
-      {items.length ? (
-        <ul className="divide-y rounded-xl border">
-          {items.map((item) => {
-            const last = item.contacts[0];
-            const wa = whatsappHref(item);
-            return (
-              <li key={`${item.queue}-${item.itemKey}`} className="space-y-2 px-4 py-3 sm:px-5">
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
-                  <div className="min-w-0 flex-1">
-                    <Link href={`/pacientes/${item.patientId}`} className="font-medium hover:underline">
-                      {item.patientName}
-                    </Link>
-                    <p className={cn("text-sm text-muted-foreground", ageClass(item, today))}>{reasonText(item, today)}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {last
-                        ? `Último contato: ${formatDateTime(last.createdAt)} · ${channelLabels[last.channel]}${last.outcome ? ` · ${outcomeLabels[last.outcome]}` : ""}${item.contacts.length > 1 ? ` (${item.contacts.length} contatos)` : ""}`
-                        : "Nenhum contato ainda"}
-                      {item.laterOn ? ` · Próximo contato em ${br(item.laterOn)}` : ""}
-                    </p>
-                  </div>
-                  {item.amountCents ? <p className="shrink-0 font-medium tabular-nums">{formatCurrency(item.amountCents)}</p> : null}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {wa ? (
-                    <a href={wa} target="_blank" rel="noreferrer" onClick={() => quickLog(item, "whatsapp")} className={buttonVariants({ variant: "outline", size: "sm" })}>
-                      <MessageCircle aria-hidden />
-                      WhatsApp
-                    </a>
-                  ) : null}
-                  {item.phone ? (
-                    <a href={`tel:${item.phone}`} onClick={() => quickLog(item, "call")} className={buttonVariants({ variant: "outline", size: "sm" })} aria-label={`Ligar para ${formatPhone(item.phone)}`}>
-                      <Phone aria-hidden />
-                      Ligar
-                    </a>
-                  ) : null}
-                  <Link href={`/agenda?paciente=${item.patientId}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
-                    <CalendarPlus aria-hidden />
-                    Agendar
-                  </Link>
-                  <Button size="sm" onClick={() => setRegistering(item)}>
-                    <ClipboardCheck aria-hidden />
-                    Registrar contato
-                  </Button>
-                </div>
-                {item.contacts.length ? (
-                  <details className="text-sm">
-                    <summary className="cursor-pointer text-muted-foreground">Histórico</summary>
-                    <ul className="mt-2 space-y-1 border-l pl-3">
-                      {item.contacts.map((c) => (
-                        <li key={c.id}>
-                          <span className="tabular-nums">{formatDateTime(c.createdAt)}</span> · {channelLabels[c.channel]}
-                          {c.outcome ? ` · ${outcomeLabels[c.outcome]}` : ""}
-                          {c.nextContactOn ? ` · retomar em ${br(c.nextContactOn)}` : ""}
-                          {c.authorName ? <span className="text-muted-foreground"> · {c.authorName}</span> : null}
-                          {c.notes ? <p className="text-muted-foreground">{c.notes}</p> : null}
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <EmptyState
-          icon={ClipboardCheck}
-          title={showingLater ? "Nada marcado para depois" : "Fila em dia"}
-          description={showingLater ? undefined : "Ninguém nesta fila precisa de contato agora."}
+        {items.length ? (
+          <ul className="overflow-hidden rounded-card border bg-card">
+            {items.map((item) => {
+              const last = item.contacts[0];
+              const days = item.queue === "birthdays" ? 0 : (daysSince(item.refDate, today) ?? 0);
+              const on = selected?.itemKey === item.itemKey;
+              return (
+                <li key={`${item.queue}-${item.itemKey}`} className="border-t border-border-soft first:border-t-0">
+                  <button
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => {
+                      setSelectedKey(item.itemKey);
+                      if (window.matchMedia("(max-width: 79.99rem)").matches) document.getElementById("contato-painel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className={cn(
+                      "flex w-full gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-muted/60 focus-visible:bg-muted",
+                      on && "bg-background",
+                    )}
+                  >
+                    <PressureBar days={days} />
+                    <span className="min-w-0 flex-1 space-y-0.5">
+                      <span className="flex items-baseline justify-between gap-3">
+                        <span className="truncate text-sm font-semibold">{item.patientName}</span>
+                        {item.amountCents ? <span className="shrink-0 text-sm font-semibold tabular-nums">{formatCurrency(item.amountCents)}</span> : null}
+                      </span>
+                      <span className={cn("block text-[0.8125rem] text-muted-foreground", ageClass(item, today))}>{reasonText(item, today)}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {last
+                          ? `Último contato: ${formatDateTime(last.createdAt)} · ${channelLabels[last.channel]}${last.outcome ? ` · ${outcomeLabels[last.outcome]}` : ""}${item.contacts.length > 1 ? ` (${item.contacts.length} contatos)` : ""}`
+                          : "Nenhum contato ainda"}
+                        {item.laterOn ? ` · Próximo contato em ${br(item.laterOn)}` : ""}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <EmptyState
+            icon={ClipboardCheck}
+            title={showingLater ? "Nada marcado para depois" : "Fila em dia"}
+            description={showingLater ? undefined : "Ninguém nesta fila precisa de contato agora."}
+          />
+        )}
+      </section>
+
+      {selected ? (
+        <ContactPanel
+          key={`${selected.queue}-${selected.itemKey}`}
+          item={selected}
+          today={today}
+          initialMessage={suggestedMessage(selected)}
+          onQuickLog={quickLog}
+          onRegister={() => setRegistering(selected)}
         />
-      )}
+      ) : null}
 
       <Dialog open={registering !== null} onOpenChange={(open) => !open && setRegistering(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Registrar contato{registering ? ` · ${registering.patientName}` : ""}</DialogTitle>
           </DialogHeader>
-          {registering ? <ContactForm
+          {registering ? (
+            <ContactForm
               item={registering}
               today={today}
               onCancel={() => setRegistering(null)}
@@ -195,10 +185,108 @@ export function CrcBoard({ queue, items, laterCount, showingLater, template, cli
                 // Fica na mesma fila mesmo que ela esvazie.
                 router.replace(`/crc?fila=${queue}${showingLater ? "&ver=depois" : ""}`, { scroll: false });
               }}
-            /> : null}
+            />
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/** Painel do paciente escolhido: histórico, mensagem sugerida (editável) e ações. */
+function ContactPanel({
+  item,
+  today,
+  initialMessage,
+  onQuickLog,
+  onRegister,
+}: {
+  item: CrcBoardItem;
+  today: string;
+  initialMessage: string;
+  onQuickLog: (item: CrcBoardItem, channel: CrcChannel) => void;
+  onRegister: () => void;
+}) {
+  const [message, setMessage] = useState(initialMessage);
+  const number = toWhatsAppNumber(item.phone);
+  const wa = number ? `https://wa.me/${number}${message.trim() ? `?text=${encodeURIComponent(message.trim())}` : ""}` : null;
+
+  return (
+    <section id="contato-painel" aria-labelledby="contato-nome" className="scroll-mt-4 space-y-4 rounded-card border bg-card p-4 sm:p-5">
+      <div className="flex items-start gap-3">
+        <span aria-hidden className="flex size-11 shrink-0 items-center justify-center rounded-avatar bg-brand-deep text-sm font-black text-brand-deep-foreground">
+          {initials(item.patientName)}
+        </span>
+        <div className="min-w-0 space-y-0.5">
+          <h2 id="contato-nome" className="type-section">
+            <Link href={`/pacientes/${item.patientId}`} className="hover:underline">
+              {item.patientName}
+            </Link>
+          </h2>
+          <p className="text-xs text-muted-foreground">{item.phone ? formatPhone(item.phone) : "Sem telefone"}</p>
+        </div>
+      </div>
+
+      <div className="rounded-lg bg-muted px-3 py-2.5 text-[0.8125rem]">
+        <p className="font-semibold">{queueLabels[item.queue]}</p>
+        <p className={cn("text-muted-foreground", ageClass(item, today))}>
+          {reasonText(item, today)}
+          {item.amountCents ? ` · ${formatCurrency(item.amountCents)}` : ""}
+        </p>
+      </div>
+
+      {item.contacts.length ? (
+        <div className="space-y-1.5">
+          <h3 className="type-label text-muted-foreground">Histórico</h3>
+          <ol className="space-y-1.5">
+            {item.contacts.map((c) => (
+              <li key={c.id} className="flex gap-2.5 text-[0.8125rem] leading-snug">
+                <span className="shrink-0 text-muted-foreground tabular-nums">{formatDateTime(c.createdAt).slice(0, 5)}</span>
+                <span className="min-w-0">
+                  {channelLabels[c.channel]}
+                  {c.outcome ? ` · ${outcomeLabels[c.outcome]}` : ""}
+                  {c.nextContactOn ? ` · retomar em ${br(c.nextContactOn)}` : ""}
+                  {c.authorName ? <span className="text-muted-foreground"> · {c.authorName}</span> : null}
+                  {c.notes ? <span className="block text-muted-foreground">{c.notes}</span> : null}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : (
+        <p className="text-[0.8125rem] text-muted-foreground">Nenhum contato ainda.</p>
+      )}
+
+      {number ? (
+        <div className="space-y-1.5">
+          <Label htmlFor="crc-message">Mensagem sugerida</Label>
+          <Textarea id="crc-message" rows={5} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} />
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-2">
+        {wa ? (
+          <a href={wa} target="_blank" rel="noreferrer" onClick={() => onQuickLog(item, "whatsapp")} className={buttonVariants({ className: "col-span-2" })}>
+            <MessageCircle aria-hidden />
+            Enviar no WhatsApp
+          </a>
+        ) : null}
+        {item.phone ? (
+          <a href={`tel:${item.phone}`} onClick={() => onQuickLog(item, "call")} className={buttonVariants({ variant: "outline" })} aria-label={`Ligar para ${formatPhone(item.phone)}`}>
+            <Phone aria-hidden />
+            Ligar
+          </a>
+        ) : null}
+        <Link href={`/agenda?paciente=${item.patientId}`} className={buttonVariants({ variant: "outline" })}>
+          <CalendarPlus aria-hidden />
+          Agendar
+        </Link>
+        <Button variant="secondary" onClick={onRegister} className="col-span-2">
+          <ClipboardCheck aria-hidden />
+          Registrar contato
+        </Button>
+      </div>
+    </section>
   );
 }
 

@@ -4,7 +4,6 @@ import { BarChart3 } from "lucide-react";
 import { z } from "zod";
 import { cn } from "cn";
 
-import { PageHeader } from "@/components/layout/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { CrcBoard } from "@/features/crc/components/crc-board";
 import { crcQueues, queueLabels, type CrcQueue } from "@/features/crc/labels";
@@ -26,36 +25,51 @@ export default async function Page({ searchParams }: PageProps<"/crc">) {
   const showingLater = params.ver === "depois";
   const source = showingLater ? board.later : board.now;
 
+  const total = board.now.length;
+
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="CRC"
-        description="Central de relacionamento: quem precisa de contato hoje."
-        actions={
-          <Link href="/crc/indicadores" className={buttonVariants({ variant: "outline" })}>
-            <BarChart3 aria-hidden />
-            Indicadores
-          </Link>
-        }
-      />
-      <div className="flex flex-col gap-6 md:flex-row">
-        <nav aria-label="Filas" className="md:w-64 md:shrink-0">
-          <ul className="flex gap-2 overflow-x-auto pb-1 md:flex-col md:gap-0.5 md:overflow-visible">
-            {crcQueues.map((q) => (
-              <li key={q} className="shrink-0">
-                <Link
-                  href={`/crc?fila=${q}`}
-                  aria-current={q === queue ? "page" : undefined}
-                  className={cn(
-                    "flex h-9 items-center justify-between gap-3 rounded-lg border px-3 text-sm transition-colors md:border-transparent pointer-coarse:h-11",
-                    q === queue ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground hover:bg-muted",
-                  )}
-                >
-                  <span>{queueLabels[q]}</span>
-                  <span className="tabular-nums">{count(q)}</span>
-                </Link>
-              </li>
-            ))}
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="type-display">CRC</h1>
+          <p className="text-sm text-muted-foreground">
+            {total === 0 ? "Ninguém para contatar hoje." : total === 1 ? "1 paciente para contatar hoje." : `${total} pacientes para contatar hoje.`} Cada um
+            sai da fila sozinho quando agenda, aprova ou paga.
+          </p>
+        </div>
+        <Link href="/crc/indicadores" className={buttonVariants({ variant: "outline" })}>
+          <BarChart3 aria-hidden />
+          Indicadores
+        </Link>
+      </header>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <nav aria-label="Filas" className="min-w-0">
+          <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-col lg:gap-1.5 lg:overflow-visible lg:px-0">
+            {crcQueues.map((q) => {
+              const on = q === queue;
+              return (
+                <li key={q} className="shrink-0">
+                  <Link
+                    href={`/crc?fila=${q}`}
+                    aria-current={on ? "page" : undefined}
+                    className={cn(
+                      "flex min-h-11 items-center justify-between gap-3 rounded-xl border px-3.5 py-2 text-sm transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+                      on ? "border-brand-deep bg-brand-deep font-semibold text-brand-deep-foreground" : "border-border bg-card hover:bg-muted",
+                    )}
+                  >
+                    <span>{queueLabels[q]}</span>
+                    <span
+                      className={cn(
+                        "min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-bold tabular-nums",
+                        on ? "bg-brand-highlight text-brand-deep" : "bg-muted text-foreground",
+                      )}
+                    >
+                      {count(q)}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
         <CrcBoard
