@@ -2,11 +2,12 @@ import "server-only";
 
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
 
 import { ACTIVE_UNIT_COOKIE } from "./constants";
-import type { MemberRole } from "./roles";
+import { memberRoles, type MemberRole } from "./roles";
 
 export type ClinicOption = { id: string; name: string; role: MemberRole };
 export type UnitOption = { id: string; name: string };
@@ -29,53 +30,39 @@ export type SessionContext = {
   activeUnit: UnitOption | null;
 };
 
+const sessionRowSchema = z.object({
+  full_name: z.string().nullable(),
+  clinics: z.array(
+    z.object({ id: z.string(), name: z.string(), role: z.enum(memberRoles), subscription_status: z.string(), trial_ends_at: z.string().nullable() }),
+  ),
+  current_clinic_id: z.string().nullable(),
+  units: z.array(z.object({ id: z.string(), name: z.string() })),
+  access_state: z.string().nullable(),
+  cro: z.string().nullable(),
+});
+
 /**
  * Usuário logado, clínicas, clínica ativa (definida no banco), papel e unidades.
- * Uma consulta por requisição (cache do React). Null se não houver login.
+ * Roda a cada clique: o login é conferido pela assinatura do token (sem ir ao
+ * servidor de autenticação) e o resto vem numa chamada só (`session_context`).
+ * Uma vez por requisição (cache do React). Null se não houver login.
  */
 export const getSessionContext = cache(async (): Promise<SessionContext | null> => {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return null;
-  const userId = auth.user.id;
+  const { data: auth } = await supabase.auth.getClaims();
+  const claims = auth?.claims;
+  if (!claims?.sub) return null;
 
-  const [profileRes, membershipsRes, clinicsRes, currentRes] = await Promise.all([
-    supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
-    supabase.from("clinic_members").select("id, clinic_id, role").eq("user_id", userId).eq("active", true),
-    supabase.from("clinics").select("id, name, subscription_status, trial_ends_at").order("name"),
-    supabase.rpc("current_clinic_id"),
-  ]);
+  const { data, error } = await supabase.rpc("session_context");
+  if (error) throw new Error(`Não foi possível carregar a sessão: ${error.message}`);
+  const row = sessionRowSchema.parse(data);
 
-  const roleByClinic = new Map((membershipsRes.data ?? []).map((m) => [m.clinic_id, m.role]));
-  const clinicRows = (clinicsRes.data ?? []).filter((c) => roleByClinic.has(c.id));
-  const clinics: ClinicOption[] = clinicRows.map((c) => ({
-    id: c.id,
-    name: c.name,
-    role: roleByClinic.get(c.id)!,
-  }));
-
-  const user = {
-    id: userId,
-    email: auth.user.email ?? "",
-    fullName: profileRes.data?.full_name ?? null,
-  };
-
-  const currentId = currentRes.data;
-  const current = clinicRows.find((c) => c.id === currentId);
+  const user = { id: claims.sub, email: typeof claims.email === "string" ? claims.email : "", fullName: row.full_name };
+  const clinics: ClinicOption[] = row.clinics.map((c) => ({ id: c.id, name: c.name, role: c.role }));
+  const current = row.clinics.find((c) => c.id === row.current_clinic_id);
   if (!current) return { user, clinics, clinic: null, units: [], activeUnit: null };
 
-  const memberId = (membershipsRes.data ?? []).find((m) => m.clinic_id === current.id)?.id;
-
-  // A RLS já devolve só as unidades permitidas da clínica ativa.
-  const [{ data: unitRows }, { data: accessState }, { data: professional }] = await Promise.all([
-    supabase.from("units").select("id, name").eq("active", true).order("created_at"),
-    supabase.rpc("clinic_access_state", { _clinic_id: current.id }),
-    memberId
-      ? supabase.from("professionals").select("cro").eq("member_id", memberId).limit(1).maybeSingle()
-      : Promise.resolve({ data: null }),
-  ]);
-  const units = unitRows ?? [];
-
+  const units = row.units;
   const cookieStore = await cookies();
   const savedUnit = cookieStore.get(ACTIVE_UNIT_COOKIE)?.value;
   const activeUnit = units.find((u) => u.id === savedUnit) ?? units[0] ?? null;
@@ -86,11 +73,11 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
     clinic: {
       id: current.id,
       name: current.name,
-      role: roleByClinic.get(current.id)!,
+      role: current.role,
       subscriptionStatus: current.subscription_status,
       trialEndsAt: current.trial_ends_at,
-      accessState: accessState === "read_only" || accessState === "grace" ? accessState : "ok",
-      cro: professional?.cro ?? null,
+      accessState: row.access_state === "read_only" || row.access_state === "grace" ? row.access_state : "ok",
+      cro: row.cro,
     },
     units,
     activeUnit,

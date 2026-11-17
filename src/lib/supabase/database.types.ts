@@ -4749,6 +4749,7 @@ export type Database = {
           whatsapp: string
         }[]
       }
+      session_context: { Args: never; Returns: Json }
       seed_agenda_defaults: { Args: { _clinic_id: string }; Returns: undefined }
       seed_booking_defaults: {
         Args: { _clinic_id: string }
