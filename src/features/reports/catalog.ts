@@ -41,3 +41,12 @@ export const reports: readonly ReportDef[] = [
 ];
 
 export const reportBySlug = new Map(reports.map((r) => [r.slug, r]));
+
+/** Relatórios agrupados pelo assunto (lista e menu lateral). */
+export const REPORT_GROUPS: readonly { title: string; slugs: readonly string[] }[] = [
+  { title: "Dinheiro", slugs: ["faturamento", "despesas", "inadimplencia"] },
+  { title: "Vendas", slugs: ["orcamentos", "primeira-consulta", "crc-crm"] },
+  { title: "Agenda", slugs: ["ocupacao", "faltas", "retornos"] },
+  { title: "Pacientes", slugs: ["sem-visita", "pacientes", "aniversariantes"] },
+  { title: "Equipe e materiais", slugs: ["producao", "comissoes", "consumo"] },
+];

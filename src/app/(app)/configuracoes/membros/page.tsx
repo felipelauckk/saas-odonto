@@ -30,9 +30,9 @@ export default async function Page() {
         <PageHeader title="Equipe" description="Quem acessa a clínica e com qual papel." />
       </div>
 
-      <section className="space-y-4 rounded-xl border p-5 sm:p-6" aria-labelledby="convidar">
+      <section className="space-y-4 rounded-card border bg-card p-5 sm:p-6" aria-labelledby="convidar">
         <div className="space-y-1">
-          <h2 id="convidar" className="text-base font-medium">
+          <h2 id="convidar" className="type-section">
             Convidar pessoa
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -43,7 +43,7 @@ export default async function Page() {
       </section>
 
       <section className="space-y-4" aria-labelledby="membros">
-        <h2 id="membros" className="text-base font-medium">
+        <h2 id="membros" className="type-section">
           Membros
         </h2>
         {members.length ? (
@@ -51,6 +51,11 @@ export default async function Page() {
         ) : (
           <EmptyState icon={Users} title="Ninguém na equipe ainda" description="Convide a primeira pessoa acima." />
         )}
+        <p className="rounded-card bg-accent px-4 py-3 text-[0.8125rem] leading-relaxed text-accent-foreground">
+          <strong>Recepção</strong> vê agenda, cadastro, orçamentos e o caixa do dia, mas não o prontuário. <strong>Dentista</strong> vê a
+          própria agenda, o prontuário e o próprio extrato de comissões. <strong>Gestão</strong> vê tudo. As permissões valem também no banco
+          de dados, não só na tela.
+        </p>
       </section>
     </div>
   );

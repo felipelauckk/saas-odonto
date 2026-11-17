@@ -13,6 +13,8 @@ test.describe.configure({ mode: "serial" });
 
 let user: TestUser;
 let fichaId = "";
+let bookingSlug = "";
+let leadToken = "";
 
 test.beforeAll(async () => {
   user = await createTestUser();
@@ -45,6 +47,7 @@ test.beforeAll(async () => {
   // Painel: recebimentos do mês, meta, orçamento apresentado e leads.
   const month = day.slice(0, 7);
   const today = Number(day.slice(8, 10));
+  const { data: second } = await client.from("professionals").insert({ clinic_id: user.clinicId, name: "Dr. Marcos Silva", color: "#a3560f" }).select("id").single();
   const paid = Array.from({ length: today }, (_, i) => i + 1)
     .filter((d) => d % 3 !== 0)
     .map((d) => ({
@@ -57,6 +60,7 @@ test.beforeAll(async () => {
       status: "paid" as const,
       paid_at: `${month}-${String(d).padStart(2, "0")}T12:00:00-03:00`,
       paid_amount_cents: 150000 + (d % 5) * 40000,
+      professional_id: d % 4 === 0 ? (second?.id ?? professionalId) : professionalId,
     }));
   await client.from("receivables").insert([
     ...paid,
@@ -70,6 +74,20 @@ test.beforeAll(async () => {
       Array.from({ length: 6 }, (_, i) => ({ clinic_id: user.clinicId, stage_id: stage.id, name: `Contato ${i + 1}`, source: "instagram" as const, patient_id: i < 2 ? patientId : null })),
     );
   }
+  const { data: stages } = await client.from("crm_stages").select("id, kind, position").eq("clinic_id", user.clinicId).order("position");
+  const openStages = (stages ?? []).filter((st) => st.kind === "open");
+  const won = (stages ?? []).find((st) => st.kind === "won");
+  const ago = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
+  const more = [
+    { name: "Rodrigo Prates", source: "indicacao" as const, interest: "Implante, perdeu um molar", stage: openStages[1], days: 1 },
+    { name: "Camila Freitas", source: "instagram" as const, interest: "Alinhadores para a filha", stage: openStages[1], days: 9 },
+    { name: "Henrique Lopes", source: "site" as const, interest: "Revisão e limpeza", stage: openStages[2], days: 2 },
+    { name: "Diego Martins", source: "google" as const, interest: "Dor no dente, pediu encaixe", stage: openStages[0], days: 0 },
+    { name: "Luciana Ferreira", source: "indicacao" as const, interest: "Implante 46", stage: won, days: 3 },
+  ];
+  await client.from("leads").insert(
+    more.filter((m) => m.stage).map((m) => ({ clinic_id: user.clinicId, stage_id: m.stage!.id, name: m.name, source: m.source, interest: m.interest, stage_changed_at: ago(m.days) })),
+  );
 
   // Ficha: paciente com alerta na anamnese, dentes registrados, plano aprovado e consultas.
   const { data: owner } = await client.from("clinic_members").select("id").eq("clinic_id", user.clinicId).eq("role", "owner").single();
@@ -119,6 +137,45 @@ test.beforeAll(async () => {
     { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: fichaId, starts_at: inDays(3, "10:00"), ends_at: inDays(3, "11:00"), status: "scheduled", type: "Restauração 36" },
   ]);
   await client.from("receivables").insert({ clinic_id: user.clinicId, unit_id: unitId, patient_id: fichaId, plan_id: plan!.id, description: "Parcela 3/6", amount_cents: 73000, due_date: inDays(10, "12:00").slice(0, 10), status: "open" });
+  // Lista de pacientes: retorno vencido, orçamento apresentado, aniversariante e arquivado.
+  const thisMonth = Number(day.slice(5, 7));
+  const { data: others } = await client
+    .from("patients")
+    .insert([
+      { clinic_id: user.clinicId, full_name: "Bruno Lima", birth_date: `1985-${String(thisMonth).padStart(2, "0")}-20`, phone: "51991112222", source: "instagram" },
+      { clinic_id: user.clinicId, full_name: "Carla Souza", birth_date: "1979-07-02", phone: "51993334444", source: "google" },
+      { clinic_id: user.clinicId, full_name: "Diego Ramos", birth_date: "2001-01-15", phone: "51995556666", source: "site", archived_at: new Date().toISOString() },
+    ])
+    .select("id, full_name");
+  // Financeiro: caixa dos últimos 6 meses, contas a pagar da semana.
+  const monthsBack = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(Date.UTC(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1 - (5 - i), 10, 15));
+    return d.toISOString();
+  });
+  await client.from("cash_movements").insert(
+    monthsBack.flatMap((at, i) => [
+      { clinic_id: user.clinicId, unit_id: unitId, type: "in" as const, amount_cents: [7_100_000, 7_800_000, 6_900_000, 8_400_000, 8_800_000, 4_900_000][i]!, description: "Recebimentos", occurred_at: i === 5 ? new Date().toISOString() : at },
+      { clinic_id: user.clinicId, unit_id: unitId, type: "out" as const, amount_cents: [5_200_000, 5_500_000, 5_800_000, 5_700_000, 6_000_000, 3_100_000][i]!, description: "Despesas", occurred_at: i === 5 ? new Date().toISOString() : at },
+    ]),
+  );
+  const { data: category } = await client.from("finance_categories").select("id").eq("clinic_id", user.clinicId).limit(1).single();
+  const { data: supplier } = await client.from("suppliers").insert({ clinic_id: user.clinicId, name: "Laboratório Dental Arte" }).select("id").single();
+  if (category) {
+    await client.from("payables").insert([
+      { clinic_id: user.clinicId, unit_id: unitId, category_id: category.id, supplier_id: supplier?.id, description: "Coroas e facetas", amount_cents: 348000, due_date: inDays(1, "12:00").slice(0, 10) },
+      { clinic_id: user.clinicId, unit_id: unitId, category_id: category.id, description: "Aluguel · unidade Centro", amount_cents: 680000, due_date: inDays(4, "12:00").slice(0, 10) },
+    ]);
+  }
+  // Páginas públicas: agendamento online ligado e formulário de captação.
+  bookingSlug = `clinica-${user.clinicId.slice(0, 8)}`;
+  await client.from("online_booking_settings").upsert({ clinic_id: user.clinicId, slug: bookingSlug, enabled: true, min_notice_hours: 0, intro: "Escolha o melhor horário para a sua avaliação." });
+  const { data: clinicRow } = await client.from("clinics").select("lead_form_token").eq("id", user.clinicId).single();
+  leadToken = clinicRow?.lead_form_token ?? "";
+  const carla = others?.find((o) => o.full_name === "Carla Souza");
+  if (carla) {
+    await client.from("patient_returns").insert({ clinic_id: user.clinicId, patient_id: carla.id, due_date: "2026-01-10", reason: "Manutenção semestral" });
+    await client.from("treatment_plans").insert({ clinic_id: user.clinicId, unit_id: unitId, patient_id: carla.id, professional_id: professionalId, status: "presented", total_cents: 640000 });
+  }
 });
 
 test.afterAll(async () => {
@@ -130,13 +187,25 @@ for (const [name, path] of [
   ["pacientes", "/pacientes"],
   ["agenda", "/agenda"],
   ["componentes", "/dev/componentes"],
+  ["financeiro", "/financeiro"],
+  ["financeiro-visao", "/financeiro/visao-geral"],
+  ["relatorios", "/relatorios"],
+  ["relatorio", "/relatorios/faturamento?agrupar=profissional"],
+  ["configuracoes", "/configuracoes"],
+  ["equipe", "/configuracoes/membros"],
+  ["orcamento-novo", "/orcamentos/novo?paciente={ficha}"],
+  ["crc", "/crc"],
+  ["crm", "/crm"],
+  ["agendar", "/agendar/{slug}"],
+  ["captacao", "/captacao/{lead}"],
   ["paciente", "/pacientes/{ficha}"],
   ["odontograma", "/pacientes/{ficha}/odontograma"],
 ] as const) {
   test(`print ${name}`, async ({ page }, info) => {
     await signIn(page, user);
-    await page.goto(path.replace("{ficha}", fichaId));
-    await expect(page.getByRole("main").first()).toBeVisible();
+    await page.goto(path.replace("{ficha}", fichaId).replace("{slug}", bookingSlug).replace("{lead}", leadToken));
+    // Páginas públicas antigas não tinham <main>: basta o título.
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
     await page.waitForLoadState("networkidle");
     if (name === "odontograma") await page.getByRole("button", { name: /^Dente 36 inteiro/ }).click();
     await page.screenshot({ path: `${process.env.SCREENS_DIR ?? "docs/design/screens"}/${label}-${name}-${info.project.name}.png`, fullPage: true });

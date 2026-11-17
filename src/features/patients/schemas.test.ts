@@ -46,10 +46,11 @@ describe("patientSchema", () => {
 
 describe("patientFiltersSchema", () => {
   it("usa padrões seguros para valores estranhos", () => {
-    expect(patientFiltersSchema.parse({ q: "ana", status: "x", source: "tiktok", page: "-3" })).toEqual({
+    expect(patientFiltersSchema.parse({ q: "ana", status: "x", source: "tiktok", segment: "vip", page: "-3" })).toEqual({
       q: "ana",
       status: "active",
       source: null,
+      segment: null,
       page: 1,
     });
   });

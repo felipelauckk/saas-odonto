@@ -1,67 +1,77 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Plus, SearchX, Users } from "lucide-react";
+import { SearchX, Users } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/empty-state";
-import { PageHeader } from "@/components/layout/page-header";
-import { buttonVariants } from "@/components/ui/button";
+import { NewPatientSheet } from "@/features/patients/components/new-patient-sheet";
 import { PatientFilters } from "@/features/patients/components/patient-filters";
 import { Pagination, PatientsList } from "@/features/patients/components/patients-list";
-import { hasAnyPatient, searchPatients } from "@/features/patients/queries";
+import { PAGE_SIZE } from "@/features/patients/labels";
+import { getSegmentCounts, hasAnyPatient, searchPatients } from "@/features/patients/queries";
 import { patientFiltersSchema } from "@/features/patients/schemas";
+import { SEGMENTS, segmentFromSlug } from "@/features/patients/situation";
 import { requireClinic } from "@/features/tenancy/guards";
+import { optional } from "@/lib/optional";
 
 export const metadata: Metadata = { title: "Pacientes" };
 
+const count = new Intl.NumberFormat("pt-BR");
+
 export default async function Page({ searchParams }: PageProps<"/pacientes">) {
-  await requireClinic();
+  const session = await requireClinic();
   const raw = await searchParams;
   const filters = patientFiltersSchema.parse({
     q: typeof raw.q === "string" ? raw.q : "",
     status: raw.status,
     source: raw.source ?? null,
+    segment: segmentFromSlug(raw.situacao),
     page: raw.page ?? 1,
   });
-  const { patients, total, pages } = await searchPatients(filters);
-  const filtering = Boolean(filters.q || filters.source || filters.status === "archived");
+  const [{ patients, total, pages }, counts] = await Promise.all([
+    searchPatients(filters),
+    optional("pacientes", getSegmentCounts({ q: filters.q, source: filters.source })),
+  ]);
+  const filtering = Boolean(filters.q || filters.source || filters.segment || filters.status === "archived");
   // Tela de "primeiro paciente" só quando não existe nenhum, nem arquivado.
   const isEmptyClinic = !filtering && total === 0 && !(await hasAnyPatient());
+  // O dentista só enxerga parte das cobranças: o saldo dele sairia errado.
+  const showBalance = session.clinic.role !== "dentist";
 
   const hrefFor = (page: number) => {
     const qs = new URLSearchParams();
     if (filters.q) qs.set("q", filters.q);
     if (filters.status === "archived") qs.set("status", "archived");
+    if (filters.segment) qs.set("situacao", SEGMENTS.find((s) => s.value === filters.segment)!.slug);
     if (filters.source) qs.set("source", filters.source);
     if (page > 1) qs.set("page", String(page));
     const s = qs.toString();
     return s ? `/pacientes?${s}` : "/pacientes";
   };
 
-  const newButton = (
-    <Link href="/pacientes/novo" className={buttonVariants()}>
-      <Plus aria-hidden />
-      Novo paciente
-    </Link>
-  );
+  const newButton = <NewPatientSheet />;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Pacientes" description="Cadastro e ficha dos pacientes." actions={newButton} />
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="type-display">Pacientes</h1>
+          {counts.ok && !isEmptyClinic ? (
+            <p className="text-sm text-muted-foreground tabular-nums">
+              {counts.value.active === 1 ? "1 cadastrado" : `${count.format(counts.value.active)} cadastrados`}
+            </p>
+          ) : null}
+        </div>
+        {newButton}
+      </header>
       {isEmptyClinic ? (
-        <EmptyState
-          icon={Users}
-          title="Nenhum paciente por enquanto"
-          description="Cadastre o primeiro paciente da clínica."
-          action={newButton}
-        />
+        <EmptyState icon={Users} title="Nenhum paciente por enquanto" description="Cadastre o primeiro paciente da clínica." action={newButton} />
       ) : (
         <>
-          <PatientFilters />
+          <PatientFilters counts={counts.ok ? counts.value : null} />
           {patients.length ? (
-            <>
-              <PatientsList patients={patients} />
-              <Pagination page={filters.page} pages={pages} total={total} hrefFor={hrefFor} />
-            </>
+            <div className="space-y-4">
+              <PatientsList patients={patients} showBalance={showBalance} />
+              <Pagination page={filters.page} pages={pages} total={total} pageSize={PAGE_SIZE} hrefFor={hrefFor} />
+            </div>
           ) : (
             <EmptyState
               icon={SearchX}

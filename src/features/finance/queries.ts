@@ -97,3 +97,35 @@ export async function listExpenseCategories() {
   const { data } = await supabase.from("finance_categories").select("id, name").eq("type", "expense").eq("active", true).order("name");
   return data ?? [];
 }
+
+/**
+ * Vencimentos até `days` dias à frente (inclui os já vencidos): as primeiras
+ * linhas de cada lado e o total. Contas a pagar só aparecem para a gestão (RLS).
+ */
+export async function getUpcomingDues(today: string, days = 7) {
+  const supabase = await createClient();
+  const until = addDays(today, days);
+  const [rec, pay] = await Promise.all([
+    supabase
+      .from("receivables")
+      .select("id, description, amount_cents, due_date, installment_number, installment_total, patients(full_name)")
+      .in("status", ["open", "overdue"])
+      .lte("due_date", until)
+      .order("due_date")
+      .limit(200),
+    supabase
+      .from("payables")
+      .select("id, description, amount_cents, due_date, suppliers(name)")
+      .in("status", ["open", "overdue"])
+      .lte("due_date", until)
+      .order("due_date")
+      .limit(200),
+  ]);
+  if (rec.error) throw rec.error;
+  if (pay.error) throw pay.error;
+  const total = (rows: { amount_cents: number }[]) => rows.reduce((s, r) => s + r.amount_cents, 0);
+  return {
+    receivables: { total: total(rec.data), count: rec.data.length, rows: rec.data.slice(0, 5) },
+    payables: { total: total(pay.data), count: pay.data.length, rows: pay.data.slice(0, 5) },
+  };
+}

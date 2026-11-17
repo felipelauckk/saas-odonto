@@ -4660,6 +4660,47 @@ export type Database = {
           label: string
         }[]
       }
+      patient_list: {
+        Args: {
+          _limit?: number
+          _offset?: number
+          _query?: string
+          _segment?: string
+          _source?: Database["public"]["Enums"]["patient_source"]
+        }
+        Returns: {
+          archived_at: string
+          birth_date: string
+          cpf: string
+          full_name: string
+          id: string
+          in_treatment: boolean
+          last_visit_at: string
+          next_visit_at: string
+          open_cents: number
+          open_quote: boolean
+          overdue_cents: number
+          phone: string
+          return_overdue: boolean
+          source: Database["public"]["Enums"]["patient_source"]
+          total_count: number
+          whatsapp: string
+        }[]
+      }
+      patient_segment_counts: {
+        Args: {
+          _query?: string
+          _source?: Database["public"]["Enums"]["patient_source"]
+        }
+        Returns: {
+          active: number
+          archived: number
+          birthday: number
+          in_treatment: number
+          open_quote: number
+          return_overdue: number
+        }[]
+      }
       pay_payable: {
         Args: {
           _paid_amount_cents: number

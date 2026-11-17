@@ -77,5 +77,7 @@ export const patientFiltersSchema = z.object({
   q: z.string().trim().max(100).catch(""),
   status: z.enum(["active", "archived"]).catch("active"),
   source: z.enum(patientSources).nullable().catch(null),
+  /** Filtro rápido (em tratamento, orçamento em aberto...); nulo = todos. */
+  segment: z.enum(["in_treatment", "open_quote", "return_overdue", "birthday"]).nullable().catch(null),
   page: z.coerce.number().int().min(1).max(10_000).catch(1),
 });

@@ -2,13 +2,16 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Download, FileSpreadsheet } from "lucide-react";
 
+import { KpiStrip } from "@/components/app/kpi-strip";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { SubpageHeader } from "@/components/layout/subpage-header";
 import { buttonVariants } from "@/components/ui/button";
 import { PeriodFilter } from "@/features/payables/components/period-filter";
 import { reportBySlug } from "@/features/reports/catalog";
 import { filtersToQuery, parseReportFilters } from "@/features/reports/filters";
+import { ReportBars, ReportNav } from "@/features/reports/components/report-ui";
 import { formatCell } from "@/features/reports/format";
+import { reportInsight } from "@/features/reports/insight";
 import { runReport } from "@/features/reports/run";
 import { requireManager } from "@/features/tenancy/guards";
 import { todayIso } from "@/lib/dates";
@@ -41,9 +44,15 @@ export default async function Page({ params, searchParams }: PageProps<"/relator
     ...(def.filters.includes("months") ? [{ name: "meses", label: "Sem visita há mais de", value: String(filters.months), options: [3, 6, 12, 18, 24].map((m) => ({ value: String(m), label: `${m} meses` })) }] : []),
   ];
   const query = filtersToQuery(def, filters);
+  const insight = reportInsight(result);
+  const num = (type: string) => (type === "text" || type === "date" ? "" : "text-right tabular-nums");
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 gap-8 xl:grid-cols-[15rem_minmax(0,1fr)]">
+      <aside className="hidden xl:block">
+        <ReportNav current={slug} />
+      </aside>
+      <div className="min-w-0 space-y-6">
       <SubpageHeader
         title={def.title}
         description={def.description}
@@ -68,40 +77,39 @@ export default async function Page({ params, searchParams }: PageProps<"/relator
       />
 
       {result.summary?.length ? (
-        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {result.summary.map((s) => (
-            <div key={s.label} className="rounded-xl border p-4">
-              <dt className="text-sm text-muted-foreground">{s.label}</dt>
-              <dd className="text-2xl font-semibold tabular-nums">{formatCell({ key: "s", label: s.label, type: s.type }, s.value)}</dd>
-            </div>
-          ))}
-        </dl>
+        <KpiStrip label="Resumo do relatório" className="lg:grid-cols-2 2xl:grid-cols-4 [&_.type-kpi]:text-2xl" items={result.summary.map((sm) => ({ label: sm.label, value: formatCell({ key: "s", label: sm.label, type: sm.type }, sm.value) }))} />
       ) : null}
 
+      {insight ? <ReportBars insight={insight} /> : null}
+
       {result.rows.length ? (
-        <div className="overflow-x-auto rounded-xl border">
+        <div className="overflow-x-auto rounded-card border bg-card">
           <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40 text-left text-muted-foreground">
+            <thead className="border-b border-border-soft text-left text-muted-foreground">
               <tr>
                 {result.columns.map((c) => (
-                  <th key={c.key} scope="col" className={`px-4 py-2 font-medium whitespace-nowrap ${c.type === "text" || c.type === "date" ? "" : "text-right"}`}>{c.label}</th>
+                  <th key={c.key} scope="col" className={`px-4 py-3 type-label whitespace-nowrap ${num(c.type)}`}>
+                    {c.label}
+                  </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-border-soft">
               {result.rows.map((row, i) => (
                 <tr key={i}>
                   {result.columns.map((c) => (
-                    <td key={c.key} className={`px-4 py-2 ${c.type === "text" || c.type === "date" ? "" : "text-right tabular-nums"}`}>{formatCell(c, row[c.key])}</td>
+                    <td key={c.key} className={`px-4 py-2.5 ${num(c.type)}`}>
+                      {formatCell(c, row[c.key])}
+                    </td>
                   ))}
                 </tr>
               ))}
             </tbody>
             {result.total ? (
-              <tfoot className="border-t bg-muted/30 font-medium">
+              <tfoot className="border-t font-semibold">
                 <tr>
                   {result.columns.map((c) => (
-                    <td key={c.key} className={`px-4 py-2 ${c.type === "text" || c.type === "date" ? "" : "text-right tabular-nums"}`}>{result.total![c.key] === null || result.total![c.key] === undefined ? "" : formatCell(c, result.total![c.key])}</td>
+                    <td key={c.key} className={`px-4 py-2.5 ${num(c.type)}`}>{result.total![c.key] === null || result.total![c.key] === undefined ? "" : formatCell(c, result.total![c.key])}</td>
                   ))}
                 </tr>
               </tfoot>
@@ -112,6 +120,7 @@ export default async function Page({ params, searchParams }: PageProps<"/relator
         <EmptyState icon={FileSpreadsheet} title="Nada para mostrar" description="Nenhum dado com esses filtros." />
       )}
       {result.note ? <p className="text-xs text-muted-foreground">{result.note}</p> : null}
+      </div>
     </div>
   );
 }

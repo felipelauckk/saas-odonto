@@ -1,141 +1,130 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  Armchair,
-  Building2,
-  ChevronRight,
-  ClipboardList,
-  QrCode,
-  Banknote,
-  CreditCard,
-  FileText,
-  FlaskConical,
-  Landmark,
-  Megaphone,
-  MapPin,
-  MessageCircle,
-  Percent,
-  Receipt,
-  ReceiptText,
-  ShieldCheck,
-  Sparkles,
-  Stethoscope,
-  Tag,
-  UserRound,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
 
-import { PageHeader } from "@/components/layout/page-header";
-import { getSettingsSummary } from "@/features/settings/queries";
+import { KpiStrip } from "@/components/app/kpi-strip";
+import { StatusBadge } from "@/components/app/status-badge";
+import { buttonVariants } from "@/components/ui/button";
+import { getBillingOverview } from "@/features/billing/queries";
+import { subscriptionStatusLabels } from "@/features/billing/labels";
+import { SettingsMenu } from "@/features/settings/components/settings-menu";
+import { getIntegrations, getSettingsSummary } from "@/features/settings/queries";
 import { requireManager } from "@/features/tenancy/guards";
+import { formatDate } from "@/lib/format";
+import { optional } from "@/lib/optional";
 
 export const metadata: Metadata = { title: "Configurações" };
-
-type Section = { href: string; title: string; description: string; icon: LucideIcon; meta?: string; warning?: string };
 
 function plural(n: number, one: string, many: string) {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-export default async function Page() {
-  await requireManager();
-  const summary = await getSettingsSummary();
+function BlockError({ what }: { what: string }) {
+  return (
+    <p role="alert" className="rounded-card border px-5 py-6 text-center text-[0.8125rem] text-muted-foreground">
+      Não foi possível carregar {what} agora. Recarregue a página.
+    </p>
+  );
+}
 
-  const sections: Section[] = [
-    { href: "/configuracoes/clinica", title: "Clínica", description: "Nome, documento, contato e logo.", icon: Building2 },
-    { href: "/configuracoes/assinatura", title: "Assinatura", description: "Plano, cobrança e situação da conta.", icon: Receipt },
-    {
-      href: "/configuracoes/unidades",
-      title: "Unidades",
-      description: "Endereços onde a clínica atende.",
-      icon: MapPin,
-      meta: plural(summary.units, "unidade ativa", "unidades ativas"),
-    },
-    {
-      href: "/configuracoes/cadeiras",
-      title: "Cadeiras",
-      description: "Cadeiras de atendimento de cada unidade.",
-      icon: Armchair,
-      meta: plural(summary.chairs, "cadeira", "cadeiras"),
-    },
-    {
-      href: "/configuracoes/profissionais",
-      title: "Profissionais",
-      description: "Dentistas, cores na agenda e horários de atendimento.",
-      icon: UserRound,
-      meta: plural(summary.professionals, "profissional", "profissionais"),
-    },
-    {
-      href: "/configuracoes/procedimentos",
-      title: "Procedimentos",
-      description: "Tabela de procedimentos com preço e duração.",
-      icon: Stethoscope,
-      meta: plural(summary.procedures, "procedimento", "procedimentos"),
-      warning: summary.unpriced ? plural(summary.unpriced, "sem preço", "sem preço") : undefined,
-    },
-    { href: "/configuracoes/crm", title: "CRM", description: "Etapas do funil, campanhas, parceiros e formulário de captação.", icon: Megaphone },
-    { href: "/configuracoes/marcadores", title: "Marcadores", description: "Etiquetas coloridas das consultas na agenda.", icon: Tag },
-    { href: "/configuracoes/comissoes", title: "Comissões", description: "Percentuais e exceções por profissional.", icon: Percent },
-    { href: "/configuracoes/financeiro", title: "Cadastros financeiros", description: "Categorias, fornecedores e centros de custo.", icon: Landmark },
-    {
-      href: "/configuracoes/formas-de-pagamento",
-      title: "Formas de pagamento",
-      description: "Taxas e prazos de recebimento.",
-      icon: CreditCard,
-      meta: plural(summary.paymentMethods, "forma ativa", "formas ativas"),
-    },
-    { href: "/configuracoes/laboratorios", title: "Laboratórios", description: "Laboratórios de prótese, preços e prazos.", icon: FlaskConical },
-    { href: "/configuracoes/agendamento-online", title: "Agendamento online e check-in", description: "Página pública de agendamento e QR Code da recepção.", icon: QrCode },
-    { href: "/configuracoes/cobranca", title: "Cobrança online", description: "Conta Asaas da clínica, Pix, boleto, link e régua de cobrança.", icon: Banknote },
-    { href: "/configuracoes/nota-fiscal", title: "Nota fiscal", description: "NFS-e: código do serviço, ISS e certificado.", icon: ReceiptText },
-    { href: "/configuracoes/documentos", title: "Documentos", description: "Modelos de receitas, atestados, contratos e termos.", icon: FileText },
-    {
-      href: "/configuracoes/anamnese",
-      title: "Modelo de anamnese",
-      description: "Perguntas da anamnese e quais viram alerta.",
-      icon: ClipboardList,
-    },
-    { href: "/configuracoes/fichas", title: "Fichas clínicas", description: "Fichas por especialidade e quem usa cada uma.", icon: ClipboardList },
-    {
-      href: "/configuracoes/mensagens",
-      title: "Mensagens",
-      description: "Lembretes e textos enviados pelo WhatsApp.",
-      icon: MessageCircle,
-    },
-    { href: "/configuracoes/inteligencia-artificial", title: "Inteligência artificial", description: "Voz, assistente de WhatsApp, follow-up e perguntas; limite e uso.", icon: Sparkles },
-    { href: "/configuracoes/auditoria", title: "Auditoria", description: "Quem abriu ou alterou dados sensíveis.", icon: ShieldCheck },
-    { href: "/configuracoes/membros", title: "Equipe", description: "Quem acessa a clínica e com qual papel.", icon: Users },
-  ];
+export default async function Page() {
+  const session = await requireManager();
+  const [summary, billing, integrations] = await Promise.all([
+    optional("configuracoes", getSettingsSummary()),
+    optional("configuracoes", getBillingOverview()),
+    optional("configuracoes", getIntegrations(session.clinic.id)),
+  ]);
+
+  const plan = billing.ok ? billing.value : null;
+  const current = plan ? plan.plans.find((p) => p.id === plan.clinic.plan_id) : null;
 
   return (
-    <div className="space-y-8">
-      <PageHeader title="Configurações" description="Dados da clínica, unidades, equipe e tabelas usadas no dia a dia." />
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {sections.map(({ href, title, description, icon: Icon, meta, warning }) => (
-          <li key={href}>
-            <Link
-              href={href}
-              className="flex h-full items-start gap-4 rounded-xl border p-5 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-                <Icon className="size-5" aria-hidden />
-              </span>
-              <span className="min-w-0 flex-1 space-y-1">
-                <span className="block font-medium">{title}</span>
-                <span className="block text-sm text-muted-foreground">{description}</span>
-                {meta || warning ? (
-                  <span className="flex flex-wrap gap-x-3 pt-1 text-xs">
-                    {meta ? <span className="text-muted-foreground">{meta}</span> : null}
-                    {warning ? <span className="font-medium text-amber-700 dark:text-amber-500">{warning}</span> : null}
-                  </span>
-                ) : null}
-              </span>
-              <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+    <div className="space-y-6">
+      <header className="space-y-1">
+        <h1 className="type-display">Configurações</h1>
+        <p className="text-sm text-muted-foreground">Dados da clínica, equipe, tabelas e integrações.</p>
+      </header>
+
+      <div className="lg:hidden">
+        <SettingsMenu withDescriptions />
+      </div>
+
+      {summary.ok ? (
+        <KpiStrip
+          label="Cadastros"
+          items={[
+            { label: "Unidades", value: summary.value.units, context: "ativas", href: "/configuracoes/unidades" },
+            { label: "Profissionais", value: summary.value.professionals, context: plural(summary.value.chairs, "cadeira", "cadeiras"), href: "/configuracoes/profissionais" },
+            {
+              label: "Procedimentos",
+              value: summary.value.procedures,
+              context: summary.value.unpriced ? <span className="font-semibold text-warning">{plural(summary.value.unpriced, "sem preço", "sem preço")}</span> : "todos com preço",
+              href: "/configuracoes/procedimentos",
+            },
+            { label: "Formas de pagamento", value: summary.value.paymentMethods, context: "ativas", href: "/configuracoes/formas-de-pagamento" },
+          ]}
+        />
+      ) : (
+        <BlockError what="os cadastros" />
+      )}
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[18rem_minmax(0,1fr)] xl:items-start">
+        {plan ? (
+          <section aria-labelledby="seu-plano" className="space-y-3 rounded-card bg-brand-deep p-5 text-brand-deep-foreground">
+            <h2 id="seu-plano" className="type-label text-brand-deep-foreground/70">
+              Seu plano
+            </h2>
+            <p className="type-title">{current?.name ?? "Sem plano escolhido"}</p>
+            <p className="text-[0.8125rem] text-brand-deep-foreground/80">
+              {subscriptionStatusLabels[plan.clinic.subscription_status]}
+              {plan.clinic.subscription_status === "trialing" && plan.clinic.trial_ends_at ? ` até ${formatDate(plan.clinic.trial_ends_at)}` : ""}
+            </p>
+            <dl className="space-y-1.5 border-t border-brand-deep-foreground/15 pt-3 text-[0.8125rem]">
+              <div className="flex justify-between gap-2">
+                <dt className="text-brand-deep-foreground/75">Unidades</dt>
+                <dd className="font-semibold tabular-nums">
+                  {plan.usage.units}
+                  {current?.max_units ? ` de ${current.max_units}` : ""}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt className="text-brand-deep-foreground/75">Profissionais</dt>
+                <dd className="font-semibold tabular-nums">
+                  {plan.usage.professionals}
+                  {current?.max_professionals ? ` de ${current.max_professionals}` : ""}
+                </dd>
+              </div>
+            </dl>
+            <Link href="/configuracoes/assinatura" className={buttonVariants({ variant: "on-dark", className: "w-full" })}>
+              Ver planos
             </Link>
-          </li>
-        ))}
-      </ul>
+          </section>
+        ) : (
+          <BlockError what="o plano" />
+        )}
+
+        {integrations.ok ? (
+          <section aria-labelledby="integracoes" className="space-y-2 rounded-card border bg-card p-4 sm:p-5">
+            <h2 id="integracoes" className="type-section">
+              Integrações
+            </h2>
+            <ul className="divide-y divide-border-soft">
+              {integrations.value.map((i) => (
+                <li key={i.name}>
+                  <Link href={i.href} className="flex min-h-14 items-center justify-between gap-3 py-2 outline-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/40">
+                    <span className="flex min-w-0 flex-col">
+                      <span className="text-sm font-semibold">{i.name}</span>
+                      <span className="truncate text-xs text-muted-foreground">{i.detail}</span>
+                    </span>
+                    <StatusBadge tone={i.tone}>{i.status}</StatusBadge>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : (
+          <BlockError what="as integrações" />
+        )}
+      </div>
     </div>
   );
 }

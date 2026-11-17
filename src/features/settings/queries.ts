@@ -159,3 +159,49 @@ export async function getSettingsSummary() {
   ]);
   return { units, chairs, professionals, procedures, paymentMethods, unpriced };
 }
+
+export type IntegrationStatus = { name: string; detail: string; status: string; tone: "success" | "warning" | "neutral"; href: string };
+
+/** Situação de cada integração, para o resumo de Configurações. */
+export async function getIntegrations(clinicId: string): Promise<IntegrationStatus[]> {
+  const supabase = await createClient();
+  const [billing, fiscal, ai] = await Promise.all([
+    createAdminClient().from("clinic_billing").select("connected_at").eq("clinic_id", clinicId).maybeSingle(),
+    supabase.from("clinic_fiscal_settings").select("enabled").eq("clinic_id", clinicId).maybeSingle(),
+    supabase.from("clinic_ai_settings").select("assistant_enabled, followup_enabled, insights_enabled, voice_enabled").eq("clinic_id", clinicId).maybeSingle(),
+  ]);
+  const env = process.env;
+  const whatsappReal = env.WHATSAPP_PROVIDER === "meta" && Boolean(env.WHATSAPP_API_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID);
+  const aiOn = Boolean(ai.data && (ai.data.assistant_enabled || ai.data.followup_enabled || ai.data.insights_enabled || ai.data.voice_enabled));
+  const aiKey = Boolean(env.ANTHROPIC_API_KEY);
+  return [
+    {
+      name: "WhatsApp",
+      detail: whatsappReal ? "API oficial da Meta" : "Envio simulado: nada sai de verdade",
+      status: whatsappReal ? "Conectado" : "Simulado",
+      tone: whatsappReal ? "success" : "warning",
+      href: "/configuracoes/mensagens",
+    },
+    {
+      name: "Cobrança online (Asaas)",
+      detail: "Pix, boleto e link de pagamento",
+      status: billing.data?.connected_at ? "Conectado" : "Desligado",
+      tone: billing.data?.connected_at ? "success" : "neutral",
+      href: "/configuracoes/cobranca",
+    },
+    {
+      name: "Nota fiscal (NFS-e)",
+      detail: "Emissão a partir dos recebimentos",
+      status: fiscal.data?.enabled ? "Ligada" : "Desligada",
+      tone: fiscal.data?.enabled ? "success" : "neutral",
+      href: "/configuracoes/nota-fiscal",
+    },
+    {
+      name: "Inteligência artificial",
+      detail: aiKey ? "Assistente, follow-up e perguntas" : "Falta a chave da API no servidor",
+      status: !aiKey ? "Indisponível" : aiOn ? "Ligada" : "Desligada",
+      tone: !aiKey ? "warning" : aiOn ? "success" : "neutral",
+      href: "/configuracoes/inteligencia-artificial",
+    },
+  ];
+}

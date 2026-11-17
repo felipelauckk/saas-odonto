@@ -6,13 +6,20 @@ import { createClient } from "@/lib/supabase/server";
 
 import { PAGE_SIZE, type PatientSource } from "./labels";
 
-type SearchParams = { q: string; status: "active" | "archived"; source: PatientSource | null; page: number };
+type SearchParams = {
+  q: string;
+  status: "active" | "archived";
+  source: PatientSource | null;
+  segment: "in_treatment" | "open_quote" | "return_overdue" | "birthday" | null;
+  page: number;
+};
 
-export async function searchPatients({ q, status, source, page }: SearchParams) {
+/** Lista da tela de pacientes, já com última/próxima visita, saldo e situação (função `patient_list`). */
+export async function searchPatients({ q, status, source, segment, page }: SearchParams) {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("search_patients", {
+  const { data, error } = await supabase.rpc("patient_list", {
     _query: q,
-    _status: status,
+    _segment: status === "archived" ? "archived" : (segment ?? "active"),
     _source: source ?? undefined,
     _limit: PAGE_SIZE,
     _offset: (page - 1) * PAGE_SIZE,
@@ -20,6 +27,25 @@ export async function searchPatients({ q, status, source, page }: SearchParams) 
   if (error) throw error;
   const total = Number(data[0]?.total_count ?? 0);
   return { patients: data, total, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
+}
+
+export type PatientListRow = Awaited<ReturnType<typeof searchPatients>>["patients"][number];
+
+/** Quantos pacientes há em cada filtro rápido, com a mesma busca e origem. */
+export async function getSegmentCounts({ q, source }: { q: string; source: PatientSource | null }) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("patient_segment_counts", { _query: q, _source: source ?? undefined });
+  if (error) throw error;
+  const row = data[0];
+  const n = (v: number | undefined) => Number(v ?? 0);
+  return {
+    active: n(row?.active),
+    in_treatment: n(row?.in_treatment),
+    open_quote: n(row?.open_quote),
+    return_overdue: n(row?.return_overdue),
+    birthday: n(row?.birthday),
+    archived: n(row?.archived),
+  };
 }
 
 /** Cache por requisição: o layout da ficha e a aba usam o mesmo resultado. */

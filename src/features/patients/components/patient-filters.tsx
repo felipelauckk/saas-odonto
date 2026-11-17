@@ -5,19 +5,31 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Search } from "lucide-react";
 import { cn } from "cn";
 
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { patientSources, sourceLabels } from "../labels";
+import { SEGMENTS } from "../situation";
 
-/** Busca e filtros da lista de pacientes. Tudo fica na URL (dá para compartilhar e voltar). */
-export function PatientFilters() {
+export type SegmentCounts = {
+  active: number;
+  in_treatment: number;
+  open_quote: number;
+  return_overdue: number;
+  birthday: number;
+  archived: number;
+};
+
+const count = new Intl.NumberFormat("pt-BR");
+
+/** Busca, filtros rápidos com contagem e origem. Tudo fica na URL (dá para compartilhar e voltar). */
+export function PatientFilters({ counts }: { counts: SegmentCounts | null }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState(params.get("q") ?? "");
-  const status = params.get("status") === "archived" ? "archived" : "active";
+  const archived = params.get("status") === "archived";
+  const segment = archived ? null : (params.get("situacao") ?? null);
   const source = params.get("source") ?? "all";
 
   function navigate(changes: Record<string, string | null>) {
@@ -41,46 +53,35 @@ export function PatientFilters() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, urlQuery]);
 
-  const tab = (value: "active" | "archived", label: string) => (
-    <button
-      type="button"
-      aria-pressed={status === value}
-      onClick={() => navigate({ status: value === "active" ? null : value })}
-      className={cn(
-        "h-8 rounded-md px-3 text-sm font-medium transition-colors pointer-coarse:h-11",
-        status === value ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {label}
-    </button>
-  );
+  const chips = [
+    { key: "all", label: "Todos", n: counts?.active, pressed: !archived && !segment, go: { situacao: null, status: null } },
+    ...SEGMENTS.map((s) => ({ key: s.slug, label: s.label, n: counts?.[s.value], pressed: segment === s.slug, go: { situacao: s.slug, status: null } })),
+    { key: "archived", label: "Arquivados", n: counts?.archived, pressed: archived, go: { situacao: null, status: "archived" } },
+  ];
 
   const sourceItems = [{ value: "all", label: "Todas as origens" }, ...patientSources.map((s) => ({ value: s, label: sourceLabels[s] }))];
 
   return (
-    <div className="flex flex-col gap-3 md:flex-row md:items-center">
-      <div className="relative flex-1">
-        {pending ? (
-          <Loader2 className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 animate-spin text-muted-foreground" aria-hidden />
-        ) : (
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-        )}
-        <Input
-          type="search"
-          placeholder="Buscar por nome, CPF ou telefone"
-          aria-label="Buscar paciente"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="pl-8"
-        />
-      </div>
-      <div className="flex gap-3">
-        <div className="inline-flex rounded-lg bg-muted p-1" role="group" aria-label="Situação">
-          {tab("active", "Ativos")}
-          {tab("archived", "Arquivados")}
-        </div>
+    <div className="space-y-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <label className="relative flex-1">
+          <span className="sr-only">Buscar paciente</span>
+          {pending ? (
+            <Loader2 className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 animate-spin text-muted-foreground" aria-hidden />
+          ) : (
+            <Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          )}
+          <input
+            type="search"
+            placeholder="Nome, CPF ou telefone"
+            aria-label="Buscar paciente"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="h-12 w-full rounded-xl border border-input bg-card pr-4 pl-12 text-[0.9375rem] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+          />
+        </label>
         <Select items={sourceItems} value={source} onValueChange={(value) => navigate({ source: value === "all" ? null : String(value) })}>
-          <SelectTrigger aria-label="Origem" className="w-44 data-[size=default]:h-10 pointer-coarse:data-[size=default]:h-11">
+          <SelectTrigger aria-label="Origem" className="w-full md:w-48 data-[size=default]:h-12">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -91,6 +92,25 @@ export function PatientFilters() {
             ))}
           </SelectContent>
         </Select>
+      </div>
+      <div role="group" aria-label="Filtros rápidos" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+        {chips.map((c) => (
+          <button
+            key={c.key}
+            type="button"
+            aria-pressed={c.pressed}
+            onClick={() => navigate(c.go)}
+            className={cn(
+              "inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-[0.8125rem] font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40 pointer-coarse:h-11",
+              c.pressed ? "border-brand-deep bg-brand-deep text-brand-deep-foreground" : "border-input bg-card text-foreground hover:bg-muted",
+            )}
+          >
+            {c.label}
+            {c.n !== undefined ? (
+              <span className={cn("text-xs font-semibold tabular-nums", c.pressed ? "text-brand-deep-foreground/75" : "text-muted-foreground")}>{count.format(c.n)}</span>
+            ) : null}
+          </button>
+        ))}
       </div>
     </div>
   );

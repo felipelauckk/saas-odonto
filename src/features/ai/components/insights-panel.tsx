@@ -13,8 +13,17 @@ import { askDataAction, monthlySummaryAction } from "../actions";
 
 const EXAMPLES = ["Quanto cada profissional faturou neste mês?", "Qual a taxa de faltas dos últimos 30 dias?", "Quais pacientes estão sem visita há mais de 6 meses?"];
 
-export function InsightsPanel({ month, summaries }: { month: string; summaries: { id: string; month: string; body: string; created_at: string }[] }) {
-  const [question, setQuestion] = useState("");
+export function InsightsPanel({
+  month,
+  summaries,
+  initialQuestion = "",
+}: {
+  month: string;
+  summaries: { id: string; month: string; body: string; created_at: string }[];
+  /** Pergunta vinda de outra tela (ex.: Relatórios); só preenche, não envia. */
+  initialQuestion?: string;
+}) {
+  const [question, setQuestion] = useState(initialQuestion);
   const [answer, setAnswer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [summaryMonth, setSummaryMonth] = useState(month);

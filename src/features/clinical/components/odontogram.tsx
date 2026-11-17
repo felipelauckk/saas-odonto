@@ -205,7 +205,7 @@ export function Odontogram({ patientId, records, canWrite, canMarkDone, startWit
   const arches = view === "deciduous" ? [ARCHES.upperDeciduous, ARCHES.lowerDeciduous] : [ARCHES.upperPermanent, ARCHES.lowerPermanent];
 
   return (
-    <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:items-start">
+    <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:items-start">
       <section aria-labelledby="odontograma-titulo" className="min-w-0 space-y-5 rounded-card border bg-card p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-0.5">
