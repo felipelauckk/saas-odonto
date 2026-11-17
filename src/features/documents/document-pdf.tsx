@@ -5,6 +5,7 @@ import { Document, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@
 import { formatDateTime } from "@/lib/format";
 
 import { documentKindLabels, type DocumentKind } from "./labels";
+import { PDF_COLORS, registerPdfFonts } from "@/lib/pdf/fonts";
 
 export type Letterhead = {
   name: string;
@@ -28,18 +29,18 @@ type DocumentPdfInput = {
 };
 
 const s = StyleSheet.create({
-  page: { padding: 48, fontSize: 11, fontFamily: "Helvetica", color: "#111827", lineHeight: 1.5 },
-  header: { flexDirection: "row", alignItems: "center", borderBottomWidth: 0.5, borderBottomColor: "#d1d5db", paddingBottom: 12, marginBottom: 24 },
+  page: { padding: 48, fontSize: 11, fontFamily: "Montserrat", color: PDF_COLORS.text, lineHeight: 1.5 },
+  header: { flexDirection: "row", alignItems: "center", borderBottomWidth: 0.5, borderBottomColor: PDF_COLORS.border, paddingBottom: 12, marginBottom: 24 },
   logo: { width: 48, height: 48, objectFit: "contain", marginRight: 12 },
-  clinic: { fontSize: 13, fontFamily: "Helvetica-Bold" },
-  muted: { color: "#6b7280", fontSize: 9 },
-  title: { fontSize: 15, fontFamily: "Helvetica-Bold", textAlign: "center", marginBottom: 20, textTransform: "uppercase", letterSpacing: 1 },
+  clinic: { fontSize: 13, fontFamily: "Montserrat-Black", color: PDF_COLORS.brand },
+  muted: { color: PDF_COLORS.muted, fontSize: 9 },
+  title: { fontSize: 15, fontFamily: "Montserrat-Black", color: PDF_COLORS.brand, textAlign: "center", marginBottom: 20, textTransform: "uppercase", letterSpacing: 1 },
   paragraph: { marginBottom: 8, textAlign: "justify" },
-  signature: { marginTop: 48, alignSelf: "center", width: 260, borderTopWidth: 0.5, borderTopColor: "#111827", paddingTop: 4, textAlign: "center" },
-  footer: { position: "absolute", bottom: 24, left: 48, right: 48, fontSize: 8, color: "#9ca3af", textAlign: "center" },
-  via: { flex: 1, padding: 14, borderWidth: 0.5, borderColor: "#9ca3af", fontSize: 9, lineHeight: 1.4 },
-  box: { borderWidth: 0.5, borderColor: "#9ca3af", padding: 6, marginTop: 6, flex: 1 },
-  bold: { fontFamily: "Helvetica-Bold" },
+  signature: { marginTop: 48, alignSelf: "center", width: 260, borderTopWidth: 0.5, borderTopColor: PDF_COLORS.text, paddingTop: 4, textAlign: "center" },
+  footer: { position: "absolute", bottom: 24, left: 48, right: 48, fontSize: 8, color: PDF_COLORS.faint, textAlign: "center" },
+  via: { flex: 1, padding: 14, borderWidth: 0.5, borderColor: PDF_COLORS.faint, fontSize: 9, lineHeight: 1.4 },
+  box: { borderWidth: 0.5, borderColor: PDF_COLORS.faint, padding: 6, marginTop: 6, flex: 1 },
+  bold: { fontFamily: "Montserrat-Bold" },
 });
 
 function Paragraphs({ text }: { text: string }) {
@@ -113,6 +114,7 @@ function SpecialPrescriptionVia({ input, clinic, via }: { input: DocumentPdfInpu
 }
 
 export async function renderDocumentPdf(input: DocumentPdfInput, clinic: Letterhead): Promise<Buffer> {
+  registerPdfFonts();
   const footer = `${documentKindLabels[input.kind]} · emitido em ${formatDateTime(input.issuedAt)} · código ${input.documentId.slice(0, 8).toUpperCase()}`;
   const doc =
     input.kind === "special_prescription" ? (

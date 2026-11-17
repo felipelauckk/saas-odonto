@@ -13,17 +13,18 @@ import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 import { genderLabels, sourceLabels } from "./labels";
+import { PDF_COLORS, registerPdfFonts } from "@/lib/pdf/fonts";
 
 const s = StyleSheet.create({
-  page: { padding: 40, fontSize: 9.5, fontFamily: "Helvetica", color: "#111827", lineHeight: 1.4 },
-  h1: { fontSize: 16, fontFamily: "Helvetica-Bold", marginBottom: 2 },
-  h2: { fontSize: 11.5, fontFamily: "Helvetica-Bold", marginTop: 16, marginBottom: 6, borderBottomWidth: 0.5, borderBottomColor: "#d1d5db", paddingBottom: 3 },
-  muted: { color: "#6b7280" },
+  page: { padding: 40, fontSize: 9.5, fontFamily: "Montserrat", color: PDF_COLORS.text, lineHeight: 1.4 },
+  h1: { fontSize: 16, fontFamily: "Montserrat-Black", color: PDF_COLORS.brand, marginBottom: 2 },
+  h2: { fontSize: 11.5, fontFamily: "Montserrat-Bold", marginTop: 16, marginBottom: 6, borderBottomWidth: 0.5, borderBottomColor: PDF_COLORS.border, paddingBottom: 3 },
+  muted: { color: PDF_COLORS.muted },
   row: { flexDirection: "row", marginBottom: 2 },
-  label: { width: 140, color: "#6b7280" },
+  label: { width: 140, color: PDF_COLORS.muted },
   item: { marginBottom: 6 },
-  bold: { fontFamily: "Helvetica-Bold" },
-  footer: { position: "absolute", bottom: 24, left: 40, right: 40, fontSize: 8, color: "#9ca3af", textAlign: "center" },
+  bold: { fontFamily: "Montserrat-Bold" },
+  footer: { position: "absolute", bottom: 24, left: 40, right: 40, fontSize: 8, color: PDF_COLORS.faint, textAlign: "center" },
 });
 
 /**
@@ -31,6 +32,7 @@ const s = StyleSheet.create({
  * Lê com a sessão do usuário: a RLS garante que só sai o que ele pode ver.
  */
 export async function renderPatientExport(patientId: string, clinicName: string): Promise<Buffer | null> {
+  registerPdfFonts();
   const supabase = await createClient();
   const [patientRes, anamnesesRes, toothRes, notesRes, apptRes, plansRes, recvRes, filesRes] = await Promise.all([
     supabase.from("patients").select("*").eq("id", patientId).maybeSingle(),

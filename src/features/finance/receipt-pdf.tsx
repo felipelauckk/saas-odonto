@@ -5,6 +5,7 @@ import { Document, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@
 import { formatCpfCnpj, formatPhone } from "@/lib/documents";
 import { centsToWords } from "@/lib/extenso";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { PDF_COLORS, registerPdfFonts } from "@/lib/pdf/fonts";
 
 type Letterhead = {
   name: string;
@@ -25,21 +26,22 @@ type Receipt = {
 };
 
 const styles = StyleSheet.create({
-  page: { padding: 48, fontSize: 11, fontFamily: "Helvetica", color: "#111827" },
+  page: { padding: 48, fontSize: 11, fontFamily: "Montserrat", color: PDF_COLORS.text },
   header: { flexDirection: "row", alignItems: "center", marginBottom: 32 },
   logo: { width: 56, height: 56, objectFit: "contain", marginRight: 12 },
-  clinic: { fontSize: 14, fontFamily: "Helvetica-Bold" },
-  muted: { color: "#6b7280", fontSize: 10 },
+  clinic: { fontSize: 14, fontFamily: "Montserrat-Black", color: PDF_COLORS.brand },
+  muted: { color: PDF_COLORS.muted, fontSize: 10 },
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 },
-  title: { fontSize: 20, fontFamily: "Helvetica-Bold", letterSpacing: 2 },
-  amount: { fontSize: 16, fontFamily: "Helvetica-Bold", borderWidth: 1, borderColor: "#111827", padding: 8 },
+  title: { fontSize: 20, fontFamily: "Montserrat-Black", color: PDF_COLORS.brand, letterSpacing: 2 },
+  amount: { fontSize: 16, fontFamily: "Montserrat-Bold", borderWidth: 1, borderColor: PDF_COLORS.text, padding: 8 },
   body: { lineHeight: 1.6, marginBottom: 32 },
-  bold: { fontFamily: "Helvetica-Bold" },
-  signature: { marginTop: 56, alignSelf: "center", width: 260, borderTopWidth: 0.5, borderTopColor: "#111827", paddingTop: 4, textAlign: "center" },
-  code: { position: "absolute", bottom: 32, left: 48, color: "#9ca3af", fontSize: 8 },
+  bold: { fontFamily: "Montserrat-Bold" },
+  signature: { marginTop: 56, alignSelf: "center", width: 260, borderTopWidth: 0.5, borderTopColor: PDF_COLORS.text, paddingTop: 4, textAlign: "center" },
+  code: { position: "absolute", bottom: 32, left: 48, color: PDF_COLORS.faint, fontSize: 8 },
 });
 
 export async function renderReceiptPdf(receipt: Receipt, clinic: Letterhead): Promise<Buffer> {
+  registerPdfFonts();
   const amount = receipt.paid_amount_cents;
   const doc = (
     <Document title={`Recibo - ${receipt.patients?.full_name ?? ""}`} author={clinic.name} language="pt-BR">

@@ -11,6 +11,7 @@ import { generateToken, isWellFormedToken, sha256Hex } from "@/lib/hash";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 import { appendEvidencePage } from "./evidence";
+import { PDF_COLORS, registerPdfFonts } from "@/lib/pdf/fonts";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
@@ -107,22 +108,23 @@ export type SignInput = {
 };
 
 const anamnesisStyles = StyleSheet.create({
-  page: { padding: 48, fontSize: 10, fontFamily: "Helvetica", lineHeight: 1.4 },
-  title: { fontSize: 15, fontFamily: "Helvetica-Bold", marginBottom: 4 },
-  row: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#e5e7eb", paddingVertical: 4 },
+  page: { padding: 48, fontSize: 10, fontFamily: "Montserrat", lineHeight: 1.4, color: PDF_COLORS.text },
+  title: { fontSize: 15, fontFamily: "Montserrat-Black", color: PDF_COLORS.brand, marginBottom: 4 },
+  row: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: PDF_COLORS.border, paddingVertical: 4 },
 });
 
 async function renderAnamnesisPdf(clinicName: string, patientName: string, answers: Answer[]) {
+  registerPdfFonts();
   const rows = answers.map((a, i) =>
     h(View, { key: i, style: anamnesisStyles.row, wrap: false }, [
-      h(Text, { key: "q", style: { width: "60%", color: "#4b5563" } }, a.label),
+      h(Text, { key: "q", style: { width: "60%", color: PDF_COLORS.muted } }, a.label),
       h(Text, { key: "a", style: { width: "40%" } }, a.type === "text" ? a.text || "—" : a.answer === "yes" ? `Sim${a.text ? ` — ${a.text}` : ""}` : a.answer === "no" ? "Não" : "—"),
     ]),
   );
   const doc = h(Document, { title: `Anamnese - ${patientName}` }, [
     h(Page, { key: "p", size: "A4", style: anamnesisStyles.page }, [
       h(Text, { key: "t", style: anamnesisStyles.title }, "Anamnese preenchida pelo paciente"),
-      h(Text, { key: "c", style: { color: "#6b7280", marginBottom: 16 } }, `${clinicName} · ${patientName}`),
+      h(Text, { key: "c", style: { color: PDF_COLORS.muted, marginBottom: 16 } }, `${clinicName} · ${patientName}`),
       ...rows,
     ]),
   ]);

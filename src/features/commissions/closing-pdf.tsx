@@ -6,17 +6,19 @@ import { formatIsoDate } from "@/lib/dates";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 
 import type { Line } from "./calc";
+import { PDF_COLORS, registerPdfFonts } from "@/lib/pdf/fonts";
 
 const s = StyleSheet.create({
-  page: { padding: 36, fontSize: 8.5, fontFamily: "Helvetica", color: "#111827" },
-  title: { fontSize: 14, fontFamily: "Helvetica-Bold" },
-  muted: { color: "#6b7280" },
+  page: { padding: 36, fontSize: 8.5, fontFamily: "Montserrat", color: PDF_COLORS.text },
+  title: { fontSize: 14, fontFamily: "Montserrat-Black", color: PDF_COLORS.brand },
+  muted: { color: PDF_COLORS.muted },
   row: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#e5e7eb", paddingVertical: 3 },
-  th: { fontFamily: "Helvetica-Bold", color: "#374151" },
+  th: { fontFamily: "Montserrat-Bold", color: PDF_COLORS.muted },
   c1: { width: 50 }, c2: { width: 110 }, c3: { flex: 1 }, num: { width: 62, textAlign: "right" }, rule: { width: 52, textAlign: "right" },
 });
 
 export async function renderClosingPdf(input: { clinicName: string; professionalName: string; month: string; base: "received" | "executed"; lines: Line[]; totals: { gross: number; base: number; commission: number } }) {
+  registerPdfFonts();
   const monthLabel = new Date(`${input.month}-15T12:00:00Z`).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   const doc = (
     <Document title={`Comissão ${input.professionalName} ${input.month}`} author={input.clinicName} language="pt-BR">

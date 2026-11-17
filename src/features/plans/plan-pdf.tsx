@@ -10,6 +10,7 @@ import { splitInstallments } from "@/lib/installments";
 import { faceLabel, type Face } from "@/features/clinical/odontogram";
 
 import type { PlanDetail } from "./queries";
+import { PDF_COLORS, registerPdfFonts } from "@/lib/pdf/fonts";
 
 type Letterhead = {
   name: string;
@@ -21,25 +22,25 @@ type Letterhead = {
 };
 
 const styles = StyleSheet.create({
-  page: { padding: 40, fontSize: 10, fontFamily: "Helvetica", color: "#111827" },
+  page: { padding: 40, fontSize: 10, fontFamily: "Montserrat", color: PDF_COLORS.text },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 },
   logo: { width: 64, height: 64, objectFit: "contain", marginRight: 12 },
-  clinicName: { fontSize: 14, fontFamily: "Helvetica-Bold" },
-  muted: { color: "#6b7280" },
-  title: { fontSize: 16, fontFamily: "Helvetica-Bold", marginBottom: 4 },
+  clinicName: { fontSize: 14, fontFamily: "Montserrat-Black", color: PDF_COLORS.brand },
+  muted: { color: PDF_COLORS.muted },
+  title: { fontSize: 16, fontFamily: "Montserrat-Black", color: PDF_COLORS.brand, marginBottom: 4 },
   section: { marginBottom: 16 },
   row: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#e5e7eb", paddingVertical: 6 },
-  th: { fontFamily: "Helvetica-Bold", color: "#374151" },
+  th: { fontFamily: "Montserrat-Bold", color: PDF_COLORS.muted },
   colDesc: { flex: 1 },
   colTooth: { width: 120 },
   colStatus: { width: 70 },
   colPrice: { width: 80, textAlign: "right" },
   totals: { alignSelf: "flex-end", width: 220, marginTop: 8 },
   totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 2 },
-  bold: { fontFamily: "Helvetica-Bold" },
+  bold: { fontFamily: "Montserrat-Bold" },
   footer: { position: "absolute", bottom: 40, left: 40, right: 40 },
   signature: { marginTop: 48, flexDirection: "row", justifyContent: "space-between" },
-  signLine: { width: 220, borderTopWidth: 0.5, borderTopColor: "#111827", paddingTop: 4, textAlign: "center" },
+  signLine: { width: 220, borderTopWidth: 0.5, borderTopColor: PDF_COLORS.text, paddingTop: 4, textAlign: "center" },
 });
 
 function toothText(tooth: number | null, faces: string[]) {
@@ -48,6 +49,7 @@ function toothText(tooth: number | null, faces: string[]) {
 }
 
 export async function renderPlanPdf({ plan, items, receivables }: PlanDetail, clinic: Letterhead): Promise<Buffer> {
+  registerPdfFonts();
   const decided = !["draft", "presented"].includes(plan.status);
   const shownItems = decided ? items.filter((i) => i.status !== "rejected") : items;
   const subtotal = shownItems.reduce((s, i) => s + i.price_cents, 0);
@@ -117,7 +119,7 @@ export async function renderPlanPdf({ plan, items, receivables }: PlanDetail, cl
                 <Text>- {formatCurrency(plan.discount_cents)}</Text>
               </View>
             ) : null}
-            <View style={[styles.totalRow, { borderTopWidth: 0.5, borderTopColor: "#111827", marginTop: 2, paddingTop: 4 }]}>
+            <View style={[styles.totalRow, { borderTopWidth: 0.5, borderTopColor: PDF_COLORS.text, marginTop: 2, paddingTop: 4 }]}>
               <Text style={styles.bold}>Total</Text>
               <Text style={styles.bold}>{formatCurrency(total)}</Text>
             </View>
