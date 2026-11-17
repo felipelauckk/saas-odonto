@@ -64,11 +64,11 @@ export function TodayTimeline({ appointments, nowTime, nowMinutes }: { appointme
         return (
           <Fragment key={a.id}>
             {i === markerAt ? <NowMarker time={nowTime} /> : null}
-            <li className={cn("grid grid-cols-[2.75rem_0.75rem_minmax(0,1fr)] items-start gap-2.5 py-1.5", faded && "opacity-65")}>
-              <span className="pt-px text-[0.8125rem] font-semibold tabular-nums">{utcToZoned(a.starts_at).time}</span>
+            <li className="grid grid-cols-[2.75rem_0.75rem_minmax(0,1fr)] items-start gap-2.5 py-1.5">
+              <span className={cn("pt-px text-[0.8125rem] font-semibold tabular-nums", faded && "font-medium text-muted-foreground")}>{utcToZoned(a.starts_at).time}</span>
               <span className={cn("mt-1 size-2.5 rounded-full ring-3", dotClass[a.status])} aria-hidden />
               <span className="flex min-w-0 flex-col">
-                <Link href={`/pacientes/${a.patient_id}`} className={cn("truncate text-sm font-medium hover:underline", a.status === "no_show" && "line-through")}>
+                <Link href={`/pacientes/${a.patient_id}`} className={cn("truncate text-sm font-medium hover:underline", faded && "text-muted-foreground", a.status === "no_show" && "line-through")}>
                   {a.patients?.full_name}
                 </Link>
                 <span className="truncate text-xs text-muted-foreground">{[a.type, a.professionals?.name, statusText[a.status]].filter(Boolean).join(" · ")}</span>

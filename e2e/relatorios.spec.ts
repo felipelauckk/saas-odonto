@@ -29,7 +29,7 @@ test("abre um relatório e exporta Excel e CSV", async ({ page }) => {
   await page.goto("/relatorios");
   await page.getByRole("link", { name: /Faltas e desmarcações/ }).click();
   await expect(page.getByRole("heading", { name: "Faltas e desmarcações" })).toBeVisible();
-  await page.getByLabel("De").fill("2026-01-01");
+  await page.getByLabel("De", { exact: true }).fill("2026-01-01");
   await page.getByRole("button", { name: "Aplicar" }).click();
   await expect(page.getByRole("cell", { name: "Dra. Ana" })).toBeVisible();
 

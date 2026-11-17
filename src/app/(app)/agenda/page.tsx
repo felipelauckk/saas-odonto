@@ -16,18 +16,11 @@ import { createClient } from "@/lib/supabase/server";
 import { todayIso } from "@/lib/dates";
 import { startOfWeek } from "@/lib/timezone";
 import { optional } from "@/lib/optional";
+import { BlockError } from "@/components/feedback/block-error";
 
 export const metadata: Metadata = { title: "Agenda" };
 
 const shortDay = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" });
-
-function AsideError({ what }: { what: string }) {
-  return (
-    <p role="alert" className="rounded-card border bg-card p-4 text-sm text-destructive">
-      Não foi possível carregar {what}. Recarregue a página para tentar de novo.
-    </p>
-  );
-}
 
 const MORE_LINKS = [
   { href: "/agenda/sala-de-espera", label: "Sala de espera" },
@@ -87,7 +80,7 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
 
   const aside = (
     <>
-      {levels.ok ? <MiniCalendar date={date} today={today} levels={levels.value} hrefFor={hrefFor} /> : <AsideError what="o calendário" />}
+      {levels.ok ? <MiniCalendar date={date} today={today} levels={levels.value} hrefFor={hrefFor} /> : <BlockError what="o calendário" />}
       <section aria-labelledby="sala" className="space-y-1 rounded-card border bg-card p-4">
         <div className="flex items-baseline justify-between gap-2 pb-1">
           <h2 id="sala" className="type-section">
@@ -111,7 +104,7 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
           />
         ) : null
       ) : (
-        <AsideError what="as vagas liberadas" />
+        <BlockError what="as vagas liberadas" />
       )}
       <nav aria-label="Mais da agenda" className="rounded-card border bg-card p-2">
         <ul>

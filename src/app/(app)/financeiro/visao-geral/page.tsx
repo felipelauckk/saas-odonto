@@ -13,18 +13,11 @@ import { canManageClinic } from "@/features/tenancy/roles";
 import { todayIso } from "@/lib/dates";
 import { formatCurrency, formatCurrencyWhole } from "@/lib/format";
 import { optional } from "@/lib/optional";
+import { BlockError } from "@/components/feedback/block-error";
 
 export const metadata: Metadata = { title: "Visão geral do financeiro" };
 
 const monthLong = new Intl.DateTimeFormat("pt-BR", { month: "long", timeZone: "UTC" });
-
-function BlockError({ what }: { what: string }) {
-  return (
-    <p role="alert" className="rounded-card border px-5 py-6 text-center text-[0.8125rem] text-muted-foreground">
-      Não foi possível carregar {what} agora. Recarregue a página.
-    </p>
-  );
-}
 
 /** "16/11", ou "10/01/2020" quando não é do ano corrente. */
 function dayMonth(date: string, today = todayIso()) {

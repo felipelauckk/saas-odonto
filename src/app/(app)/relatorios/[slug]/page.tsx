@@ -83,7 +83,7 @@ export default async function Page({ params, searchParams }: PageProps<"/relator
       {insight ? <ReportBars insight={insight} /> : null}
 
       {result.rows.length ? (
-        <div className="overflow-x-auto rounded-card border bg-card">
+        <div className="overflow-x-auto rounded-card border bg-card" tabIndex={0} role="region" aria-label={`Tabela: ${def.title}`}>
           <table className="w-full text-sm">
             <thead className="border-b border-border-soft text-left text-muted-foreground">
               <tr>

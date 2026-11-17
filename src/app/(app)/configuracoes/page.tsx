@@ -11,19 +11,12 @@ import { getIntegrations, getSettingsSummary } from "@/features/settings/queries
 import { requireManager } from "@/features/tenancy/guards";
 import { formatDate } from "@/lib/format";
 import { optional } from "@/lib/optional";
+import { BlockError } from "@/components/feedback/block-error";
 
 export const metadata: Metadata = { title: "Configurações" };
 
 function plural(n: number, one: string, many: string) {
   return `${n} ${n === 1 ? one : many}`;
-}
-
-function BlockError({ what }: { what: string }) {
-  return (
-    <p role="alert" className="rounded-card border px-5 py-6 text-center text-[0.8125rem] text-muted-foreground">
-      Não foi possível carregar {what} agora. Recarregue a página.
-    </p>
-  );
 }
 
 export default async function Page() {

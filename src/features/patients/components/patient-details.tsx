@@ -11,9 +11,9 @@ import type { Patient } from "../queries";
 
 type Address = { cep?: string | null; street?: string | null; number?: string | null; complement?: string | null; district?: string | null; city?: string | null; state?: string | null };
 
-function Item({ label, value }: { label: string; value: string | null | undefined }) {
+function Item({ label, value, wide = false }: { label: string; value: string | null | undefined; wide?: boolean }) {
   return (
-    <div className="space-y-0.5">
+    <div className={wide ? "space-y-0.5 sm:col-span-2 lg:col-span-3" : "space-y-0.5"}>
       <dt className="text-sm text-muted-foreground">{label}</dt>
       <dd className="text-sm">{value || <span className="text-muted-foreground">Não informado</span>}</dd>
     </div>
@@ -37,7 +37,7 @@ export function PatientDetails({ patient }: { patient: Patient }) {
           Editar dados
         </Link>
       </div>
-      <section className="rounded-xl border p-5 sm:p-6" aria-label="Dados pessoais">
+      <section className="rounded-card border bg-card p-5 sm:p-6" aria-label="Dados pessoais">
         <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <Item label="CPF" value={patient.cpf ? formatCpfCnpj(patient.cpf) : null} />
           <Item label="Data de nascimento" value={patient.birth_date ? formatIsoDate(patient.birth_date) : null} />
@@ -45,9 +45,7 @@ export function PatientDetails({ patient }: { patient: Patient }) {
           <Item label="Telefone" value={patient.phone ? formatPhone(patient.phone) : null} />
           <Item label="WhatsApp" value={patient.whatsapp ? formatPhone(patient.whatsapp) : null} />
           <Item label="E-mail" value={patient.email} />
-          <div className="sm:col-span-2 lg:col-span-3">
-            <Item label="Endereço" value={formatAddress(patient.address as Address | null)} />
-          </div>
+          <Item label="Endereço" value={formatAddress(patient.address as Address | null)} wide />
           {patient.guardian_name ? (
             <>
               <Item label="Responsável legal" value={patient.guardian_name} />
@@ -61,9 +59,7 @@ export function PatientDetails({ patient }: { patient: Patient }) {
           />
           <Item label="Cadastrado em" value={formatDateTime(patient.created_at)} />
           {patient.notes ? (
-            <div className="sm:col-span-2 lg:col-span-3">
-              <Item label="Observações" value={patient.notes} />
-            </div>
+            <Item label="Observações" value={patient.notes} wide />
           ) : null}
         </dl>
       </section>

@@ -7,7 +7,9 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      // Rolagem lateral no celular: precisa receber foco para rolar pelo teclado.
+      tabIndex={0}
+      className="relative w-full overflow-x-auto rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <table
         data-slot="table"

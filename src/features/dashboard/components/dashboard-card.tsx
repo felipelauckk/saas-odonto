@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { AlertCircle } from "lucide-react";
 import { cn } from "cn";
 
 type DashboardCardProps = {
@@ -39,14 +38,7 @@ export function DashboardCard({ id, title, description, link, className, childre
 }
 
 /** Erro de um bloco só (o resto do painel continua funcionando). */
-export function BlockError({ what }: { what: string }) {
-  return (
-    <p role="alert" className="flex items-center gap-2 rounded-lg bg-destructive-soft px-3 py-3 text-sm text-destructive">
-      <AlertCircle className="size-4 shrink-0" aria-hidden />
-      Não foi possível carregar {what}. Recarregue a página para tentar de novo.
-    </p>
-  );
-}
+export { BlockError } from "@/components/feedback/block-error";
 
 /** Estado vazio compacto, dentro de um bloco. */
 export function BlockEmpty({ children }: { children: ReactNode }) {

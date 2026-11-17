@@ -3,6 +3,8 @@
  *   SCREENS=depois-r1 npx playwright test e2e/screens.spec.ts
  * Salva em docs/design/screens/<SCREENS>-<tela>-<projeto>.png.
  */
+import { appendFileSync } from "node:fs";
+
 import { expect, test } from "@playwright/test";
 
 import { admin, createTestUser, hasSupabase, seedAgenda, signIn, type TestUser } from "./support/test-user";
@@ -208,6 +210,33 @@ for (const [name, path] of [
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
     await page.waitForLoadState("networkidle");
     if (name === "odontograma") await page.getByRole("button", { name: /^Dente 36 inteiro/ }).click();
+    // AUDIT=<arquivo>: revisão final (R10). axe, largura no celular de 390px e alvos de toque.
+    if (process.env.AUDIT) {
+      if (info.project.name === "celular") {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.waitForTimeout(300);
+      }
+      await page.addScriptTag({ path: require.resolve("axe-core/axe.min.js") });
+      const result = await page.evaluate(async () => {
+        // @ts-expect-error axe é injetado na página
+        const r = await window.axe.run(document, { runOnly: ["wcag2a", "wcag2aa", "wcag21aa"] });
+        const overflow = document.documentElement.scrollWidth - window.innerWidth;
+        const small = [...document.querySelectorAll("a, button, input, select, textarea, [role=button], [role=radio], [role=tab]")]
+          .filter((el) => {
+            const b = el.getBoundingClientRect();
+            const style = getComputedStyle(el);
+            return b.width > 0 && b.height > 0 && style.visibility !== "hidden" && (b.height < 44 || b.width < 24);
+          })
+          .map((el) => `${el.tagName.toLowerCase()} "${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 40)}" ${Math.round(el.getBoundingClientRect().width)}x${Math.round(el.getBoundingClientRect().height)}`);
+        return {
+          violations: r.violations.map((v: { id: string; impact: string; nodes: { target: string[] }[] }) => ({ id: v.id, impact: v.impact, count: v.nodes.length, targets: v.nodes.slice(0, 3).map((n) => n.target.join(" ")) })),
+          overflow,
+          small: small.slice(0, 15),
+          smallCount: small.length,
+        };
+      });
+      appendFileSync(process.env.AUDIT, JSON.stringify({ page: name, project: info.project.name, ...result }) + "\n");
+    }
     await page.screenshot({ path: `${process.env.SCREENS_DIR ?? "docs/design/screens"}/${label}-${name}-${info.project.name}.png`, fullPage: true });
   });
 }

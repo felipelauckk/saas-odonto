@@ -70,7 +70,7 @@ function cardLook(status: AgendaAppointment["status"], color: { value: string; s
     case "in_progress":
       return { className: "border text-primary-foreground", style: { backgroundColor: color.value, borderColor: color.value }, sub: "text-primary-foreground/85" };
     case "done":
-      return { className: "border border-muted bg-muted opacity-80", style: {}, sub: "text-muted-foreground" };
+      return { className: "border border-border bg-muted text-muted-foreground", style: {}, sub: "text-muted-foreground" };
     default:
       return {
         className:
