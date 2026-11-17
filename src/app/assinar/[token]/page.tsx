@@ -1,23 +1,12 @@
 import type { Metadata } from "next";
 import { Clock, Link2Off } from "lucide-react";
 
-import { Brand } from "@/components/layout/brand";
+import { PublicNotice, PublicShell } from "@/components/app/public-shell";
 import { PublicSigningForm } from "@/features/documents/components/public-signing-form";
 import { loadPublicSigning } from "@/features/documents/signing";
 import { formatDateTime } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Assinatura de documento", robots: { index: false, follow: false } };
-
-function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-full bg-muted/40 px-4 py-8">
-      <div className="mx-auto w-full max-w-2xl space-y-6">
-        <Brand />
-        {children}
-      </div>
-    </div>
-  );
-}
 
 export default async function Page({ params }: PageProps<"/assinar/[token]">) {
   const { token } = await params;
@@ -27,31 +16,38 @@ export default async function Page({ params }: PageProps<"/assinar/[token]">) {
     // Mensagem neutra: nenhum dado do paciente, nem se o link existiu.
     const expired = signing.state === "expired";
     return (
-      <Shell>
-        <div className="flex flex-col items-center gap-3 rounded-xl border bg-background p-8 text-center">
-          {expired ? <Clock className="size-8 text-muted-foreground" aria-hidden /> : <Link2Off className="size-8 text-muted-foreground" aria-hidden />}
-          <h1 className="text-lg font-medium">{expired ? "Este link expirou" : signing.state === "used" ? "Este link já foi usado" : "Link indisponível"}</h1>
-          <p className="text-sm text-muted-foreground">Peça um novo link para a clínica.</p>
-        </div>
-      </Shell>
+      <PublicShell clinicName={null} width="lg">
+        <PublicNotice
+          icon={expired ? <Clock aria-hidden /> : <Link2Off aria-hidden />}
+          title={expired ? "Este link expirou" : signing.state === "used" ? "Este link já foi usado" : "Link indisponível"}
+        >
+          Peça um novo link para a clínica.
+        </PublicNotice>
+      </PublicShell>
     );
   }
 
   return (
-    <Shell>
-      <div className="space-y-1">
-        <p className="text-sm text-muted-foreground">{signing.clinicName}</p>
-        <h1 className="text-xl font-semibold tracking-tight">{signing.purpose === "document" ? signing.document!.title : "Anamnese"}</h1>
+    <PublicShell
+      clinicName={signing.clinicName}
+      detail="Link seguro para assinatura"
+      width="lg"
+      footer="Registramos data, hora, endereço IP e um código único do documento. Seus dados ficam protegidos pela LGPD."
+    >
+      <div className="space-y-1.5">
+        <h1 className="type-title">{signing.purpose === "document" ? signing.document!.title : "Anamnese"}</h1>
         <p className="text-xs text-muted-foreground">Link válido até {formatDateTime(signing.expiresAt)}.</p>
       </div>
       {signing.document ? (
-        <article className="whitespace-pre-line rounded-xl border bg-background p-5 text-sm leading-relaxed">{signing.document.body}</article>
+        <article className="max-h-[55dvh] overflow-y-auto rounded-card border bg-card p-5 text-sm leading-relaxed whitespace-pre-line" tabIndex={0} aria-label="Texto do documento">
+          {signing.document.body}
+        </article>
       ) : (
         <p className="text-sm text-muted-foreground">Responda as perguntas abaixo. Elas ajudam o dentista a cuidar de você com segurança.</p>
       )}
-      <div className="rounded-xl bg-background">
+      <div className="rounded-card border bg-card p-4 sm:p-5">
         <PublicSigningForm token={token} purpose={signing.purpose} questions={signing.anamnesis?.questions ?? null} />
       </div>
-    </Shell>
+    </PublicShell>
   );
 }

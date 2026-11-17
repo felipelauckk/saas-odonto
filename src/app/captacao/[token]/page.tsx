@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PublicNotice, PublicShell } from "@/components/app/public-shell";
 import { Link2Off } from "lucide-react";
 import { z } from "zod";
 
@@ -18,23 +19,18 @@ export default async function Page({ params, searchParams }: PageProps<"/captaca
   const campaignId = z.uuid().nullable().catch(null).parse(query.campanha ?? null);
 
   return (
-    <div className="min-h-full bg-background px-4 py-8">
-      <div className="mx-auto w-full max-w-md space-y-6">
-        {clinic ? (
-          <>
-            <div className="space-y-1">
-              <h1 className="text-xl font-semibold tracking-tight">{clinic.name}</h1>
-              <p className="text-sm text-muted-foreground">Deixe seu contato e a clínica fala com você.</p>
-            </div>
-            <PublicLeadForm token={token} source={source} campaignId={campaignId} action={submitPublicLead} />
-          </>
-        ) : (
-          <div className="flex flex-col items-center gap-3 rounded-xl border p-8 text-center">
-            <Link2Off className="size-8 text-muted-foreground" aria-hidden />
-            <h1 className="text-lg font-medium">Formulário indisponível</h1>
+    <PublicShell clinicName={clinic?.name ?? null} width="sm">
+      {clinic ? (
+        <>
+          <div className="space-y-1">
+            <h1 className="type-title">Fale com a clínica</h1>
+            <p className="text-sm text-muted-foreground">Deixe seu contato e a clínica fala com você.</p>
           </div>
-        )}
-      </div>
-    </div>
+          <PublicLeadForm token={token} source={source} campaignId={campaignId} action={submitPublicLead} />
+        </>
+      ) : (
+        <PublicNotice icon={<Link2Off aria-hidden />} title="Formulário indisponível" />
+      )}
+    </PublicShell>
   );
 }

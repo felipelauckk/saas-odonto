@@ -32,6 +32,7 @@ test("liga o agendamento online, paciente marca com código e a consulta aparece
   await page.goto(url);
   await page.getByRole("button", { name: "Próxima semana" }).click();
   await page.getByRole("button", { name: /^10:00/ }).first().click();
+  await page.getByRole("button", { name: /^Continuar · .* às 10:00$/ }).click();
   await page.getByLabel("Nome completo").fill("Roberta Site");
   await page.getByLabel("WhatsApp").fill("(11) 94444-3333");
   await page.getByRole("button", { name: "Receber código" }).click();

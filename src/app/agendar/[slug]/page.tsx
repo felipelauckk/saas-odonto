@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { CalendarX } from "lucide-react";
 
+import { PublicNotice, PublicShell } from "@/components/app/public-shell";
+
 import { BookingWizard } from "@/features/booking/components/booking-wizard";
 import { loadBookingPage } from "@/features/booking/service";
 import { utcToZoned } from "@/lib/timezone";
@@ -15,24 +17,24 @@ export async function generateMetadata({ params }: PageProps<"/agendar/[slug]">)
 export default async function Page({ params }: PageProps<"/agendar/[slug]">) {
   const page = await loadBookingPage((await params).slug);
   return (
-    <div className="min-h-full bg-background px-4 py-8">
-      <div className="mx-auto w-full max-w-xl space-y-6">
-        {page ? (
-          <>
-            <div className="space-y-1">
-              <h1 className="text-xl font-semibold tracking-tight">{page.clinicName}</h1>
-              <p className="text-sm text-muted-foreground">{page.intro || "Escolha o melhor horário para a sua consulta."}</p>
-            </div>
-            <BookingWizard page={page} today={utcToZoned(new Date()).date} actions={{ getSlots, startBooking, finishBooking }} />
-          </>
-        ) : (
-          <div className="flex flex-col items-center gap-3 rounded-xl border p-8 text-center">
-            <CalendarX className="size-8 text-muted-foreground" aria-hidden />
-            <h1 className="text-lg font-medium">Agendamento online indisponível</h1>
-            <p className="text-sm text-muted-foreground">Entre em contato com a clínica.</p>
+    <PublicShell
+      clinicName={page?.clinicName ?? null}
+      detail={page && page.units.length === 1 ? page.units[0]!.name : null}
+      footer="Agendamento por Arcada · seus dados ficam protegidos (LGPD)."
+    >
+      {page ? (
+        <>
+          <div className="space-y-1">
+            <h1 className="type-title">Agende sua consulta</h1>
+            <p className="text-sm text-muted-foreground">{page.intro || "Escolha o melhor horário para a sua consulta."}</p>
           </div>
-        )}
-      </div>
-    </div>
+          <BookingWizard page={page} today={utcToZoned(new Date()).date} actions={{ getSlots, startBooking, finishBooking }} />
+        </>
+      ) : (
+        <PublicNotice icon={<CalendarX aria-hidden />} title="Agendamento online indisponível">
+          Entre em contato com a clínica.
+        </PublicNotice>
+      )}
+    </PublicShell>
   );
 }
