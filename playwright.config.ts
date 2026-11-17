@@ -13,9 +13,10 @@ const PORT = 3100;
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
-  // A suíte usa um único servidor e o mesmo projeto Supabase: com um processo
-  // por núcleo, o servidor ficava lento e os testes estouravam o tempo à toa.
-  workers: process.env.CI ? 2 : 4,
+  // A suíte usa um único servidor e o mesmo projeto Supabase (Nano, plano
+  // gratuito): com 4 processos o banco esgotava a CPU no meio da suíte e tudo
+  // passava a estourar o tempo. E2E_WORKERS ajusta quando o banco for maior.
+  workers: Number(process.env.E2E_WORKERS ?? 2),
   timeout: 60_000,
   expect: { timeout: 10_000 },
   forbidOnly: !!process.env.CI,

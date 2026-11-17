@@ -78,22 +78,25 @@ export const CLINIC_TABLES = [
 
 export async function purgeClinic(admin: SupabaseClient, clinicId: string): Promise<void> {
   const storage = admin.storage.from("clinic");
-  const paths: string[] = [];
-  const { data: files } = await admin.from("patient_files").select("storage_path").eq("clinic_id", clinicId);
-  paths.push(...(files ?? []).map((f: { storage_path: string }) => f.storage_path));
-  const { data: bills } = await admin.from("payables").select("attachment_path").eq("clinic_id", clinicId).not("attachment_path", "is", null);
-  paths.push(...(bills ?? []).map((b: { attachment_path: string }) => b.attachment_path));
-  const { data: docs } = await admin.from("patient_documents").select("pdf_path").eq("clinic_id", clinicId);
-  paths.push(...(docs ?? []).map((d: { pdf_path: string | null }) => d.pdf_path).filter((p): p is string => Boolean(p)));
-  const { data: sigs } = await admin.from("signature_requests").select("signed_pdf_path, signature_path").eq("clinic_id", clinicId);
-  for (const s of (sigs ?? []) as { signed_pdf_path: string | null; signature_path: string | null }[]) {
-    if (s.signed_pdf_path) paths.push(s.signed_pdf_path);
-    if (s.signature_path) paths.push(s.signature_path);
-  }
-  const { data: closings } = await admin.from("commission_closings").select("pdf_path").eq("clinic_id", clinicId).not("pdf_path", "is", null);
-  paths.push(...(closings ?? []).map((c: { pdf_path: string }) => c.pdf_path));
-  const { data: logo } = await storage.list(`${clinicId}/logo`);
-  paths.push(...(logo ?? []).map((f) => `${clinicId}/logo/${f.name}`));
+  // Arquivos guardados no Storage: as leituras vão juntas, numa ida só.
+  const [files, bills, docs, sigs, closings, logo] = await Promise.all([
+    admin.from("patient_files").select("storage_path").eq("clinic_id", clinicId),
+    admin.from("payables").select("attachment_path").eq("clinic_id", clinicId).not("attachment_path", "is", null),
+    admin.from("patient_documents").select("pdf_path").eq("clinic_id", clinicId),
+    admin.from("signature_requests").select("signed_pdf_path, signature_path").eq("clinic_id", clinicId),
+    admin.from("commission_closings").select("pdf_path").eq("clinic_id", clinicId).not("pdf_path", "is", null),
+    storage.list(`${clinicId}/logo`),
+  ]);
+  const paths: string[] = [
+    ...((files.data ?? []) as { storage_path: string }[]).map((f) => f.storage_path),
+    ...((bills.data ?? []) as { attachment_path: string }[]).map((b) => b.attachment_path),
+    ...((docs.data ?? []) as { pdf_path: string | null }[]).map((d) => d.pdf_path).filter((p): p is string => Boolean(p)),
+    ...((sigs.data ?? []) as { signed_pdf_path: string | null; signature_path: string | null }[]).flatMap((s) =>
+      [s.signed_pdf_path, s.signature_path].filter((p): p is string => Boolean(p)),
+    ),
+    ...((closings.data ?? []) as { pdf_path: string }[]).map((c) => c.pdf_path),
+    ...(logo.data ?? []).map((f) => `${clinicId}/logo/${f.name}`),
+  ];
   if (paths.length) await storage.remove(paths);
 
   for (const table of CLINIC_TABLES) await admin.from(table).delete().eq("clinic_id", clinicId);
