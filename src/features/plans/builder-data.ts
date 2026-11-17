@@ -11,7 +11,7 @@ export async function loadBuilderData(patientId: string | null) {
   const supabase = await createClient();
   const [{ data: professionals }, { data: procedures }, access] = await Promise.all([
     supabase.from("professionals").select("id, name").eq("active", true).order("name"),
-    supabase.from("procedures").select("id, name, price_cents, applies_to_tooth").eq("active", true).order("name"),
+    supabase.from("procedures").select("id, name, price_cents, applies_to_tooth, category").eq("active", true).order("name"),
     getClinicalAccess(),
   ]);
 

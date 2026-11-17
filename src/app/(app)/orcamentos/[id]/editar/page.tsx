@@ -23,7 +23,7 @@ export default async function Page({ params }: PageProps<"/orcamentos/[id]/edita
   const data = await loadBuilderData(plan.patient_id);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="space-y-6">
       <SubpageHeader title="Editar orçamento" backHref={`/orcamentos/${id}`} backLabel="Orçamento" />
       <PlanBuilder
         planId={plan.id}

@@ -16,7 +16,7 @@ export default async function Page({ searchParams }: PageProps<"/orcamentos/novo
   const [patient, data] = await Promise.all([patientId ? getPatient(patientId) : null, loadBuilderData(patientId)]);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="space-y-6">
       <SubpageHeader
         title="Novo orçamento"
         backHref={patient ? `/pacientes/${patient.id}/orcamentos` : "/orcamentos"}
