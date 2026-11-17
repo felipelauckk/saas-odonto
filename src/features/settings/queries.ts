@@ -174,7 +174,7 @@ export async function getIntegrations(clinicId: string): Promise<IntegrationStat
   const whatsappReal = env.WHATSAPP_PROVIDER === "meta" && Boolean(env.WHATSAPP_API_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID);
   const aiOn = Boolean(ai.data && (ai.data.assistant_enabled || ai.data.followup_enabled || ai.data.insights_enabled || ai.data.voice_enabled));
   const aiKey = Boolean(env.ANTHROPIC_API_KEY);
-  return [
+  const list: IntegrationStatus[] = [
     {
       name: "WhatsApp",
       detail: whatsappReal ? "API oficial da Meta" : "Envio simulado: nada sai de verdade",
@@ -196,12 +196,14 @@ export async function getIntegrations(clinicId: string): Promise<IntegrationStat
       tone: fiscal.data?.enabled ? "success" : "neutral",
       href: "/configuracoes/nota-fiscal",
     },
-    {
-      name: "Inteligência artificial",
-      detail: aiKey ? "Assistente, follow-up e perguntas" : "Falta a chave da API no servidor",
-      status: !aiKey ? "Indisponível" : aiOn ? "Ligada" : "Desligada",
-      tone: !aiKey ? "warning" : aiOn ? "success" : "neutral",
-      href: "/configuracoes/inteligencia-artificial",
-    },
   ];
+  // Primeira versão sem IA: a linha só aparece com a chave configurada no servidor.
+  if (aiKey) list.push({
+      name: "Inteligência artificial",
+      detail: "Assistente, follow-up e perguntas",
+      status: aiOn ? "Ligada" : "Desligada",
+      tone: aiOn ? "success" : "neutral",
+      href: "/configuracoes/inteligencia-artificial",
+    });
+  return list;
 }

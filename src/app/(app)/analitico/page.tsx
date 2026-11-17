@@ -13,6 +13,7 @@ import { requireManager } from "@/features/tenancy/guards";
 import { todayIso } from "@/lib/dates";
 import { formatCurrency } from "@/lib/format";
 import { addDays } from "@/lib/timezone";
+import { isAiConfigured } from "@/lib/ai/claude";
 
 export const metadata: Metadata = { title: "Painel analítico" };
 
@@ -37,10 +38,12 @@ export default async function Page({ searchParams }: PageProps<"/analitico">) {
         description="Evolução mensal, metas, funil e rankings."
         actions={
           <div className="flex gap-2">
-            <Link href="/analitico/ia" className={buttonVariants({ variant: "outline" })}>
-              <Sparkles aria-hidden />
-              Perguntar à IA
-            </Link>
+            {isAiConfigured() ? (
+              <Link href="/analitico/ia" className={buttonVariants({ variant: "outline" })}>
+                <Sparkles aria-hidden />
+                Perguntar à IA
+              </Link>
+            ) : null}
             <Link href={`/analitico/metas?mes=${month}`} className={buttonVariants({ variant: "outline" })}>
               <Target aria-hidden />
               Metas

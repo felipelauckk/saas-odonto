@@ -5,6 +5,7 @@ import { AiSettings } from "@/features/ai/components/ai-settings";
 import { requireManager } from "@/features/tenancy/guards";
 import { aiFeatureLabels, isAiConfigured, type AiFeature } from "@/lib/ai/claude";
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = { title: "Inteligência artificial" };
 
@@ -12,6 +13,8 @@ const usd = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "USD",
 
 export default async function Page() {
   const session = await requireManager();
+  // Sem a chave da IA no servidor a seção some (primeira versão sem IA).
+  if (!isAiConfigured()) redirect("/configuracoes");
   const supabase = await createClient();
   const start = new Date();
   start.setUTCDate(1);

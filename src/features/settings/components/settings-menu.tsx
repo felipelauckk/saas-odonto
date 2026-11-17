@@ -7,7 +7,7 @@ import { cn } from "cn";
 import { SETTINGS_GROUPS } from "../sections";
 
 /** Menu das seções de Configurações (lateral no desktop, lista na página inicial no celular). */
-export function SettingsMenu({ withDescriptions = false }: { withDescriptions?: boolean }) {
+export function SettingsMenu({ withDescriptions = false, aiEnabled = false }: { withDescriptions?: boolean; aiEnabled?: boolean }) {
   const pathname = usePathname();
   return (
     <nav aria-label="Seções das configurações" className="space-y-5">
@@ -15,7 +15,7 @@ export function SettingsMenu({ withDescriptions = false }: { withDescriptions?: 
         <div key={g.title} className="space-y-1">
           <h2 className="px-3 type-label text-muted-foreground">{g.title}</h2>
           <ul>
-            {g.sections.map((s) => {
+            {g.sections.filter((s) => aiEnabled || !s.ai).map((s) => {
               const on = pathname === s.href || pathname.startsWith(`${s.href}/`);
               return (
                 <li key={s.href}>

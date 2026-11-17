@@ -12,6 +12,7 @@ import { requireManager } from "@/features/tenancy/guards";
 import { formatDate } from "@/lib/format";
 import { optional } from "@/lib/optional";
 import { BlockError } from "@/components/feedback/block-error";
+import { isAiConfigured } from "@/lib/ai/claude";
 
 export const metadata: Metadata = { title: "Configurações" };
 
@@ -38,7 +39,7 @@ export default async function Page() {
       </header>
 
       <div className="lg:hidden">
-        <SettingsMenu withDescriptions />
+        <SettingsMenu withDescriptions aiEnabled={isAiConfigured()} />
       </div>
 
       {summary.ok ? (

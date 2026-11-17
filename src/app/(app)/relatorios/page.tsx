@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react";
 
 import { AskForm, ReportNav } from "@/features/reports/components/report-ui";
 import { requireManager } from "@/features/tenancy/guards";
+import { isAiConfigured } from "@/lib/ai/claude";
 
 export const metadata: Metadata = { title: "Relatórios" };
 
@@ -16,7 +17,7 @@ export default async function Page() {
           <h1 className="type-display">Relatórios</h1>
           <p className="text-sm text-muted-foreground">Todos com filtros e exportação para Excel e CSV.</p>
         </div>
-        <AskForm />
+        {isAiConfigured() ? <AskForm /> : null}
       </header>
       <Link
         href="/analitico"

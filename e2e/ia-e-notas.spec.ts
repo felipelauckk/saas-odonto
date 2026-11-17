@@ -17,10 +17,16 @@ test.afterEach(async () => {
 
 test("configura a IA e a caixa de entrada recebe a mensagem simulada", async ({ page }) => {
   await page.goto("/configuracoes/inteligencia-artificial");
-  await expect(page.getByText("Uso neste mês")).toBeVisible();
-  await page.getByLabel("Informações para o assistente").fill("Rua das Flores, 100. Atendemos de segunda a sexta, das 8h às 18h.");
-  await page.getByRole("button", { name: "Salvar" }).click();
-  await expect(page.getByText("Configuração salva.")).toBeVisible();
+  if (process.env.ANTHROPIC_API_KEY) {
+    await expect(page.getByText("Uso neste mês")).toBeVisible();
+    await page.getByLabel("Informações para o assistente").fill("Rua das Flores, 100. Atendemos de segunda a sexta, das 8h às 18h.");
+    await page.getByRole("button", { name: "Salvar" }).click();
+    await expect(page.getByText("Configuração salva.")).toBeVisible();
+  } else {
+    // Sem a chave da IA no servidor, a seção não existe: volta para Configurações.
+    await expect(page).toHaveURL(/\/configuracoes$/);
+    await expect(page.getByRole("link", { name: /Inteligência artificial/ })).toHaveCount(0);
+  }
 
   // Assistente desligado: a mensagem chega para a equipe.
   await page.goto("/whatsapp");

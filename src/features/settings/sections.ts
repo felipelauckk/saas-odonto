@@ -1,5 +1,5 @@
 /** Seções de Configurações, agrupadas como no menu lateral. */
-export type SettingsSection = { href: string; title: string; description: string };
+export type SettingsSection = { href: string; title: string; description: string; /** Só aparece com a IA configurada no servidor. */ ai?: boolean };
 
 export const SETTINGS_GROUPS: readonly { title: string; sections: readonly SettingsSection[] }[] = [
   {
@@ -41,7 +41,7 @@ export const SETTINGS_GROUPS: readonly { title: string; sections: readonly Setti
       { href: "/configuracoes/mensagens", title: "Mensagens automáticas", description: "Lembretes e cobrança" },
       { href: "/configuracoes/agendamento-online", title: "Agendamento online", description: "Página pública e check-in" },
       { href: "/configuracoes/crm", title: "CRM", description: "Funil, campanhas e formulário" },
-      { href: "/configuracoes/inteligencia-artificial", title: "Inteligência artificial", description: "Assistente, follow-up e limite" },
+      { href: "/configuracoes/inteligencia-artificial", title: "Inteligência artificial", description: "Assistente, follow-up e limite", ai: true },
     ],
   },
 ];
