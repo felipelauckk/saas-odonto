@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
-import { cn } from "cn";
+import { Banknote, CalendarDays, ChevronRight, HandCoins, Package, Sparkles, UsersRound, type LucideIcon } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { initials } from "@/lib/initials";
@@ -33,37 +32,51 @@ export function AskForm() {
   );
 }
 
-/** Relatórios agrupados por assunto. `current` marca o aberto (menu lateral). */
-export function ReportNav({ current, columns = false }: { current?: string; columns?: boolean }) {
+const GROUP_ICONS: Record<string, LucideIcon> = {
+  Dinheiro: Banknote,
+  Vendas: HandCoins,
+  Agenda: CalendarDays,
+  Pacientes: UsersRound,
+  "Equipe e materiais": Package,
+};
+
+/** Todos os relatórios, em cartões por assunto. */
+export function ReportNav() {
   return (
-    <nav aria-label="Todos os relatórios" className={cn(columns ? "grid gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-3" : "space-y-5")}>
-      {REPORT_GROUPS.map((g) => (
-        <div key={g.title} className="space-y-1.5">
-          <h2 className="px-3 type-label text-muted-foreground">{g.title}</h2>
-          <ul className={cn(columns && "rounded-card border bg-card p-1.5")}>
-            {g.slugs.map((slug) => {
-              const def = reportBySlug.get(slug);
-              if (!def) return null;
-              const on = slug === current;
-              return (
-                <li key={slug}>
-                  <Link
-                    href={`/relatorios/${slug}`}
-                    aria-current={on ? "page" : undefined}
-                    className={cn(
-                      "flex min-h-10 flex-col justify-center rounded-lg px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/40 pointer-coarse:min-h-11",
-                      on ? "bg-accent font-semibold text-accent-foreground" : "hover:bg-muted",
-                    )}
-                  >
-                    {def.title}
-                    {columns ? <span className="text-xs font-normal text-muted-foreground">{def.description}</span> : null}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
+    <nav aria-label="Todos os relatórios" className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+      {REPORT_GROUPS.map((g) => {
+        const Icon = GROUP_ICONS[g.title] ?? Banknote;
+        return (
+          <section key={g.title} aria-labelledby={`grupo-${g.title}`} className="rounded-card border bg-card p-2">
+            <h2 id={`grupo-${g.title}`} className="flex items-center gap-2.5 px-3 pt-2.5 pb-2 type-section">
+              <span aria-hidden className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                <Icon className="size-4" />
+              </span>
+              {g.title}
+            </h2>
+            <ul>
+              {g.slugs.map((slug) => {
+                const def = reportBySlug.get(slug);
+                if (!def) return null;
+                return (
+                  <li key={slug}>
+                    <Link
+                      href={`/relatorios/${slug}`}
+                      className="group flex items-center gap-3 rounded-lg px-3 py-2.5 outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40"
+                    >
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="text-sm font-semibold">{def.title}</span>
+                        <span className="text-xs text-muted-foreground">{def.description}</span>
+                      </span>
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
     </nav>
   );
 }

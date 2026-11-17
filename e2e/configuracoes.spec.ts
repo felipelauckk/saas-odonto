@@ -17,7 +17,8 @@ test.afterEach(async () => {
 
 test("clínica nova já tem procedimentos sem preço", async ({ page }) => {
   await page.goto("/configuracoes");
-  await expect(page.getByRole("list", { name: "Cadastros" }).getByRole("link", { name: /Procedimentos/ })).toContainText("sem preço");
+  await page.getByRole("list", { name: "O que falta configurar" }).getByRole("link", { name: /procedimentos sem preço/ }).click();
+  await expect(page).toHaveURL(/\/configuracoes\/procedimentos$/);
 
   await page.goto("/configuracoes/procedimentos");
   await expect(page.getByText("Profilaxia (limpeza)")).toBeVisible();

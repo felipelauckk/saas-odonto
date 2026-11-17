@@ -1,24 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight, CircleAlert } from "lucide-react";
 
-import { KpiStrip } from "@/components/app/kpi-strip";
 import { StatusBadge } from "@/components/app/status-badge";
-import { buttonVariants } from "@/components/ui/button";
+import { BlockError } from "@/components/feedback/block-error";
 import { getBillingOverview } from "@/features/billing/queries";
 import { subscriptionStatusLabels } from "@/features/billing/labels";
-import { SettingsMenu } from "@/features/settings/components/settings-menu";
-import { getIntegrations, getSettingsSummary } from "@/features/settings/queries";
+import { SettingsDirectory } from "@/features/settings/components/settings-directory";
+import { getIntegrations, getSettingsSummary, type IntegrationStatus } from "@/features/settings/queries";
+import { settingsTodo } from "@/features/settings/todo";
 import { requireManager } from "@/features/tenancy/guards";
+import { isAiConfigured } from "@/lib/ai/claude";
 import { formatDate } from "@/lib/format";
 import { optional } from "@/lib/optional";
-import { BlockError } from "@/components/feedback/block-error";
-import { isAiConfigured } from "@/lib/ai/claude";
+import type { StatusTone } from "@/lib/status-tones";
 
 export const metadata: Metadata = { title: "Configurações" };
 
-function plural(n: number, one: string, many: string) {
-  return `${n} ${n === 1 ? one : many}`;
-}
+const PLAN_TONE: Record<string, StatusTone> = { trialing: "info", active: "success", past_due: "danger", canceled: "neutral" };
 
 export default async function Page() {
   const session = await requireManager();
@@ -30,95 +29,90 @@ export default async function Page() {
 
   const plan = billing.ok ? billing.value : null;
   const current = plan ? plan.plans.find((p) => p.id === plan.clinic.plan_id) : null;
+  const todo = settingsTodo(
+    summary.ok ? summary.value : null,
+    plan ? { planId: plan.clinic.plan_id, status: plan.clinic.subscription_status, trialEndsAt: plan.clinic.trial_ends_at } : null,
+  );
+
+  const status: (Omit<IntegrationStatus, "tone"> & { tone: StatusTone })[] = [];
+  if (plan) {
+    const s = plan.clinic.subscription_status;
+    status.push({
+      name: current ? `Plano ${current.name}` : "Plano",
+      detail:
+        s === "trialing" && plan.clinic.trial_ends_at
+          ? `${current ? "Teste" : "Nenhum plano escolhido · teste"} até ${formatDate(plan.clinic.trial_ends_at)}`
+          : current
+            ? "Assinatura da clínica"
+            : "Nenhum plano escolhido",
+      status: subscriptionStatusLabels[s] ?? s,
+      tone: PLAN_TONE[s] ?? "neutral",
+      href: "/configuracoes/assinatura",
+    });
+  }
+  if (integrations.ok) status.push(...integrations.value);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header className="space-y-1">
         <h1 className="type-display">Configurações</h1>
-        <p className="text-sm text-muted-foreground">Dados da clínica, equipe, tabelas e integrações.</p>
+        <p className="text-sm text-muted-foreground">Escolha o que quer ajustar. Cada item abre a sua própria tela.</p>
       </header>
 
-      <div className="lg:hidden">
-        <SettingsMenu withDescriptions aiEnabled={isAiConfigured()} />
-      </div>
+      {!summary.ok ? (
+        <BlockError what="as pendências" />
+      ) : todo.length ? (
+        <section aria-labelledby="pendencias" className="space-y-3 rounded-card border border-warning/30 bg-warning-soft/40 p-4 sm:p-5">
+          <h2 id="pendencias" className="type-section">
+            O que falta configurar
+          </h2>
+          <ul aria-label="O que falta configurar" className="divide-y divide-warning/15">
+            {todo.map((t) => (
+              <li key={t.href}>
+                <Link
+                  href={t.href}
+                  className="group flex min-h-11 items-center gap-3 py-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+                >
+                  <CircleAlert className="size-4 shrink-0 text-warning" aria-hidden />
+                  <span className="min-w-0 flex-1">{t.text}</span>
+                  <span className="flex shrink-0 items-center gap-1 font-semibold text-primary group-hover:underline">
+                    Resolver
+                    <ArrowRight className="size-3.5" aria-hidden />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
-      {summary.ok ? (
-        <KpiStrip
-          label="Cadastros"
-          items={[
-            { label: "Unidades", value: summary.value.units, context: "ativas", href: "/configuracoes/unidades" },
-            { label: "Profissionais", value: summary.value.professionals, context: plural(summary.value.chairs, "cadeira", "cadeiras"), href: "/configuracoes/profissionais" },
-            {
-              label: "Procedimentos",
-              value: summary.value.procedures,
-              context: summary.value.unpriced ? <span className="font-semibold text-warning">{plural(summary.value.unpriced, "sem preço", "sem preço")}</span> : "todos com preço",
-              href: "/configuracoes/procedimentos",
-            },
-            { label: "Formas de pagamento", value: summary.value.paymentMethods, context: "ativas", href: "/configuracoes/formas-de-pagamento" },
-          ]}
-        />
-      ) : (
-        <BlockError what="os cadastros" />
-      )}
+      <SettingsDirectory aiEnabled={isAiConfigured()} />
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[18rem_minmax(0,1fr)] xl:items-start">
-        {plan ? (
-          <section aria-labelledby="seu-plano" className="space-y-3 rounded-card bg-brand-deep p-5 text-brand-deep-foreground">
-            <h2 id="seu-plano" className="type-label text-brand-deep-foreground/70">
-              Seu plano
-            </h2>
-            <p className="type-title">{current?.name ?? "Sem plano escolhido"}</p>
-            <p className="text-[0.8125rem] text-brand-deep-foreground/80">
-              {subscriptionStatusLabels[plan.clinic.subscription_status]}
-              {plan.clinic.subscription_status === "trialing" && plan.clinic.trial_ends_at ? ` até ${formatDate(plan.clinic.trial_ends_at)}` : ""}
-            </p>
-            <dl className="space-y-1.5 border-t border-brand-deep-foreground/15 pt-3 text-[0.8125rem]">
-              <div className="flex justify-between gap-2">
-                <dt className="text-brand-deep-foreground/75">Unidades</dt>
-                <dd className="font-semibold tabular-nums">
-                  {plan.usage.units}
-                  {current?.max_units ? ` de ${current.max_units}` : ""}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-2">
-                <dt className="text-brand-deep-foreground/75">Profissionais</dt>
-                <dd className="font-semibold tabular-nums">
-                  {plan.usage.professionals}
-                  {current?.max_professionals ? ` de ${current.max_professionals}` : ""}
-                </dd>
-              </div>
-            </dl>
-            <Link href="/configuracoes/assinatura" className={buttonVariants({ variant: "on-dark", className: "w-full" })}>
-              Ver planos
-            </Link>
-          </section>
-        ) : (
-          <BlockError what="o plano" />
-        )}
-
-        {integrations.ok ? (
-          <section aria-labelledby="integracoes" className="space-y-2 rounded-card border bg-card p-4 sm:p-5">
-            <h2 id="integracoes" className="type-section">
-              Integrações
-            </h2>
-            <ul className="divide-y divide-border-soft">
-              {integrations.value.map((i) => (
-                <li key={i.name}>
-                  <Link href={i.href} className="flex min-h-14 items-center justify-between gap-3 py-2 outline-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/40">
-                    <span className="flex min-w-0 flex-col">
-                      <span className="text-sm font-semibold">{i.name}</span>
-                      <span className="truncate text-xs text-muted-foreground">{i.detail}</span>
-                    </span>
+      <section aria-labelledby="situacao" className="space-y-2.5">
+        <h2 id="situacao" className="type-label text-muted-foreground">
+          Plano e integrações
+        </h2>
+        {status.length ? (
+          <ul className="grid grid-cols-1 gap-px overflow-hidden rounded-card border bg-border sm:grid-cols-2 xl:grid-cols-4">
+            {status.map((i) => (
+              <li key={i.name} className="bg-card">
+                <Link
+                  href={i.href}
+                  className="flex h-full flex-col gap-2 p-4 outline-none transition-colors hover:bg-accent/30 focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:ring-inset"
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold">{i.name}</span>
                     <StatusBadge tone={i.tone}>{i.status}</StatusBadge>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
+                  </span>
+                  <span className="text-xs text-muted-foreground">{i.detail}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         ) : (
-          <BlockError what="as integrações" />
+          <BlockError what="o plano e as integrações" />
         )}
-      </div>
+      </section>
     </div>
   );
 }

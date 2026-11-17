@@ -14,7 +14,7 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
         <h1 className="type-display">{title}</h1>
         {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
       </div>
-      {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+      {actions ? <div className="flex flex-wrap gap-2 sm:shrink-0">{actions}</div> : null}
     </div>
   );
 }

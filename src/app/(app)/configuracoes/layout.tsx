@@ -1,16 +1,4 @@
-import { SettingsMenu } from "@/features/settings/components/settings-menu";
-import { isAiConfigured } from "@/lib/ai/claude";
-
-/** Configurações: menu das seções fixo à esquerda no desktop. */
+/** Configurações: cada seção é uma tela própria, com "← Configurações" no topo. */
 export default function SettingsLayout({ children }: LayoutProps<"/configuracoes">) {
-  return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[14.5rem_minmax(0,1fr)]">
-      <aside className="hidden lg:block">
-        <div className="sticky top-6 max-h-[calc(100dvh-3rem)] overflow-y-auto pb-6">
-          <SettingsMenu aiEnabled={isAiConfigured()} />
-        </div>
-      </aside>
-      <div className="min-w-0">{children}</div>
-    </div>
-  );
+  return <div className="max-w-6xl">{children}</div>;
 }
