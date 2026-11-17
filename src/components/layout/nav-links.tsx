@@ -16,10 +16,10 @@ export function NavLinks({ canManage = false, isDentist = false, onNavigate }: N
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Menu principal" className="flex flex-col gap-5">
+    <nav aria-label="Menu principal" className="flex flex-col gap-3.5 [@media(max-height:800px)]:gap-2">
       {visibleNavGroups({ canManage, isDentist }).map((group) => (
-        <div key={group.title} role="group" aria-labelledby={`nav-${group.title}`} className="flex flex-col gap-0.5">
-          <div id={`nav-${group.title}`} className="px-3 pb-1.5 type-label text-sidebar-foreground/60">
+        <div key={group.title} role="group" aria-labelledby={`nav-${group.title}`} className="flex flex-col">
+          <div id={`nav-${group.title}`} className="px-3 pb-1 type-label text-sidebar-foreground/60 [@media(max-height:800px)]:pb-0.5">
             {group.title}
           </div>
           {group.items.map(({ href, label, icon: Icon }) => {
@@ -31,7 +31,7 @@ export function NavLinks({ canManage = false, isDentist = false, onNavigate }: N
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/75 transition-colors outline-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring pointer-coarse:h-11",
+                  "flex h-9 items-center gap-3 rounded-lg px-3 text-sm [@media(max-height:800px)]:h-8 font-medium text-sidebar-foreground/75 transition-colors outline-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring pointer-coarse:h-11",
                   active && "bg-sidebar-accent font-semibold text-sidebar-accent-foreground",
                 )}
               >
