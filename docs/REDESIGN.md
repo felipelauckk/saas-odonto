@@ -114,3 +114,16 @@ Ajustar ou criar em `src/components/ui` e `src/components/app`:
 5. Acessibilidade: contraste mínimo de 4.5:1, foco visível, `aria-label` em botões de ícone, alvos de 44px no toque, e a cor nunca é o único sinal (status sempre com texto).
 6. Os testes Playwright existentes continuam passando; atualizar seletores quando o texto mudar.
 7. Registrar cada etapa R concluída no `docs/PROGRESS.md`.
+
+## Redesign 2.0 (novembro de 2026)
+
+Substitui a direção "clínico editorial" acima onde houver conflito. Prévia aprovada: https://claude.ai/artifact/BJbaXZkaXPbqcvazDYt8Th (Painel, Pacientes e Configurações).
+
+- **Fundo e superfícies:** fundo cinza frio `#F3F4F7`, cartões brancos com borda `#E7E9EE` e sombra suave (`shadow-card`). Raio dos cartões 20px, dos controles 12px.
+- **Menu lateral branco** com borda à direita; item ativo em verde-azulado suave (`#E6F2F3` / `#0E5562`). O menu escuro em petróleo deixa de ser a assinatura.
+- **Cor principal:** verde-azulado `#17707F` (botão principal com sombra colorida `shadow-primary`, links, foco, gráficos).
+- **Tons pastel** (`tint-sky`, `tint-mint`, `tint-lilac`, `tint-peach`, `tint-rose`, cada um com `-foreground`): só em detalhes, como o quadrado do ícone de um indicador, etiquetas de situação e avatares. Nunca como fundo de cartão inteiro.
+- **Destaque com degradê** (`bg-hero`, verde-azulado para índigo, texto branco): um por tela, no número mais importante. No Painel, o recebido no mês.
+- **Indicadores:** cartões separados (não mais uma faixa com divisórias), com ícone pastel, número grande e linha de contexto. Variação colorida junto do contexto.
+- **Gráficos:** simples. Barras horizontais e linhas em verde-azulado; nada de bolhas.
+- **Configurações** (próxima etapa): menu de 7 áreas à esquerda dentro da tela e formulários em blocos (título e explicação à esquerda, campos à direita), como na prévia.

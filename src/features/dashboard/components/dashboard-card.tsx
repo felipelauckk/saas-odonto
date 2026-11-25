@@ -15,7 +15,7 @@ type DashboardCardProps = {
 /** Bloco do painel: título, descrição opcional, link no canto e conteúdo. */
 export function DashboardCard({ id, title, description, link, className, children }: DashboardCardProps) {
   return (
-    <section aria-labelledby={id} className={cn("flex min-w-0 flex-col gap-4 rounded-card border bg-card p-5 sm:p-6", className)}>
+    <section aria-labelledby={id} className={cn("flex min-w-0 flex-col gap-4 rounded-card border bg-card p-5 shadow-card sm:p-6", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1">
           <h2 id={id} className="type-section">

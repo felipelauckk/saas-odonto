@@ -46,7 +46,7 @@ export function WorkspaceSwitcher({ clinics, currentClinicId, units, activeUnitI
   );
 
   const boxClass =
-    "flex min-h-13 w-full items-center gap-2 rounded-xl border border-sidebar-border bg-white/6 px-3 py-2 text-sidebar-foreground";
+    "flex min-h-13 w-full items-center gap-2 rounded-xl border border-sidebar-border bg-muted/60 px-3 py-2 text-sidebar-foreground";
 
   if (!multiClinic && !multiUnit) return <div className={boxClass}>{label}</div>;
 

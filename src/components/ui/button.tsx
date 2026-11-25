@@ -8,7 +8,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         /** Principal: petróleo. */
-        default: "bg-primary text-primary-foreground hover:bg-primary-hover",
+        default: "bg-primary text-primary-foreground shadow-primary hover:bg-primary-hover",
         /** Secundário: branco com borda. */
         outline:
           "border-input bg-card text-foreground hover:bg-muted aria-expanded:bg-muted dark:bg-input/30 dark:hover:bg-input/50",

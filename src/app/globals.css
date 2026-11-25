@@ -45,6 +45,16 @@
   --color-brand-deep: var(--brand-deep);
   --color-brand-deep-foreground: var(--brand-deep-foreground);
   --color-brand-highlight: var(--brand-highlight);
+  --color-tint-sky: var(--tint-sky);
+  --color-tint-sky-foreground: var(--tint-sky-foreground);
+  --color-tint-mint: var(--tint-mint);
+  --color-tint-mint-foreground: var(--tint-mint-foreground);
+  --color-tint-lilac: var(--tint-lilac);
+  --color-tint-lilac-foreground: var(--tint-lilac-foreground);
+  --color-tint-peach: var(--tint-peach);
+  --color-tint-peach-foreground: var(--tint-peach-foreground);
+  --color-tint-rose: var(--tint-rose);
+  --color-tint-rose-foreground: var(--tint-rose-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -65,28 +75,30 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  --radius-card: 1rem;
+  --radius-card: 1.25rem;
   --radius-avatar: 22%;
   --shadow-segment: 0 1px 2px rgb(20 24 31 / 0.08);
+  --shadow-card: 0 1px 2px rgb(17 24 39 / 0.04), 0 8px 24px -12px rgb(17 24 39 / 0.08);
+  --shadow-primary: 0 6px 16px -6px rgb(23 112 127 / 0.55);
 }
 
-/* Arcada — clínico editorial (docs/REDESIGN.md). */
+/* Arcada — Redesign 2.0 (docs/REDESIGN.md): fundo cinza frio, cartões brancos, pastel só em detalhes. */
 :root {
-  --background: #f7f6f3;
-  --foreground: #14181f;
+  --background: #f3f4f7;
+  --foreground: #111827;
   --card: #ffffff;
-  --card-foreground: #14181f;
+  --card-foreground: #111827;
   --popover: #ffffff;
-  --popover-foreground: #14181f;
+  --popover-foreground: #111827;
   --primary: #17707f;
   --primary-hover: #125866;
   --primary-foreground: #ffffff;
-  --secondary: #f0eeea;
-  --secondary-foreground: #14181f;
-  --muted: #f0eeea;
-  --muted-foreground: #4a515c;
-  --accent: #e3f0f1;
-  --accent-foreground: #0c3640;
+  --secondary: #f1f2f5;
+  --secondary-foreground: #111827;
+  --muted: #f1f2f5;
+  --muted-foreground: #4b5563;
+  --accent: #e6f2f3;
+  --accent-foreground: #0e5562;
   --destructive: #b3261e;
   --destructive-soft: #fbe9e7;
   --success: #157a4c;
@@ -96,10 +108,10 @@
   --brand-deep: #0c3640;
   --brand-deep-foreground: #ffffff;
   --brand-highlight: #3fb8a8;
-  --border: #e8e6e1;
-  --border-soft: #f0eeea;
-  --track: #eceae5;
-  --input: #dad7d0;
+  --border: #e7e9ee;
+  --border-soft: #eef0f4;
+  --track: #eceef2;
+  --input: #d9dce3;
   --ring: #17707f;
   --chart-1: #17707f;
   --chart-2: #3fb8a8;
@@ -120,21 +132,32 @@
   --tooth-implant: #5b49a8;
   --tooth-implant-soft: #efecf9;
   --tooth-canal: #344054;
-  --tooth-canal-soft: #f0eeea;
+  --tooth-canal-soft: #f1f2f5;
   --tooth-missing: #9aa1ab;
   --tooth-other: #0d9488;
   --tooth-outline: #b8bec6;
   --tooth-surface: #ffffff;
-  --radius: 0.625rem;
-  /* Menu lateral escuro em petróleo profundo: a assinatura visual do produto. */
-  --sidebar: #0c3640;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #3fb8a8;
-  --sidebar-primary-foreground: #0c3640;
-  --sidebar-accent: rgb(255 255 255 / 0.12);
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgb(255 255 255 / 0.12);
-  --sidebar-ring: #3fb8a8;
+  --radius: 0.75rem;
+  /* Menu lateral claro (Redesign 2.0): item ativo em verde-azulado suave. */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: #17707f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e6f2f3;
+  --sidebar-accent-foreground: #0e5562;
+  --sidebar-border: #e7e9ee;
+  --sidebar-ring: #17707f;
+  /* Tons pastel: só em detalhes (ícone de indicador, etiqueta, avatar). Texto sempre no tom escuro do par. */
+  --tint-sky: #d6e6ff;
+  --tint-sky-foreground: #1e3a8a;
+  --tint-mint: #d3f2e2;
+  --tint-mint-foreground: #14532d;
+  --tint-lilac: #e5ddff;
+  --tint-lilac-foreground: #4c1d95;
+  --tint-peach: #ffe4cc;
+  --tint-peach-foreground: #7c2d12;
+  --tint-rose: #fad9e6;
+  --tint-rose-foreground: #831843;
 }
 
 /* Modo escuro: não exposto na interface; mantido só para não quebrar classes dark:. */
@@ -198,6 +221,23 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgb(255 255 255 / 0.1);
   --sidebar-ring: #3fb8a8;
+  --tint-sky: #1b2a44;
+  --tint-sky-foreground: #c7dbff;
+  --tint-mint: #16301f;
+  --tint-mint-foreground: #bdecd3;
+  --tint-lilac: #2a2346;
+  --tint-lilac-foreground: #ddd3ff;
+  --tint-peach: #3a2614;
+  --tint-peach-foreground: #ffd9b8;
+  --tint-rose: #3a1d2a;
+  --tint-rose-foreground: #f8c8dc;
+}
+
+/* Destaque com degradê: um por tela, no número mais importante (Redesign 2.0). Texto branco. */
+@utility bg-hero {
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgb(167 139 250 / 0.5) 0%, rgb(167 139 250 / 0) 55%),
+    linear-gradient(135deg, #0f766e 0%, #17707f 45%, #3730a3 100%);
 }
 
 /* Tipografia: Montserrat em tudo. Black (900) nos títulos, pesos finos no resto. */

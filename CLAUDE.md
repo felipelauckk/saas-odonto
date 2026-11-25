@@ -39,7 +39,7 @@ SaaS de gestão para clínicas odontológicas, cobrado por mensalidade. Várias 
 - Sem `any`. Tipos do banco gerados com `supabase gen types`.
 
 ## Visual
-- Limpo e profissional, estilo ferramentas SaaS modernas (Linear, Notion). Muito espaço em branco, uma cor de destaque, tipografia Montserrat (Black nos títulos, pesos finos no resto). Visual detalhado em `docs/REDESIGN.md`.
+- Limpo e profissional, estilo ferramentas SaaS modernas. Fundo cinza frio, cartões brancos com sombra suave, menu lateral branco. Cor principal verde-azulado; tons pastel só em detalhes (ícone de indicador, etiqueta de situação, avatar). Tipografia Montserrat (Black nos títulos, pesos finos no resto). Visual detalhado em `docs/REDESIGN.md` > "Redesign 2.0".
 - Menu lateral fixo; seletor de unidade no topo só quando houver mais de uma.
 - Estados vazios, carregamento e erro em toda tela. Botões e campos com no mínimo 44px de altura no toque.
-- Nada de gradientes chamativos ou emojis na interface.
+- No máximo um destaque com degradê por tela (utilitário `bg-hero`), no número mais importante. Nada de emojis na interface.

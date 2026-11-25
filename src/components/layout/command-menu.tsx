@@ -36,13 +36,13 @@ export function CommandMenuTrigger({ className }: { className?: string }) {
       type="button"
       onClick={() => window.dispatchEvent(new Event(OPEN_EVENT))}
       className={cn(
-        "flex h-10 w-full items-center gap-2 rounded-lg bg-white/8 px-2.5 text-left text-[0.8125rem] font-medium whitespace-nowrap text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring pointer-coarse:h-11",
+        "flex h-10 w-full items-center gap-2 rounded-lg border border-sidebar-border bg-muted/60 px-2.5 text-left text-[0.8125rem] font-medium whitespace-nowrap text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring pointer-coarse:h-11",
         className,
       )}
     >
       <Search className="size-4 shrink-0" aria-hidden />
       <span className="min-w-0 truncate">Buscar ou ir para…</span>
-      <kbd className="ml-auto shrink-0 rounded-md pointer-coarse:hidden border border-white/20 px-1 font-sans text-[0.625rem] font-medium">
+      <kbd className="ml-auto shrink-0 rounded-md pointer-coarse:hidden border border-border bg-card px-1 font-sans text-[0.625rem] font-medium">
         {isMac ? "⌘K" : "Ctrl K"}
       </kbd>
     </button>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { CalendarDays, FileCheck2, HandCoins, Plus, Wallet } from "lucide-react";
 import { cn } from "cn";
 
 import { KpiStrip, type Kpi } from "@/components/app/kpi-strip";
@@ -95,26 +95,33 @@ export default async function Page({ searchParams }: PageProps<"/painel">) {
   const overdue = metrics.receivable_overdue_cents;
   const noShowToday = trend?.ok ? trend.value.noShowToday : 0;
 
+  // O recebido no mês é o destaque (degradê); os demais vêm em cartões brancos.
   const kpis: Kpi[] = [
-    {
-      label: "Consultas hoje",
-      value: String(metrics.appointments_today),
-      href: "/agenda",
-      context: [`${metrics.appointments_today_done} atendidas ou em atendimento`, noShowToday ? `${noShowToday} ${noShowToday === 1 ? "falta" : "faltas"}` : null].filter(Boolean).join(" · "),
-      trend: trend?.ok ? trend.value.perDay : undefined,
-    },
     {
       label: isDentist ? "Recebido no mês (seus)" : "Recebido no mês",
       value: formatCurrencyWhole(metrics.revenue_month_cents),
       href: "/financeiro?status=pagos",
+      icon: Wallet,
+      highlight: true,
       delta: revenueChange !== null ? { text: signedPercent.format(revenueChange), tone: revenueChange >= 0 ? "up" : "down" } : null,
       context: revenueChange !== null ? `vs. mesmo período de ${monthName(prevMonth)}` : "pagamentos recebidos",
       trend: pace && pace.accumulated.length > 1 ? pace.accumulated : undefined,
     },
     {
+      label: "Consultas hoje",
+      value: String(metrics.appointments_today),
+      href: "/agenda",
+      icon: CalendarDays,
+      tint: "sky",
+      context: [`${metrics.appointments_today_done} atendidas ou em atendimento`, noShowToday ? `${noShowToday} ${noShowToday === 1 ? "falta" : "faltas"}` : null].filter(Boolean).join(" · "),
+      trend: trend?.ok ? trend.value.perDay : undefined,
+    },
+    {
       label: "A receber",
       value: formatCurrencyWhole(metrics.receivable_open_cents + overdue),
       href: "/financeiro",
+      icon: HandCoins,
+      tint: "peach",
       delta: overdue ? { text: `${formatCurrencyWhole(overdue)} vencido`, tone: "down" } : null,
       context: overdue ? "em aberto e vencido" : "nada vencido",
     },
@@ -122,6 +129,8 @@ export default async function Page({ searchParams }: PageProps<"/painel">) {
       label: "Conversão de orçamentos",
       value: conversion?.ok && conversion.value.rate !== null ? percent.format(conversion.value.rate) : "—",
       href: "/orcamentos",
+      icon: FileCheck2,
+      tint: "lilac",
       delta:
         conversionDelta !== null
           ? { text: `${conversionDelta > 0 ? "+" : ""}${Math.round(conversionDelta * 100)} p.p.`, tone: conversionDelta > 0 ? "up" : conversionDelta < 0 ? "down" : "flat" }

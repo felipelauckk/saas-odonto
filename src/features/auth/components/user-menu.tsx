@@ -42,7 +42,7 @@ export function UserMenu({ name, email, subtitle }: UserMenuProps) {
         className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring pointer-coarse:min-h-11"
       >
         <span
-          className="flex size-8.5 shrink-0 items-center justify-center rounded-full bg-brand-highlight text-xs font-bold text-brand-deep"
+          className="flex size-8.5 shrink-0 items-center justify-center rounded-full bg-tint-peach text-xs font-bold text-tint-peach-foreground"
           aria-hidden
         >
           {initials(name, email)}
