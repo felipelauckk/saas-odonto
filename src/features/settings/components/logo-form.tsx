@@ -66,7 +66,7 @@ export function LogoForm({ logoUrl }: { logoUrl: string | null }) {
           ) : null}
         </form>
       </div>
-      <p className="text-sm text-muted-foreground">PNG, JPG ou WebP, até 1 MB. Aparece nos orçamentos e recibos.</p>
+      <p className="text-[0.8125rem] text-muted-foreground">PNG, JPG ou WebP, até 1 MB.</p>
     </div>
   );
 }

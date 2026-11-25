@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { FormSection, FormSections } from "@/components/forms/form-sections";
 import { SubpageHeader } from "@/components/layout/subpage-header";
 import { ConnectionSetup, DunningSetup } from "@/features/charges/components/billing-setup";
 import { requireManager } from "@/features/tenancy/guards";
@@ -18,10 +19,16 @@ export default async function Page() {
     getSiteUrl(),
   ]);
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <SubpageHeader title="Cobrança online" description="Pix, boleto e link de pagamento pela conta Asaas da clínica, e régua de cobrança." backHref="/configuracoes" backLabel="Configurações" />
-      <section className="space-y-3" aria-labelledby="asaas"><h2 id="asaas" className="text-base font-medium">Conta Asaas</h2><ConnectionSetup connection={connection} webhookUrl={`${site}/api/asaas/cobranca`} secretsReady={isSecretsConfigured()} /></section>
-      <section className="space-y-3" aria-labelledby="regua"><h2 id="regua" className="text-base font-medium">Régua de cobrança</h2><DunningSetup steps={steps ?? []} /></section>
+      <FormSections>
+        <FormSection id="asaas" title="Conta Asaas" description="O dinheiro das cobranças vai direto para a conta da clínica.">
+          <ConnectionSetup connection={connection} webhookUrl={`${site}/api/asaas/cobranca`} secretsReady={isSecretsConfigured()} />
+        </FormSection>
+        <FormSection id="regua" title="Régua de cobrança" description="Mensagens pelo WhatsApp antes e depois do vencimento de cada parcela.">
+          <DunningSetup steps={steps ?? []} />
+        </FormSection>
+      </FormSections>
     </div>
   );
 }

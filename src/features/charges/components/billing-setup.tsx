@@ -43,12 +43,12 @@ export function ConnectionSetup({ connection, webhookUrl, secretsReady }: { conn
     <div className="space-y-4">
       {message ? <FormMessage state={message} /> : null}
       {!secretsReady ? (
-        <p className="rounded-lg border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+        <p className="rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
           O servidor ainda não tem a chave de criptografia (CLINIC_SECRETS_KEY). Sem ela, não dá para guardar a chave do Asaas.
         </p>
       ) : null}
       {connected ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border p-4 text-sm">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-muted/50 p-4 text-sm">
           <Badge>Conectado</Badge>
           <span>
             {connection!.environment === "production" ? "Produção" : "Sandbox (testes)"} · chave terminando em {connection!.api_key_hint} · desde {formatDateTime(connection!.connected_at!)}
@@ -58,7 +58,7 @@ export function ConnectionSetup({ connection, webhookUrl, secretsReady }: { conn
           </Button>
         </div>
       ) : null}
-      <div className="space-y-3 rounded-xl border p-4">
+      <div className="space-y-3 rounded-xl bg-muted/50 p-4">
         <p className="text-sm font-medium">{connected ? "Trocar chave" : "Conectar a conta Asaas da clínica"}</p>
         <p className="text-sm text-muted-foreground">No Asaas: Integrações &gt; Chave de API. O dinheiro das cobranças vai direto para a conta da clínica.</p>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -68,7 +68,7 @@ export function ConnectionSetup({ connection, webhookUrl, secretsReady }: { conn
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="asaas-env">Ambiente</Label>
-            <select id="asaas-env" value={environment} onChange={(e) => setEnvironment(e.target.value as "sandbox" | "production")} className="h-9 rounded-lg border bg-background px-2.5 text-sm pointer-coarse:h-11">
+            <select id="asaas-env" value={environment} onChange={(e) => setEnvironment(e.target.value as "sandbox" | "production")} className="h-10 rounded-lg border border-input bg-card px-2.5 text-sm pointer-coarse:h-11">
               <option value="sandbox">Sandbox (testes)</option>
               <option value="production">Produção</option>
             </select>
@@ -80,7 +80,7 @@ export function ConnectionSetup({ connection, webhookUrl, secretsReady }: { conn
         <p className="text-xs text-muted-foreground">A chave é conferida no Asaas e guardada criptografada. Ninguém da equipe consegue vê-la depois.</p>
       </div>
       {connection ? (
-        <div className="space-y-3 rounded-xl border p-4">
+        <div className="space-y-3 rounded-xl bg-muted/50 p-4">
           <p className="text-sm font-medium">Baixa automática (webhook)</p>
           <p className="text-sm text-muted-foreground">
             No Asaas, em Integrações &gt; Webhooks, crie um webhook de cobranças com o endereço e o token abaixo. Assim, quando o paciente paga, a parcela é baixada e entra no caixa sozinha.
@@ -141,7 +141,7 @@ export function DunningSetup({ steps }: { steps: Step[] }) {
       <p className="text-sm text-muted-foreground">
         Mensagens automáticas pelo WhatsApp para parcelas em aberto. Param sozinhas quando a parcela é paga ou marcada como “em negociação”. Variáveis: {"{{paciente}}"}, {"{{clinica}}"}, {"{{valor}}"}, {"{{vencimento}}"} e {"{{link}}"} (link da cobrança online, quando houver).
       </p>
-      <ul className="divide-y rounded-xl border">
+      <ul className="divide-y rounded-xl border bg-card">
         {steps.map((s) => (
           <StepRow key={`${s.id}-${s.body}-${s.active}`} step={s} />
         ))}
