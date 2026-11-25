@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/app/status-badge";
 import { BlockError } from "@/components/feedback/block-error";
 import { getBillingOverview } from "@/features/billing/queries";
 import { subscriptionStatusLabels } from "@/features/billing/labels";
-import { SettingsDirectory } from "@/features/settings/components/settings-directory";
+import { SettingsAreaList } from "@/features/settings/components/settings-area-list";
 import { getIntegrations, getSettingsSummary, type IntegrationStatus } from "@/features/settings/queries";
 import { settingsTodo } from "@/features/settings/todo";
 import { requireManager } from "@/features/tenancy/guards";
@@ -56,24 +56,26 @@ export default async function Page() {
     <div className="space-y-8">
       <header className="space-y-1">
         <h1 className="type-display">Configurações</h1>
-        <p className="text-sm text-muted-foreground">Escolha o que quer ajustar. Cada item abre a sua própria tela.</p>
+        <p className="text-sm text-muted-foreground">Informações e preferências da sua clínica. Escolha uma área para ajustar.</p>
       </header>
 
       {!summary.ok ? (
         <BlockError what="as pendências" />
       ) : todo.length ? (
-        <section aria-labelledby="pendencias" className="space-y-3 rounded-card border border-warning/30 bg-warning-soft/40 p-4 sm:p-5">
+        <section aria-labelledby="pendencias" className="space-y-3 rounded-card border bg-card p-4 shadow-card sm:p-5">
           <h2 id="pendencias" className="type-section">
             O que falta configurar
           </h2>
-          <ul aria-label="O que falta configurar" className="divide-y divide-warning/15">
+          <ul aria-label="O que falta configurar" className="divide-y">
             {todo.map((t) => (
               <li key={t.href}>
                 <Link
                   href={t.href}
                   className="group flex min-h-11 items-center gap-3 py-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
                 >
-                  <CircleAlert className="size-4 shrink-0 text-warning" aria-hidden />
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-tint-peach text-tint-peach-foreground" aria-hidden>
+                    <CircleAlert className="size-3.5" strokeWidth={2} />
+                  </span>
                   <span className="min-w-0 flex-1">{t.text}</span>
                   <span className="flex shrink-0 items-center gap-1 font-semibold text-primary group-hover:underline">
                     Resolver
@@ -86,14 +88,14 @@ export default async function Page() {
         </section>
       ) : null}
 
-      <SettingsDirectory aiEnabled={isAiConfigured()} />
+      <SettingsAreaList aiEnabled={isAiConfigured()} />
 
       <section aria-labelledby="situacao" className="space-y-2.5">
         <h2 id="situacao" className="type-label text-muted-foreground">
           Plano e integrações
         </h2>
         {status.length ? (
-          <ul className="grid grid-cols-1 gap-px overflow-hidden rounded-card border bg-border sm:grid-cols-2 xl:grid-cols-4">
+          <ul className="grid grid-cols-1 gap-px overflow-hidden rounded-card border bg-border shadow-card sm:grid-cols-2">
             {status.map((i) => (
               <li key={i.name} className="bg-card">
                 <Link

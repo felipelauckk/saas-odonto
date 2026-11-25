@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { cn } from "cn";
 
 import { PageHeader } from "./page-header";
 
@@ -18,7 +19,11 @@ export function SubpageHeader({
     <div className="space-y-3">
       <Link
         href={backHref}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground pointer-coarse:min-h-11"
+        // Em Configurações, no computador, o menu das áreas ao lado já leva de volta.
+        className={cn(
+          "inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground pointer-coarse:min-h-11",
+          backHref === "/configuracoes" && "lg:hidden",
+        )}
       >
         <ChevronLeft className="size-4" aria-hidden />
         {backLabel}

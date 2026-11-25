@@ -86,3 +86,11 @@ test("cria cadeira", async ({ page }) => {
   await page.getByRole("dialog").getByRole("button", { name: "Criar cadeira" }).click();
   await expect(page.getByText("Cadeira 1")).toBeVisible();
 });
+
+test("menu das áreas leva às telas da área aberta", async ({ page }) => {
+  await page.goto("/configuracoes/membros");
+  // Computador: menu das áreas à esquerda; celular: abas da área. Em ambos, a tela vizinha está a um clique.
+  await page.getByRole("link", { name: "Profissionais e horários", exact: true }).locator("visible=true").click();
+  await expect(page).toHaveURL(/\/configuracoes\/profissionais$/);
+  await expect(page.getByRole("link", { name: "Profissionais e horários", exact: true }).locator("visible=true")).toHaveAttribute("aria-current", "page");
+});
