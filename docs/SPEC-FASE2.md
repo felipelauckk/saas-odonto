@@ -1,16 +1,16 @@
-# Especificação — Fase 2: paridade com o Clinicorp
+# Especificação — Fase 2: paridade com o mercado
 
-Continuação de `docs/SPEC.md`. O MVP (Etapas 1 a 11) está concluído, conforme `docs/PROGRESS.md`. Esta fase adiciona os recursos que os concorrentes líderes (Clinicorp, Simples Dental) vendem e que o sistema ainda não tem. A meta é que uma clínica que avalia o Clinicorp não encontre um motivo funcional para escolher o concorrente.
+Continuação de `docs/SPEC.md`. O MVP (Etapas 1 a 11) está concluído, conforme `docs/PROGRESS.md`. Esta fase adiciona os recursos que os sistemas líderes do mercado vendem e que o sistema ainda não tem. A meta é que uma clínica que compara opções não encontre um motivo funcional para escolher outro sistema.
 
 Todas as regras de `CLAUDE.md` e da especificação original continuam valendo: uma etapa por vez, plano antes de executar, migration para toda mudança de banco, RLS em toda tabela, permissões impostas no banco, testes, `docs/PROGRESS.md` atualizado ao fim de cada etapa.
 
 O redesign visual vem **depois** desta fase. Nesta fase, siga o padrão visual atual e não gaste tempo com acabamento estético: as telas novas serão redesenhadas junto com as antigas.
 
-## Referência: o que o Clinicorp oferece
+## Referência: o que o mercado oferece
 
-O Clinicorp vende dois planos principais: Standard (R$ 149,90/mês: agenda, prontuário, financeiro e relatórios) e Premium (R$ 369,90/mês: soma gestão avançada, estoque, relacionamento e automação). Os combos de IA são cobrados à parte.
+Os sistemas líderes costumam vender dois planos: um básico (agenda, prontuário, financeiro e relatórios) e um completo (soma gestão avançada, estoque, relacionamento e automação). Recursos de IA costumam ser cobrados à parte.
 
-| Área | Recursos do Clinicorp | Situação no nosso sistema |
+| Área | Recursos do mercado | Situação no nosso sistema |
 | --- | --- | --- |
 | Captação | CRM (funil), controle de indicação, relatórios de primeira consulta, localização e faixa etária | Só o campo "origem" no paciente |
 | Agenda | Agenda inteligente, agendamento online, marcadores, múltiplos agendamentos, lista de espera, encaixes, check-in pelo app do paciente, confirmações por WhatsApp/SMS/e-mail, relatórios de faltas e desmarcações | Agenda completa, lembrete por WhatsApp e relatório de faltas. Faltam agendamento online, marcadores, sessões em série, lista de espera, check-in e desmarcações |
@@ -24,9 +24,9 @@ O Clinicorp vende dois planos principais: Standard (R$ 149,90/mês: agenda, pron
 
 ## Ordem de implementação
 
-Os blocos estão em ordem de impacto comercial. O Bloco A cobre o que o plano Standard do Clinicorp já entrega: sem ele, o sistema perde a venda na demonstração. O Bloco B cobre o Premium. O Bloco C traz os diferenciais de IA.
+Os blocos estão em ordem de impacto comercial. O Bloco A cobre o que os planos básicos do mercado já entregam: sem ele, o sistema perde a venda na demonstração. O Bloco B cobre os planos completos. O Bloco C traz os diferenciais de IA.
 
-### Bloco A — Paridade com o plano Standard
+### Bloco A — Paridade com os planos básicos
 
 #### Etapa 12. Documentos clínicos e assinatura eletrônica
 
@@ -119,7 +119,7 @@ Central de relatórios com filtros de período, unidade e profissional, tela e e
 13. Retornos (alerta de retorno) vencidos e cumpridos.
 14. Desempenho da CRC e do CRM.
 
-### Bloco B — Paridade com o plano Premium
+### Bloco B — Paridade com os planos completos
 
 #### Etapa 19. Cobrança online ao paciente e régua de cobrança
 
