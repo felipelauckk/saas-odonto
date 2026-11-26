@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Sparkles, X } from "lucide-react";
+import { Plus, Sparkles, X } from "lucide-react";
 import { cn } from "cn";
 
 import { FormMessage } from "@/components/forms/form-message";
@@ -21,6 +21,7 @@ import type { PatientOption } from "@/features/agenda/actions";
 import { VoiceDictation } from "@/features/ai/components/voice-dictation";
 
 import { savePlan } from "../actions";
+import { ProcedureCatalog } from "./procedure-catalog";
 import { uncoveredSuggestions } from "../builder-logic";
 
 type Procedure = { id: string; name: string; price_cents: number; applies_to_tooth: boolean; category: string | null };
@@ -43,12 +44,6 @@ const ALL_TEETH = Object.values(ARCHES).flat().sort((a, b) => a - b);
 const FACE_ORDER: Face[] = ["M", "O", "D", "V", "L"];
 let counter = 0;
 const key = () => `i${++counter}`;
-const normalize = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
-
 /**
  * Montar orçamento em três colunas: catálogo (busca e categorias), plano
  * proposto (itens e avisos do odontograma) e resumo com o total.
@@ -62,15 +57,6 @@ export function PlanBuilder(props: Props) {
   const [validUntil, setValidUntil] = useState(props.initialValidUntil ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-
-  // Catálogo
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<string | null>(null);
-  const categories = useMemo(() => [...new Set(props.procedures.map((p) => p.category).filter((c): c is string => Boolean(c)))].sort(), [props.procedures]);
-  const catalog = useMemo(() => {
-    const q = normalize(query.trim());
-    return props.procedures.filter((p) => (!category || p.category === category) && (!q || normalize(p.name).includes(q)));
-  }, [props.procedures, query, category]);
 
   // Formulário de inclusão
   const [procedureId, setProcedureId] = useState(props.procedures[0]?.id ?? "");
@@ -149,12 +135,6 @@ export function PlanBuilder(props: Props) {
     });
   }
 
-  const chip = (active: boolean) =>
-    cn(
-      "inline-flex h-8 shrink-0 items-center rounded-full border px-3 text-[0.8125rem] font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40 pointer-coarse:h-11",
-      active ? "border-foreground bg-foreground font-semibold text-background" : "border-input bg-card hover:bg-muted",
-    );
-
   return (
     <div className="space-y-4">
       {error ? <FormMessage state={{ status: "error", message: error }} /> : null}
@@ -183,52 +163,12 @@ export function PlanBuilder(props: Props) {
                 }}
               />
             </div>
-            <label className="relative block">
-              <span className="sr-only">Buscar procedimento</span>
-              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar procedimento"
-                className="h-10 w-full rounded-lg border border-input bg-card pr-3 pl-9 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 pointer-coarse:h-11"
-              />
-            </label>
-            {categories.length ? (
-              <div role="group" aria-label="Categorias" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-                <button type="button" aria-pressed={category === null} onClick={() => setCategory(null)} className={chip(category === null)}>
-                  Todos
-                </button>
-                {categories.map((c) => (
-                  <button key={c} type="button" aria-pressed={category === c} onClick={() => setCategory(c)} className={chip(category === c)}>
-                    {c}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            {catalog.length ? (
-              <ul className="-mx-1 max-h-80 overflow-y-auto">
-                {catalog.map((p) => (
-                  <li key={p.id}>
-                    <button
-                      type="button"
-                      onClick={() => pickFromCatalog(p)}
-                      aria-label={`${p.applies_to_tooth ? "Escolher" : "Incluir"} ${p.name}`}
-                      className="flex min-h-11 w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40"
-                    >
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate text-[0.8125rem] font-medium">{p.name}</span>
-                        <span className="text-xs text-muted-foreground">{p.applies_to_tooth ? "Por dente" : (p.category ?? "Geral")}</span>
-                      </span>
-                      <span className="text-[0.8125rem] text-muted-foreground tabular-nums">{p.price_cents ? formatCurrency(p.price_cents) : "sem preço"}</span>
-                      <Plus className="size-4 shrink-0 text-primary" aria-hidden />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="py-4 text-center text-[0.8125rem] text-muted-foreground">Nenhum procedimento com esse nome.</p>
-            )}
+            <ProcedureCatalog
+              procedures={props.procedures}
+              onPick={pickFromCatalog}
+              actionLabel={(p) => `${p.applies_to_tooth ? "Escolher" : "Incluir"} ${p.name}`}
+              meta={(p) => (p.price_cents ? formatCurrency(p.price_cents) : "sem preço")}
+            />
           </section>
 
           <section className="space-y-4 rounded-card border bg-card p-4" aria-labelledby="incluir-item">

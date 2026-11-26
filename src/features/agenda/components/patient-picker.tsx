@@ -14,10 +14,12 @@ type PatientPickerProps = {
   value: PatientOption | null;
   onChange: (patient: PatientOption | null) => void;
   error?: string;
+  /** Esconde o telefone no cartão (quem usa já mostra o contato logo abaixo). */
+  hideDetail?: boolean;
 };
 
 /** Escolhe o paciente pelo nome, CPF ou telefone; cadastra um novo se não achar. */
-export function PatientPicker({ value, onChange, error }: PatientPickerProps) {
+export function PatientPicker({ value, onChange, error, hideDetail = false }: PatientPickerProps) {
   const id = useId();
   const [query, setQuery] = useState("");
   const [found, setResults] = useState<PatientOption[]>([]);
@@ -51,7 +53,7 @@ export function PatientPicker({ value, onChange, error }: PatientPickerProps) {
         <div className="flex items-center justify-between gap-2 rounded-lg border px-3 py-2 pointer-coarse:min-h-11">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{value.name}</p>
-            {value.detail ? <p className="text-xs text-muted-foreground">{formatPhone(value.detail)}</p> : null}
+            {value.detail && !hideDetail ? <p className="text-xs text-muted-foreground">{formatPhone(value.detail)}</p> : null}
           </div>
           <Button type="button" variant="ghost" size="icon-sm" aria-label="Trocar paciente" onClick={() => onChange(null)}>
             <X />

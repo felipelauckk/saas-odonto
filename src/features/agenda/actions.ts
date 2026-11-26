@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { subscriptionErrorMessage } from "@/lib/db-errors";
 import { createClient } from "@/lib/supabase/server";
-import { addDays, zonedToUtc } from "@/lib/timezone";
+import { addDays, timeToMinutes, weekdayOf, zonedToUtc } from "@/lib/timezone";
 import { addMonths } from "@/lib/installments";
 import { randomUUID } from "node:crypto";
 
@@ -14,7 +14,10 @@ import { fitsWaitlist, seriesDates } from "./advanced";
 import { utcToZoned } from "@/lib/timezone";
 import { getSessionContext } from "@/features/tenancy/queries";
 
-import { appointmentSchema, blockSchema, moveAppointmentSchema, statusSchema } from "./schemas";
+import { sendAppointmentReminder } from "@/features/messaging/service";
+
+import { clipToDay, groupByPeriod, OUTSIDE_HOURS, slotStarts, type Range, type SlotGroup } from "./free-slots";
+import { appointmentSchema, blockSchema, moveAppointmentSchema, slotsQuerySchema, statusSchema } from "./schemas";
 
 type Result = { error?: string; id?: string };
 
@@ -55,22 +58,59 @@ async function setTags(supabase: Awaited<ReturnType<typeof createClient>>, clini
   }
 }
 
-export async function saveAppointment(input: z.input<typeof appointmentSchema>): Promise<Result & { failed?: { date: string; reason: string }[]; created?: number }> {
+type ProcedureRow = z.output<typeof appointmentSchema>["procedures"][number];
+
+/** Troca a lista de procedimentos da consulta (na ordem escolhida). */
+async function setProcedures(supabase: Awaited<ReturnType<typeof createClient>>, clinicId: string, appointmentId: string, procedures: ProcedureRow[]) {
+  await supabase.from("appointment_procedures").delete().eq("appointment_id", appointmentId);
+  if (!procedures.length) return null;
+  const { error } = await supabase.from("appointment_procedures").insert(
+    procedures.map((p, position) => ({
+      clinic_id: clinicId,
+      appointment_id: appointmentId,
+      procedure_id: p.procedureId,
+      treatment_item_id: p.treatmentItemId,
+      tooth: p.tooth,
+      faces: p.faces?.length ? p.faces : null,
+      position,
+    })),
+  );
+  return error;
+}
+
+/** "Pedir confirmação: enviar agora": manda o lembrete com o botão Confirmar sem contar como o da véspera. */
+async function requestConfirmation(appointmentId: string): Promise<string> {
+  const result = await sendAppointmentReminder(appointmentId, { markSent: false });
+  if (result.status === "failed") return `Não deu para pedir a confirmação: ${result.error ?? "veja o motivo em Configurações → Mensagens"}.`;
+  return result.status === "simulated" ? "Pedido de confirmação registrado (envio simulado: WhatsApp não configurado)." : "Pedido de confirmação enviado pelo WhatsApp.";
+}
+
+type SaveResult = Result & { failed?: { date: string; reason: string }[]; created?: number; notice?: string };
+
+export async function saveAppointment(input: z.input<typeof appointmentSchema>): Promise<SaveResult> {
   const parsed = appointmentSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   const ctx = await activeContext();
   if (!ctx) return { error: "Sessão expirada. Entre novamente." };
 
-  const { id, patientId, professionalId, chairId, procedureId, date, time, durationMin, type, notes, tagIds, repeat, repeatCount } = parsed.data;
-  const row = { professional_id: professionalId, chair_id: chairId, procedure_id: procedureId, type, notes };
+  const { id, patientId, professionalId, chairId, procedures, date, time, durationMin, type, notes, tagIds, repeat, repeatCount, reminderMode } = parsed.data;
+  // Dentista não envia mensagens (mesma regra do "Enviar lembrete").
+  const confirmationMode = parsed.data.confirmationMode === "now" && ctx.session.clinic?.role === "dentist" ? "auto" : parsed.data.confirmationMode;
+  // procedure_id fica só por compatibilidade: a lista vai para appointment_procedures.
+  const row = { professional_id: professionalId, chair_id: chairId, type, notes, confirmation_mode: confirmationMode, reminder_mode: reminderMode };
 
   if (id) {
+    const { data: before } = await ctx.supabase.from("appointments").select("confirmation_mode").eq("id", id).maybeSingle();
     const { data, error } = await ctx.supabase.from("appointments").update({ ...row, ...interval(date, time, durationMin), reschedule_requested_at: null }).eq("id", id).select("id");
     if (error) return { error: agendaError(error) };
     if (!data.length) return { error: "Consulta não encontrada ou sem permissão." };
     await setTags(ctx.supabase, ctx.clinicId, id, tagIds);
+    const procError = await setProcedures(ctx.supabase, ctx.clinicId, id, procedures);
+    // Só pede de novo se "enviar agora" acabou de ser escolhido.
+    const notice = confirmationMode === "now" && before?.confirmation_mode !== "now" ? await requestConfirmation(id) : undefined;
     revalidatePath(AGENDA_PATH);
-    return { id };
+    if (procError) return { id, error: "A consulta foi salva, mas os procedimentos não. Abra e tente de novo." };
+    return { id, notice };
   }
 
   // Série: cada data é marcada separadamente; as que conflitam ficam de fora.
@@ -78,6 +118,7 @@ export async function saveAppointment(input: z.input<typeof appointmentSchema>):
   const seriesId = dates.length > 1 ? randomUUID() : null;
   const failed: { date: string; reason: string }[] = [];
   let firstId: string | undefined;
+  let procFailed = false;
   for (const day of dates) {
     const { data, error } = await ctx.supabase
       .from("appointments")
@@ -90,10 +131,112 @@ export async function saveAppointment(input: z.input<typeof appointmentSchema>):
     }
     firstId ??= data.id;
     await setTags(ctx.supabase, ctx.clinicId, data.id, tagIds);
+    if (await setProcedures(ctx.supabase, ctx.clinicId, data.id, procedures)) procFailed = true;
   }
+  if (!firstId) {
+    revalidatePath(AGENDA_PATH);
+    return { error: failed[0]?.reason ?? "Não foi possível marcar.", failed };
+  }
+  // Na série, o pedido de confirmação vai só para a primeira consulta.
+  const notice = confirmationMode === "now" ? await requestConfirmation(firstId) : undefined;
   revalidatePath(AGENDA_PATH);
-  if (!firstId) return { error: failed[0]?.reason ?? "Não foi possível marcar.", failed };
-  return { id: firstId, failed, created: dates.length - failed.length };
+  if (procFailed) return { id: firstId, failed, created: dates.length - failed.length, error: "A consulta foi marcada, mas os procedimentos não. Abra e tente de novo." };
+  return { id: firstId, failed, created: dates.length - failed.length, notice };
+}
+
+// Grade de horários livres ----------------------------------------------------------------
+
+export type SlotsResult = { groups: SlotGroup[]; hasSchedule: boolean; error?: string };
+
+/** Horários livres do profissional no dia (a cada 15 min), lidos com a sessão do usuário. */
+export async function loadFreeSlots(input: z.input<typeof slotsQuerySchema>): Promise<SlotsResult> {
+  const parsed = slotsQuerySchema.safeParse(input);
+  if (!parsed.success) return { groups: [], hasSchedule: false, error: "Dados inválidos." };
+  const ctx = await activeContext();
+  if (!ctx) return { groups: [], hasSchedule: false, error: "Sessão expirada. Entre novamente." };
+  const { professionalId, date, durationMin, excludeId, outsideHours } = parsed.data;
+
+  const dayStart = zonedToUtc(date, "00:00");
+  const dayEnd = zonedToUtc(addDays(date, 1), "00:00");
+  let apptQuery = ctx.supabase
+    .from("appointments")
+    .select("id, starts_at, ends_at")
+    .eq("professional_id", professionalId)
+    .not("status", "in", "(canceled,no_show)")
+    .lt("starts_at", dayEnd.toISOString())
+    .gt("ends_at", dayStart.toISOString());
+  if (excludeId) apptQuery = apptQuery.neq("id", excludeId);
+  const [schedulesRes, apptRes, blocksRes] = await Promise.all([
+    ctx.supabase.from("professional_schedules").select("start_time, end_time").eq("unit_id", ctx.unitId).eq("professional_id", professionalId).eq("weekday", weekdayOf(date)),
+    apptQuery,
+    ctx.supabase
+      .from("schedule_blocks")
+      .select("starts_at, ends_at")
+      .eq("unit_id", ctx.unitId)
+      .or(`professional_id.is.null,professional_id.eq.${professionalId}`)
+      .lt("starts_at", dayEnd.toISOString())
+      .gt("ends_at", dayStart.toISOString()),
+  ]);
+  if (schedulesRes.error || apptRes.error || blocksRes.error) return { groups: [], hasSchedule: false, error: "Não foi possível carregar os horários." };
+
+  const busy = [...(apptRes.data ?? []), ...(blocksRes.data ?? [])]
+    .map((b) => clipToDay(Date.parse(b.starts_at), Date.parse(b.ends_at), dayStart.getTime()))
+    .filter((b): b is Range => b !== null);
+  const working = (schedulesRes.data ?? []).map((s) => ({ startMin: timeToMinutes(s.start_time.slice(0, 5)), endMin: timeToMinutes(s.end_time.slice(0, 5)) }));
+  const now = utcToZoned(new Date());
+  const starts = slotStarts({
+    windows: outsideHours ? [OUTSIDE_HOURS] : working,
+    busy,
+    durationMin,
+    stepMin: 15,
+    // Hoje: o que já passou não é oferecido.
+    earliestMin: now.date === date ? now.minutes : now.date > date ? Infinity : undefined,
+  });
+  return { groups: groupByPeriod(starts), hasSchedule: working.length > 0 };
+}
+
+// Dados do paciente para a consulta ----------------------------------------------------------
+
+export type PlanItemOption = { id: string; procedureId: string; name: string; tooth: number | null; faces: string[]; durationMin: number };
+export type AppointmentPatientInfo = {
+  phone: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  alerts: { label: string; details: string | null }[];
+  firstVisit: boolean;
+  planItems: PlanItemOption[];
+};
+
+/** Contato, alerta da anamnese, "primeira vez" e itens do plano aprovado ainda não feitos nem agendados. */
+export async function loadAppointmentPatient(patientId: string, appointmentId?: string | null): Promise<AppointmentPatientInfo | null> {
+  if (!z.uuid().safeParse(patientId).success) return null;
+  const supabase = await createClient();
+  const [patientRes, alertsRes, visitsRes, itemsRes] = await Promise.all([
+    supabase.from("patients").select("phone, whatsapp, email").eq("id", patientId).maybeSingle(),
+    supabase.rpc("patient_alerts", { _patient_id: patientId }),
+    supabase.from("appointments").select("id", { count: "exact", head: true }).eq("patient_id", patientId).in("status", ["arrived", "in_progress", "done"]),
+    supabase
+      .from("treatment_items")
+      .select("id, procedure_id, description, tooth, faces, position, procedures(duration_min), treatment_plans!inner(patient_id, status, approved_at), appointment_procedures(appointment_id, appointments(status))")
+      .eq("treatment_plans.patient_id", patientId)
+      .in("treatment_plans.status", ["approved", "partially_approved"])
+      .eq("status", "approved")
+      .not("procedure_id", "is", null),
+  ]);
+  if (!patientRes.data) return null;
+  const planItems = (itemsRes.data ?? [])
+    // Já agendado em outra consulta que segue de pé: não oferece de novo.
+    .filter((i) => !i.appointment_procedures.some((ap) => ap.appointment_id !== appointmentId && ap.appointments && !["canceled", "no_show"].includes(ap.appointments.status)))
+    .sort((a, b) => (a.treatment_plans.approved_at ?? "").localeCompare(b.treatment_plans.approved_at ?? "") || a.position - b.position)
+    .map((i) => ({ id: i.id, procedureId: i.procedure_id!, name: i.description, tooth: i.tooth, faces: i.faces, durationMin: i.procedures?.duration_min ?? 30 }));
+  return {
+    phone: patientRes.data.phone,
+    whatsapp: patientRes.data.whatsapp,
+    email: patientRes.data.email,
+    alerts: (alertsRes.data ?? []) as AppointmentPatientInfo["alerts"],
+    firstVisit: (visitsRes.count ?? 0) === 0,
+    planItems,
+  };
 }
 
 /** Arrastar na grade: muda o horário (mantém a duração) e, se for o caso, o profissional ou a cadeira. */

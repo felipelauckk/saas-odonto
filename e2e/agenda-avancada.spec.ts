@@ -37,9 +37,8 @@ test("consultas em série avisam a data que conflita e marcam as outras", async 
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Paciente").fill("Paciente Ag");
   await dialog.getByRole("button", { name: /Paciente Agenda/ }).click();
-  await dialog.getByLabel("Repetir").click();
-  await page.getByRole("option", { name: "Toda semana" }).click();
-  await dialog.getByLabel("Quantas consultas").fill("3");
+  await dialog.getByRole("radio", { name: "Toda semana" }).click();
+  await dialog.getByLabel("Quantas vezes").fill("3");
   await dialog.getByRole("button", { name: "Marcar consulta" }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByText(/2 consultas marcadas\. Não deu para marcar: 11\/03\/2030/)).toBeVisible();

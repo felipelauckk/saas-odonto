@@ -9,6 +9,7 @@ import { subscriptionErrorMessage } from "@/lib/db-errors";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/features/tenancy/queries";
 
+import { getPatient, type Patient } from "./queries";
 import { patientSchema, type PatientInput } from "./schemas";
 
 function toRow(data: PatientInput) {
@@ -112,7 +113,15 @@ export async function updatePatient(_prev: ActionState, formData: FormData): Pro
 
   revalidatePath("/pacientes");
   revalidatePath(`/pacientes/${parsed.data.id}`);
+  // Editado num painel por cima de outra tela (ex.: Nova consulta): fica onde está.
+  if (formData.get("stay") === "1") return { status: "success", message: "Cadastro atualizado." };
   redirect(`/pacientes/${parsed.data.id}`);
+}
+
+/** Cadastro completo para editar num painel lateral (lido com a sessão do usuário). */
+export async function loadPatientForEdit(id: string): Promise<Patient | null> {
+  if (!z.uuid().safeParse(id).success) return null;
+  return getPatient(id);
 }
 
 export async function setPatientArchived(id: string, archived: boolean): Promise<{ error?: string }> {

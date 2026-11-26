@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
@@ -8,7 +8,7 @@ import { FormField } from "@/components/forms/form-field";
 import { FormMessage } from "@/components/forms/form-message";
 import { SelectField } from "@/components/forms/select-field";
 import { SubmitButton } from "@/components/forms/submit-button";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,8 +45,23 @@ function Section({ title, description, children }: { title: string; description?
   );
 }
 
-export function PatientForm({ patient }: { patient?: Patient }) {
+type PatientFormProps = {
+  patient?: Patient;
+  /** Editando por cima de outra tela: salva sem sair dela e avisa aqui. */
+  onSaved?: () => void;
+  onCancel?: () => void;
+};
+
+export function PatientForm({ patient, onSaved, onCancel }: PatientFormProps) {
   const [state, action] = useActionState(patient ? updatePatient : createPatient, idleState);
+  // Avisa uma vez por resposta de sucesso (onSaved muda a cada render de quem usa).
+  const onSavedRef = useRef(onSaved);
+  useEffect(() => {
+    onSavedRef.current = onSaved;
+  });
+  useEffect(() => {
+    if (state.status === "success") onSavedRef.current?.();
+  }, [state]);
   const v = state.status === "error" ? state.values : undefined;
   const e = state.fieldErrors;
   const saved = (patient?.address ?? {}) as Address;
@@ -238,13 +253,17 @@ export function PatientForm({ patient }: { patient?: Patient }) {
         )}
       </Section>
 
+      {onSaved ? <input type="hidden" name="stay" value="1" /> : null}
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Link
-          href={patient ? `/pacientes/${patient.id}` : "/pacientes"}
-          className={buttonVariants({ variant: "outline" })}
-        >
-          Cancelar
-        </Link>
+        {onCancel ? (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancelar
+          </Button>
+        ) : (
+          <Link href={patient ? `/pacientes/${patient.id}` : "/pacientes"} className={buttonVariants({ variant: "outline" })}>
+            Cancelar
+          </Link>
+        )}
         <SubmitButton pendingLabel="Salvando...">{patient ? "Salvar alterações" : "Cadastrar paciente"}</SubmitButton>
       </div>
     </form>

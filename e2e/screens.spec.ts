@@ -243,3 +243,22 @@ for (const [name, path] of [
     await page.screenshot({ path: `${process.env.SCREENS_DIR ?? "docs/design/screens"}/${label}-${name}-${info.project.name}.png`, fullPage: true });
   });
 }
+
+// Diálogo "Nova consulta" com a paciente da ficha (alerta na anamnese e plano aprovado).
+test("print nova-consulta", async ({ page }, info) => {
+  await signIn(page, user);
+  await page.goto("/agenda");
+  await page.getByRole("button", { name: "Nova consulta" }).first().click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Paciente").first().fill("Mariana Cos");
+  await dialog.getByRole("button", { name: /Mariana Costa/ }).first().click();
+  // Depois da P1: profissional com expediente, para a grade de horários aparecer.
+  const pro = dialog.getByLabel("Profissional", { exact: true });
+  if (await pro.count()) {
+    await pro.click();
+    await page.getByRole("option", { name: "Dra. Ana", exact: true }).click();
+  }
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `${process.env.SCREENS_DIR ?? "docs/design/screens"}/${label}-nova-consulta-${info.project.name}.png` });
+});

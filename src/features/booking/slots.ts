@@ -1,4 +1,5 @@
-import { addDays, timeToMinutes, weekdayOf, zonedToUtc } from "@/lib/timezone";
+import { clipToDay, slotStarts, type Range } from "@/features/agenda/free-slots";
+import { addDays, minutesToTime, timeToMinutes, weekdayOf, zonedToUtc } from "@/lib/timezone";
 
 export type Busy = { start: number; end: number }; // ms desde a época
 export type Schedule = { professionalId: string; weekday: number; start: string; end: string };
@@ -8,6 +9,7 @@ export type Slot = { date: string; time: string; professionalId: string; startsA
  * Horários livres para agendamento online: dentro do expediente de cada
  * profissional, sem sobrepor consultas ou bloqueios, a cada `durationMin`,
  * respeitando a antecedência mínima e o limite de dias à frente.
+ * A conta de cada dia é a mesma da agenda (`slotStarts`).
  */
 export function freeSlots(input: {
   schedules: Schedule[];
@@ -22,24 +24,29 @@ export function freeSlots(input: {
 }): Slot[] {
   const out: Slot[] = [];
   const earliest = input.now + input.minNoticeHours * 3_600_000;
-  const step = input.durationMin * 60_000;
   for (let i = 0; i < input.days; i++) {
     const date = addDays(input.from, i);
     const weekday = weekdayOf(date);
+    const dayStart = zonedToUtc(date, "00:00").getTime();
     for (const s of input.schedules.filter((x) => x.weekday === weekday)) {
-      const busy = [...(input.busyByProfessional.get(s.professionalId) ?? []), ...input.unitBusy];
-      const dayStart = zonedToUtc(date, s.start).getTime();
-      const dayEnd = zonedToUtc(date, s.end).getTime();
-      for (let t = dayStart; t + step <= dayEnd; t += step) {
-        if (t < earliest) continue;
-        if (busy.some((b) => b.start < t + step && b.end > t)) continue;
-        const minutes = timeToMinutes(s.start) + Math.round((t - dayStart) / 60_000);
+      const busy = [...(input.busyByProfessional.get(s.professionalId) ?? []), ...input.unitBusy]
+        .map((b) => clipToDay(b.start, b.end, dayStart))
+        .filter((b): b is Range => b !== null);
+      const starts = slotStarts({
+        windows: [{ startMin: timeToMinutes(s.start), endMin: timeToMinutes(s.end) }],
+        busy,
+        durationMin: input.durationMin,
+        stepMin: input.durationMin,
+        earliestMin: Math.ceil((earliest - dayStart) / 60_000),
+      });
+      for (const minutes of starts) {
+        const t = dayStart + minutes * 60_000;
         out.push({
           date,
-          time: `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`,
+          time: minutesToTime(minutes),
           professionalId: s.professionalId,
           startsAt: new Date(t).toISOString(),
-          endsAt: new Date(t + step).toISOString(),
+          endsAt: new Date(t + input.durationMin * 60_000).toISOString(),
         });
       }
     }

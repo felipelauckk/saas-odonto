@@ -13,12 +13,29 @@ const optionalText = (max: number) =>
     .optional()
     .transform((v) => v || null);
 
+export const confirmationModes = ["auto", "none", "now"] as const;
+export const reminderModes = ["auto", "none"] as const;
+export type ConfirmationMode = (typeof confirmationModes)[number];
+export type ReminderMode = (typeof reminderModes)[number];
+
+const tooth = z
+  .number()
+  .int()
+  .refine((t) => (Math.floor(t / 10) >= 1 && Math.floor(t / 10) <= 4 && t % 10 >= 1 && t % 10 <= 8) || (Math.floor(t / 10) >= 5 && Math.floor(t / 10) <= 8 && t % 10 >= 1 && t % 10 <= 5), "Dente inválido.");
+
+export const appointmentProcedureSchema = z.object({
+  procedureId: z.uuid(),
+  treatmentItemId: z.uuid().nullable().default(null),
+  tooth: tooth.nullable().default(null),
+  faces: z.array(z.enum(["M", "D", "O", "V", "L"])).max(5).nullable().default(null),
+});
+
 export const appointmentSchema = z.object({
   id: z.uuid().optional(),
   patientId: z.uuid({ message: "Escolha o paciente." }),
   professionalId: z.uuid({ message: "Escolha o profissional." }),
   chairId: nullableId,
-  procedureId: nullableId,
+  procedures: z.array(appointmentProcedureSchema).max(20, "No máximo 20 procedimentos por consulta.").default([]),
   date: isoDate,
   time,
   durationMin: z.coerce.number().int().min(5, "Duração mínima de 5 minutos.").max(720, "Duração máxima de 12 horas."),
@@ -27,6 +44,8 @@ export const appointmentSchema = z.object({
   tagIds: z.array(z.uuid()).max(10).optional(),
   repeat: z.enum(["week", "2weeks", "month"]).nullable().optional(),
   repeatCount: z.number().int().min(2).max(52).optional(),
+  confirmationMode: z.enum(confirmationModes).default("auto"),
+  reminderMode: z.enum(reminderModes).default("auto"),
 });
 
 export const moveAppointmentSchema = z.object({
@@ -71,3 +90,14 @@ export const agendaParamsSchema = z.object({
 
 export type AppointmentInput = z.input<typeof appointmentSchema>;
 export type BlockInput = z.input<typeof blockSchema>;
+
+export const slotsQuerySchema = z.object({
+  professionalId: z.uuid(),
+  date: isoDate,
+  durationMin: z.number().int().min(5).max(720),
+  /** Consulta sendo editada: o horário dela não conta como ocupado. */
+  excludeId: z.uuid().nullable().default(null),
+  outsideHours: z.boolean().default(false),
+});
+
+export type AppointmentProcedureInput = z.input<typeof appointmentProcedureSchema>;

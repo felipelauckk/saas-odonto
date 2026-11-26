@@ -204,6 +204,74 @@ export type Database = {
           },
         ]
       }
+      appointment_procedures: {
+        Row: {
+          appointment_id: string
+          clinic_id: string
+          created_at: string
+          faces: string[] | null
+          id: string
+          position: number
+          procedure_id: string
+          tooth: number | null
+          treatment_item_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          clinic_id: string
+          created_at?: string
+          faces?: string[] | null
+          id?: string
+          position?: number
+          procedure_id: string
+          tooth?: number | null
+          treatment_item_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          clinic_id?: string
+          created_at?: string
+          faces?: string[] | null
+          id?: string
+          position?: number
+          procedure_id?: string
+          tooth?: number | null
+          treatment_item_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_procedures_appointment_id_clinic_id_fkey"
+            columns: ["appointment_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "appointment_procedures_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_procedures_procedure_id_clinic_id_fkey"
+            columns: ["procedure_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id", "clinic_id"]
+          },
+          {
+            foreignKeyName: "appointment_procedures_treatment_item_id_clinic_id_fkey"
+            columns: ["treatment_item_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_items"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       appointment_tag_links: {
         Row: {
           appointment_id: string
@@ -294,6 +362,8 @@ export type Database = {
           booked_online: boolean
           cancel_note: string | null
           cancel_reason: Database["public"]["Enums"]["cancel_reason"] | null
+          confirmation_mode: string
+          reminder_mode: string
           chair_id: string | null
           clinic_id: string
           confirmed_at: string | null
@@ -320,6 +390,8 @@ export type Database = {
           booked_online?: boolean
           cancel_note?: string | null
           cancel_reason?: Database["public"]["Enums"]["cancel_reason"] | null
+          confirmation_mode?: string
+          reminder_mode?: string
           chair_id?: string | null
           clinic_id: string
           confirmed_at?: string | null
@@ -346,6 +418,8 @@ export type Database = {
           booked_online?: boolean
           cancel_note?: string | null
           cancel_reason?: Database["public"]["Enums"]["cancel_reason"] | null
+          confirmation_mode?: string
+          reminder_mode?: string
           chair_id?: string | null
           clinic_id?: string
           confirmed_at?: string | null

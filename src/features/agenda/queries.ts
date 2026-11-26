@@ -6,6 +6,7 @@ import { addDays, timeToMinutes, utcToZoned, zonedToUtc } from "@/lib/timezone";
 
 import type { Period } from "./advanced";
 import type { AppointmentStatus } from "./labels";
+import type { ConfirmationMode, ReminderMode } from "./schemas";
 import { monthOccupancy, occupancyLevel, pickFreedSlot } from "./overview";
 
 export type AgendaAppointment = {
@@ -15,11 +16,14 @@ export type AgendaAppointment = {
   patientPhone: string | null;
   professionalId: string;
   chairId: string | null;
-  procedureId: string | null;
+  /** Procedimentos da consulta, na ordem (appointment_procedures). */
+  procedures: AgendaProcedure[];
   status: AppointmentStatus;
   type: string | null;
   notes: string | null;
   tagIds: string[];
+  confirmationMode: ConfirmationMode;
+  reminderMode: ReminderMode;
   isFirstVisit: boolean;
   arrivedAt: string | null;
   cancelReason: string | null;
@@ -33,6 +37,8 @@ export type AgendaAppointment = {
   endsAt: string;
 };
 
+export type AgendaProcedure = { procedureId: string; name: string; treatmentItemId: string | null; tooth: number | null; faces: string[] | null };
+
 export type AgendaBlock = {
   id: string;
   professionalId: string | null;
@@ -45,7 +51,7 @@ export type AgendaBlock = {
 export type AgendaData = {
   professionals: { id: string; name: string; color: string }[];
   chairs: { id: string; name: string }[];
-  procedures: { id: string; name: string; duration_min: number; return_months: number | null }[];
+  procedures: { id: string; name: string; duration_min: number; return_months: number | null; category: string | null; applies_to_tooth: boolean }[];
   tags: { id: string; name: string; color: string }[];
   schedules: { professional_id: string; weekday: number; start_time: string; end_time: string }[];
   appointments: AgendaAppointment[];
@@ -92,7 +98,7 @@ export async function getAgendaData({
     supabase.from("professionals").select("id, name, color").eq("active", true).order("name"),
     isDentist ? supabase.rpc("current_professional_ids") : Promise.resolve({ data: null, error: null }),
     supabase.from("chairs").select("id, name").eq("unit_id", unitId).eq("active", true).order("name"),
-    supabase.from("procedures").select("id, name, duration_min, return_months").eq("active", true).order("name"),
+    supabase.from("procedures").select("id, name, duration_min, return_months, category, applies_to_tooth").eq("active", true).order("name"),
     supabase
       .from("professional_schedules")
       .select("professional_id, weekday, start_time, end_time")
@@ -100,7 +106,7 @@ export async function getAgendaData({
     supabase
       .from("appointments")
       .select(
-        "id, patient_id, professional_id, chair_id, procedure_id, starts_at, ends_at, status, type, notes, is_first_visit, arrived_at, cancel_reason, booked_online, reschedule_requested_at, patients(full_name, phone, whatsapp), appointment_tag_links(tag_id)",
+        "id, patient_id, professional_id, chair_id, starts_at, ends_at, status, type, notes, confirmation_mode, reminder_mode, is_first_visit, arrived_at, cancel_reason, booked_online, reschedule_requested_at, patients(full_name, phone, whatsapp), appointment_tag_links(tag_id), appointment_procedures(procedure_id, treatment_item_id, tooth, faces, position, procedures(name))",
       )
       .eq("unit_id", unitId)
       .lt("starts_at", rangeEnd)
@@ -130,7 +136,11 @@ export async function getAgendaData({
       patientPhone: a.patients?.whatsapp ?? a.patients?.phone ?? null,
       professionalId: a.professional_id,
       chairId: a.chair_id,
-      procedureId: a.procedure_id,
+      procedures: [...a.appointment_procedures]
+        .sort((x, y) => x.position - y.position)
+        .map((p) => ({ procedureId: p.procedure_id, name: p.procedures?.name ?? "Procedimento", treatmentItemId: p.treatment_item_id, tooth: p.tooth, faces: p.faces })),
+      confirmationMode: a.confirmation_mode as ConfirmationMode,
+      reminderMode: a.reminder_mode as ReminderMode,
       status: a.status,
       type: a.type,
       notes: a.notes,

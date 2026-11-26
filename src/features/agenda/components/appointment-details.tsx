@@ -40,7 +40,9 @@ export function AppointmentDetails({ appointment: a, professionalName, chairName
   const [asking, setAsking] = useState<"cancel" | "return" | null>(null);
   const [reason, setReason] = useState<CancelReason>("patient_canceled");
   const [note, setNote] = useState("");
-  const defaultMonths = procedures.find((p) => p.id === a.procedureId)?.return_months ?? 6;
+  // Retorno sugerido pelo primeiro procedimento da consulta.
+  const firstProcedureId = a.procedures[0]?.procedureId ?? null;
+  const defaultMonths = procedures.find((p) => p.id === firstProcedureId)?.return_months ?? 6;
   const [months, setMonths] = useState(String(defaultMonths));
   const [matches, setMatches] = useState<{ id: string; patientName: string; notes: string | null }[] | null>(null);
   const start = utcToZoned(a.startsAt);
@@ -81,6 +83,16 @@ export function AppointmentDetails({ appointment: a, professionalName, chairName
         <p className="text-sm text-muted-foreground">
           {[professionalName, chairName, a.type].filter(Boolean).join(" · ")}
         </p>
+        {a.procedures.length ? (
+          <ul className="space-y-0.5 pt-1 text-sm" aria-label="Procedimentos">
+            {a.procedures.map((p, i) => (
+              <li key={`${p.procedureId}-${i}`}>
+                {p.name}
+                {p.tooth ? <span className="text-muted-foreground"> · dente {p.tooth}{p.faces?.length ? ` (${p.faces.join("")})` : ""}</span> : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {a.notes ? <p className="whitespace-pre-line pt-1 text-sm">{a.notes}</p> : null}
         {a.bookedOnline || a.rescheduleRequestedAt ? (
           <p className="flex flex-wrap gap-2 pt-1 text-xs">
@@ -166,7 +178,7 @@ export function AppointmentDetails({ appointment: a, professionalName, chairName
             <Button size="sm" disabled={pending} onClick={() => startTransition(async () => {
               const n = Number(months);
               if (!Number.isInteger(n) || n < 1 || n > 60) return setError("Meses entre 1 e 60.");
-              const r = await createReturn({ patientId: a.patientId, months: n, reason: a.type || "Retorno", professionalId: a.professionalId, procedureId: a.procedureId, sourceAppointmentId: a.id });
+              const r = await createReturn({ patientId: a.patientId, months: n, reason: a.type || "Retorno", professionalId: a.professionalId, procedureId: firstProcedureId, sourceAppointmentId: a.id });
               if (r.error) setError(r.error); else setAsking(null);
             })}>Agendar alerta</Button>
             <Button size="sm" variant="ghost" onClick={() => setAsking(null)}>Sem retorno</Button>

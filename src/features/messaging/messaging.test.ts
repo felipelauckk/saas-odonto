@@ -20,6 +20,8 @@ describe.skipIf(!hasSupabase)("mensagens (WhatsApp simulado)", () => {
   let dentist: Client;
   let clinicId = "";
   let appointmentId = "";
+  let noReminderId = "";
+  let confirmNowId = "";
   let birthdayPatient = "";
 
   beforeAll(async () => {
@@ -52,6 +54,22 @@ describe.skipIf(!hasSupabase)("mensagens (WhatsApp simulado)", () => {
       .select("id")
       .single();
     appointmentId = appt!.id;
+    // Fase 3 P1: consulta marcada "lembrete na véspera: não enviar" e outra que pede confirmação na hora.
+    const { data: quiet } = await admin
+      .from("patients")
+      .insert({ clinic_id: clinicId, full_name: "Carla Sem Lembrete", whatsapp: "11977770000" })
+      .select("id")
+      .single();
+    const { data: extra, error: extraError } = await admin
+      .from("appointments")
+      .insert([
+        { clinic_id: clinicId, unit_id: unit!.id, patient_id: quiet!.id, professional_id: pro!.id, starts_at: `${tomorrow}T11:00:00-03:00`, ends_at: `${tomorrow}T11:30:00-03:00`, confirmation_mode: "auto", reminder_mode: "none" },
+        { clinic_id: clinicId, unit_id: unit!.id, patient_id: quiet!.id, professional_id: pro!.id, starts_at: `${addDays(today, 3)}T11:00:00-03:00`, ends_at: `${addDays(today, 3)}T11:30:00-03:00`, confirmation_mode: "now", reminder_mode: "auto" },
+      ])
+      .select("id, reminder_mode");
+    expect(extraError).toBeNull();
+    noReminderId = extra!.find((a) => a.reminder_mode === "none")!.id;
+    confirmNowId = extra!.find((a) => a.reminder_mode === "auto")!.id;
 
     const [, m, d] = today.split("-");
     const { data: bday } = await admin
@@ -94,10 +112,23 @@ describe.skipIf(!hasSupabase)("mensagens (WhatsApp simulado)", () => {
     const { data: appt } = await admin.from("appointments").select("reminder_sent_at").eq("id", appointmentId).single();
     expect(appt?.reminder_sent_at).not.toBeNull();
 
+    // "Lembrete na véspera: não enviar" fica de fora da rotina.
+    expect(logs!.some((l) => l.template_kind === "appointment_reminder" && l.body?.includes("Carla"))).toBe(false);
+    const { data: quiet } = await admin.from("appointments").select("reminder_sent_at").eq("id", noReminderId).single();
+    expect(quiet?.reminder_sent_at).toBeNull();
+
     // Rodar de novo não duplica.
     await runDailyMessages({ clinicId });
     const { count } = await admin.from("messages_log").select("id", { count: "exact", head: true }).eq("clinic_id", clinicId);
     expect(count).toBe(logs!.length);
+  });
+
+  it("pedido de confirmação na hora não conta como o lembrete da véspera", async () => {
+    const { sendAppointmentReminder } = await import("./service");
+    const result = await sendAppointmentReminder(confirmNowId, { markSent: false });
+    expect(result.status).toBe("simulated");
+    const { data } = await admin.from("appointments").select("reminder_sent_at").eq("id", confirmNowId).single();
+    expect(data?.reminder_sent_at).toBeNull();
   });
 
   it("webhook: assinatura errada é recusada; botão Confirmar confirma a consulta", async () => {

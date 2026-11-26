@@ -72,7 +72,7 @@ export async function deliver(
 async function appointmentContext(admin: Admin, appointmentId: string) {
   const { data } = await admin
     .from("appointments")
-    .select("id, clinic_id, patient_id, starts_at, status, patients(full_name, whatsapp, phone), professionals(name), clinics(name)")
+    .select("id, clinic_id, patient_id, starts_at, status, confirmation_mode, patients(full_name, whatsapp, phone), professionals(name), clinics(name)")
     .eq("id", appointmentId)
     .maybeSingle();
   if (!data) return null;
@@ -87,8 +87,13 @@ async function appointmentContext(admin: Admin, appointmentId: string) {
   return { appointment: data, variables, phone: data.patients?.whatsapp ?? data.patients?.phone ?? null };
 }
 
-/** Lembrete de uma consulta (cron ou botão na agenda). */
-export async function sendAppointmentReminder(appointmentId: string) {
+/**
+ * Lembrete de uma consulta (cron ou botão na agenda). Leva o botão "Confirmar"
+ * se a consulta ainda não foi confirmada e não está marcada "não pedir confirmação".
+ * `markSent: false` (pedido de confirmação ao marcar) não conta como o lembrete
+ * da véspera, que continua saindo.
+ */
+export async function sendAppointmentReminder(appointmentId: string, { markSent = true }: { markSent?: boolean } = {}) {
   const admin = createAdminClient();
   const ctx = await appointmentContext(admin, appointmentId);
   if (!ctx) return { status: "failed" as const, error: "Consulta não encontrada." };
@@ -103,9 +108,9 @@ export async function sendAppointmentReminder(appointmentId: string) {
     phone: ctx.phone,
     body,
     variables: ctx.variables,
-    confirm: ctx.appointment.status === "scheduled",
+    confirm: ctx.appointment.status === "scheduled" && ctx.appointment.confirmation_mode !== "none",
   });
-  if (status !== "failed") {
+  if (status !== "failed" && markSent) {
     await admin.from("appointments").update({ reminder_sent_at: new Date().toISOString() }).eq("id", appointmentId);
   }
   return { status };
@@ -123,6 +128,7 @@ export async function runDailyMessages({ now = new Date(), clinicId }: { now?: D
     .select("id")
     .in("status", ["scheduled", "confirmed"])
     .is("reminder_sent_at", null)
+    .neq("reminder_mode", "none")
     .gte("starts_at", zonedToUtc(tomorrow, "00:00").toISOString())
     .lt("starts_at", zonedToUtc(addDays(tomorrow, 1), "00:00").toISOString());
   if (clinicId) appointmentsQuery = appointmentsQuery.eq("clinic_id", clinicId);

@@ -9,9 +9,11 @@ const ids = {
 
 describe("appointmentSchema", () => {
   it("aceita consulta sem cadeira e converte vazios", () => {
-    const result = appointmentSchema.parse({ ...ids, chairId: "", procedureId: "none", date: "2026-11-16", time: "09:00", durationMin: "30" });
+    const result = appointmentSchema.parse({ ...ids, chairId: "", date: "2026-11-16", time: "09:00", durationMin: "30" });
     expect(result.chairId).toBeNull();
-    expect(result.procedureId).toBeNull();
+    expect(result.procedures).toEqual([]);
+    expect(result.confirmationMode).toBe("auto");
+    expect(result.reminderMode).toBe("auto");
     expect(result.durationMin).toBe(30);
     expect(result.notes).toBeNull();
   });
@@ -20,6 +22,19 @@ describe("appointmentSchema", () => {
     expect(appointmentSchema.safeParse({ ...ids, patientId: "", date: "2026-11-16", time: "09:00", durationMin: 30 }).success).toBe(false);
     expect(appointmentSchema.safeParse({ ...ids, date: "2026-11-16", time: "25:00", durationMin: 30 }).success).toBe(false);
     expect(appointmentSchema.safeParse({ ...ids, date: "2026-11-16", time: "09:00", durationMin: 0 }).success).toBe(false);
+  });
+
+  it("procedimentos com dente e faces válidos", () => {
+    const procedureId = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+    const base = { ...ids, date: "2026-11-16", time: "09:00", durationMin: 30 };
+    const ok = appointmentSchema.parse({ ...base, procedures: [{ procedureId, tooth: 36, faces: ["O", "M"] }, { procedureId }] });
+    expect(ok.procedures).toEqual([
+      { procedureId, treatmentItemId: null, tooth: 36, faces: ["O", "M"] },
+      { procedureId, treatmentItemId: null, tooth: null, faces: null },
+    ]);
+    expect(appointmentSchema.safeParse({ ...base, procedures: [{ procedureId, tooth: 19 }] }).success).toBe(false);
+    expect(appointmentSchema.safeParse({ ...base, procedures: [{ procedureId, faces: ["X"] }] }).success).toBe(false);
+    expect(appointmentSchema.safeParse({ ...base, confirmationMode: "sempre" }).success).toBe(false);
   });
 });
 

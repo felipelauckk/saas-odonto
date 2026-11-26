@@ -30,7 +30,8 @@ import { initials, occupancy, weekTitle } from "../overview";
 import type { AgendaAppointment, AgendaBlock, AgendaData } from "../queries";
 import { AgendaGrid, type GridColumn, type MoveTarget } from "./agenda-grid";
 import { AppointmentDetails } from "./appointment-details";
-import { AppointmentForm, type AppointmentFormValues } from "./appointment-form";
+import { AppointmentForm, newAppointmentValues, type AppointmentFormValues } from "./appointment-form";
+import { procedureKey } from "./appointment-procedures";
 import { BlockForm } from "./block-form";
 
 type View = "dia" | "semana";
@@ -117,18 +118,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
     presetPatient
       ? {
           kind: "new",
-          initial: {
-            patient: presetPatient,
-            professionalId: data.professionals[0]?.id ?? "",
-            chairId: null,
-            procedureId: null,
-            date: date < today ? today : date,
-            time: "09:00",
-            durationMin: 30,
-            type: "",
-            notes: "",
-            tagIds: [],
-          },
+          initial: newAppointmentValues({ patient: presetPatient, professionalId: data.professionals[0]?.id ?? "", date: date < today ? today : date }),
         }
       : null,
   );
@@ -279,18 +269,13 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
   function openNew(column?: GridColumn, startMin?: number) {
     setDialog({
       kind: "new",
-      initial: {
-        patient: null,
+      initial: newAppointmentValues({
         professionalId: column?.professionalId ?? (view === "semana" && by === "profissional" ? (selectedId ?? defaultProfessional) : defaultProfessional),
         chairId: column?.chairId ?? null,
-        procedureId: null,
         date: column?.date ?? date,
-        time: startMin !== undefined ? minutesToTime(startMin) : "09:00",
-        durationMin: 30,
-        type: "",
-        notes: "",
-        tagIds: [],
-      },
+        // Clique na grade: o horário clicado já vem escolhido.
+        time: startMin !== undefined ? minutesToTime(startMin) : null,
+      }),
     });
   }
 
@@ -315,13 +300,23 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
       patient: { id: a.patientId, name: a.patientName, detail: a.patientPhone },
       professionalId: a.professionalId,
       chairId: a.chairId,
-      procedureId: a.procedureId,
+      procedures: a.procedures.map((p) => ({
+        key: procedureKey(),
+        procedureId: p.procedureId,
+        name: p.name,
+        durationMin: data.procedures.find((x) => x.id === p.procedureId)?.duration_min ?? 30,
+        treatmentItemId: p.treatmentItemId,
+        tooth: p.tooth,
+        faces: p.faces,
+      })),
       date: a.date,
       time: minutesToTime(a.startMin),
       durationMin: Math.round((new Date(a.endsAt).getTime() - new Date(a.startsAt).getTime()) / 60_000),
       type: a.type ?? "",
       notes: a.notes ?? "",
       tagIds: a.tagIds,
+      confirmationMode: a.confirmationMode,
+      reminderMode: a.reminderMode,
     };
   }
 
@@ -498,26 +493,30 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
 
       {/* Janelas */}
       <Dialog open={dialog !== null} onOpenChange={(open) => !open && closeDialog()}>
-        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg">
+        <DialogContent
+          className={cn(
+            "max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg",
+            // Consulta: cabeçalho, corpo com rolagem própria e rodapé fixo; tela cheia no celular.
+            (dialog?.kind === "new" || dialog?.kind === "edit") &&
+              "flex flex-col gap-0 overflow-hidden rounded-card p-0 sm:max-w-2xl max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:max-w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none",
+          )}
+        >
           {dialog?.kind === "new" || dialog?.kind === "edit" ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>{dialog.kind === "new" ? "Nova consulta" : "Editar consulta"}</DialogTitle>
-              </DialogHeader>
-              <AppointmentForm
-                key={dialog.kind === "edit" ? dialog.appointment.id : "new"}
-                initial={dialog.kind === "edit" ? editValues(dialog.appointment) : dialog.initial}
-                professionals={data.professionals}
-                chairs={data.chairs}
-                procedures={data.procedures}
-                tags={data.tags}
-                onDone={(text) => {
-                  closeDialog();
-                  if (text) setNotice(text);
-                }}
-                onCancel={closeDialog}
-              />
-            </>
+            <AppointmentForm
+              key={dialog.kind === "edit" ? dialog.appointment.id : "new"}
+              initial={dialog.kind === "edit" ? editValues(dialog.appointment) : dialog.initial}
+              professionals={data.professionals}
+              chairs={data.chairs}
+              procedures={data.procedures}
+              tags={data.tags}
+              today={today}
+              isDentist={isDentist}
+              onDone={(text) => {
+                closeDialog();
+                if (text) setNotice(text);
+              }}
+              onCancel={closeDialog}
+            />
           ) : null}
 
           {dialog?.kind === "details" ? (

@@ -229,7 +229,6 @@ export async function createBookedAppointment(page: BookingPage, p: BookingPaylo
       unit_id: p.unitId,
       patient_id: patientId,
       professional_id: p.professionalId,
-      procedure_id: procedure?.id ?? null,
       type: procedure?.name ?? "Agendado online",
       starts_at: p.startsAt,
       ends_at: p.endsAt,
@@ -239,5 +238,7 @@ export async function createBookedAppointment(page: BookingPage, p: BookingPaylo
     .select("id")
     .single();
   if (error) return { error: error.code === "23P01" || error.code === "OB001" ? "Esse horário acabou de ser ocupado. Escolha outro." : "Não foi possível concluir. Tente de novo." };
+  // Procedimento escolhido vai para a lista da consulta (appointments.procedure_id não é mais gravado).
+  if (procedure) await admin.from("appointment_procedures").insert({ clinic_id: page.clinicId, appointment_id: appt.id, procedure_id: procedure.id });
   return { appointmentId: appt.id, patientId: patientId! };
 }
