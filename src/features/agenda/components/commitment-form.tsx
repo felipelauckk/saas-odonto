@@ -269,7 +269,7 @@ export function CommitmentForm({ initial, professionals, schedules, isDentist, o
                 </button>
               </div>
               {!hasSchedule && !wholeDay ? (
-                <p className="text-[0.8125rem] text-muted-foreground">{target === "clinic" ? "Ninguém" : whoName} atende neste dia; mostrando 8h às 18h.</p>
+                <p className="text-[0.8125rem] text-muted-foreground">{target === "clinic" ? "Ninguém atende" : `${whoName} não atende`} neste dia; mostrando 8h às 18h.</p>
               ) : null}
               <div role="group" aria-labelledby="commitment-times" className="grid grid-cols-4 gap-2 sm:grid-cols-6">
                 {marks.map((m) => {
