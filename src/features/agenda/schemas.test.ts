@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { agendaParamsSchema, appointmentSchema, blockSchema } from "./schemas";
+import { agendaParamsSchema, appointmentSchema, commitmentSchema } from "./schemas";
 
 const ids = {
   patientId: "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
@@ -41,11 +41,20 @@ describe("appointmentSchema", () => {
   });
 });
 
-describe("blockSchema", () => {
+describe("commitmentSchema", () => {
+  const base = { title: "Almoço", professionalId: null, kind: "block" as const, date: "2026-11-16", startTime: "12:00", endTime: "11:00" };
   it("exige fim depois do início, exceto dia inteiro", () => {
-    const base = { professionalId: null, date: "2026-11-16", startTime: "12:00", endTime: "11:00" };
-    expect(blockSchema.safeParse({ ...base, allDay: false }).success).toBe(false);
-    expect(blockSchema.safeParse({ ...base, allDay: true }).success).toBe(true);
+    expect(commitmentSchema.safeParse({ ...base, allDay: false }).success).toBe(false);
+    expect(commitmentSchema.safeParse({ ...base, allDay: true }).success).toBe(true);
+    expect(commitmentSchema.safeParse({ ...base, allDay: false, endTime: "24:00" }).success).toBe(true);
+  });
+  it("exige nome e, para repetir, até quando ou quantas vezes", () => {
+    const ok = { ...base, allDay: true };
+    expect(commitmentSchema.safeParse({ ...ok, title: "  " }).success).toBe(false);
+    expect(commitmentSchema.safeParse({ ...ok, repeat: "weekdays" }).success).toBe(false);
+    expect(commitmentSchema.safeParse({ ...ok, repeat: "weekdays", until: "2026-12-11" }).success).toBe(true);
+    expect(commitmentSchema.safeParse({ ...ok, repeat: "week", count: 53 }).success).toBe(false);
+    expect(commitmentSchema.safeParse({ ...ok, repeat: "week", until: "2026-11-01" }).success).toBe(false);
   });
 });
 

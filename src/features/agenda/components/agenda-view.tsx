@@ -3,14 +3,15 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Ban, CalendarX2, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { BellRing, CalendarClock, CalendarPlus, CalendarX2, ChevronDown, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "cn";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { SimpleSelect } from "@/components/forms/simple-select";
 import { SegmentedControl } from "@/components/app/segmented-control";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { professionalColor } from "@/lib/professional-colors";
@@ -21,10 +22,11 @@ import {
   minutesToTime,
   startOfWeek,
   timeToMinutes,
+  utcToZoned,
   weekdayOf,
 } from "@/lib/timezone";
 
-import { deleteBlock, moveAppointment, type PatientOption } from "../actions";
+import { moveAppointment, type PatientOption } from "../actions";
 import { visibleRange } from "../layout";
 import { initials, occupancy, weekTitle } from "../overview";
 import type { AgendaAppointment, AgendaBlock, AgendaData } from "../queries";
@@ -32,7 +34,10 @@ import { AgendaGrid, type GridColumn, type MoveTarget } from "./agenda-grid";
 import { AppointmentDetails } from "./appointment-details";
 import { AppointmentForm, newAppointmentValues, type AppointmentFormValues } from "./appointment-form";
 import { procedureKey } from "./appointment-procedures";
-import { BlockForm } from "./block-form";
+import { CommitmentDetails } from "./commitment-details";
+import { CommitmentForm, newCommitmentValues, type CommitmentFormValues } from "./commitment-form";
+import type { EntryTab } from "./entry-parts";
+import { ReturnAlertForm } from "./return-alert-form";
 
 type View = "dia" | "semana";
 type By = "profissional" | "cadeira";
@@ -58,8 +63,9 @@ type DialogState =
   | { kind: "new"; initial: AppointmentFormValues }
   | { kind: "details"; appointment: AgendaAppointment }
   | { kind: "edit"; appointment: AgendaAppointment }
-  | { kind: "block" }
+  | { kind: "commitment"; initial: CommitmentFormValues }
   | { kind: "blockInfo"; block: AgendaBlock }
+  | { kind: "returnAlert" }
   | null;
 
 /** Atualiza a tela quando outra pessoa mexe na agenda da unidade. */
@@ -279,6 +285,46 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
     });
   }
 
+  /** Novo compromisso: mesmo dia e profissional da consulta (ou da coluna), horário clicado já como início. */
+  function openCommitment(from?: { professionalId?: string; date?: string; startMin?: number | null }) {
+    setDialog({
+      kind: "commitment",
+      initial: newCommitmentValues({
+        professionalId: from?.professionalId || (view === "semana" && by === "profissional" ? (selectedId ?? defaultProfessional) : defaultProfessional),
+        date: from?.date ?? date,
+        startMin: from?.startMin ?? null,
+      }),
+    });
+  }
+
+  /** Aba do diálogo: troca entre consulta e compromisso levando dia, profissional e horário. */
+  function switchTab(tab: EntryTab, from: { professionalId: string; date: string; startMin: number | null }) {
+    if (tab === "compromisso") openCommitment(from);
+    else
+      setDialog({
+        kind: "new",
+        initial: newAppointmentValues({ professionalId: from.professionalId, date: from.date, time: from.startMin === null ? null : minutesToTime(from.startMin) }),
+      });
+  }
+
+  function commitmentValues(b: AgendaBlock): CommitmentFormValues {
+    const start = utcToZoned(b.startsAt);
+    const end = utcToZoned(b.endsAt);
+    return {
+      id: b.id,
+      seriesId: b.seriesId,
+      title: b.title,
+      notes: b.notes ?? "",
+      target: b.professionalId ? "professional" : "clinic",
+      professionalId: b.professionalId ?? defaultProfessional,
+      kind: b.kind,
+      date: start.date,
+      allDay: b.allDay,
+      startMin: b.allDay ? null : start.minutes,
+      endMin: b.allDay ? null : end.date === start.date ? end.minutes : 24 * 60,
+    };
+  }
+
   async function handleMove({ appointment, column, startMin }: MoveTarget) {
     const result = await moveAppointment({
       id: appointment.id,
@@ -422,10 +468,27 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
               className="w-48 data-[size=default]:h-10 pointer-coarse:data-[size=default]:h-11"
             />
           ) : null}
-          <Button variant="outline" onClick={() => setDialog({ kind: "block" })} disabled={!data.professionals.length}>
-            <Ban aria-hidden />
-            Bloquear
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="outline" disabled={!data.professionals.length} />}>
+              <Plus aria-hidden />
+              Novo
+              <ChevronDown aria-hidden />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-52">
+              <DropdownMenuItem className="pointer-coarse:min-h-11" onClick={() => openNew()}>
+                <CalendarPlus aria-hidden />
+                Nova consulta
+              </DropdownMenuItem>
+              <DropdownMenuItem className="pointer-coarse:min-h-11" onClick={() => openCommitment()}>
+                <CalendarClock aria-hidden />
+                Novo compromisso
+              </DropdownMenuItem>
+              <DropdownMenuItem className="pointer-coarse:min-h-11" onClick={() => setDialog({ kind: "returnAlert" })}>
+                <BellRing aria-hidden />
+                Alerta de retorno
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={() => openNew()} disabled={!data.professionals.length}>
             <Plus aria-hidden />
             Nova consulta
@@ -498,7 +561,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
           className={cn(
             "max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg",
             // Consulta: cabeçalho, corpo com rolagem própria e rodapé fixo; tela cheia no celular.
-            (dialog?.kind === "new" || dialog?.kind === "edit") &&
+            (dialog?.kind === "new" || dialog?.kind === "edit" || dialog?.kind === "commitment") &&
               "flex flex-col gap-0 overflow-hidden rounded-card p-0 sm:max-w-2xl max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:max-w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none",
           )}
         >
@@ -517,6 +580,11 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
                 if (text) setNotice(text);
               }}
               onCancel={closeDialog}
+              onSwitchTab={
+                dialog.kind === "new"
+                  ? (tab) => switchTab(tab, { professionalId: dialog.initial.professionalId, date: dialog.initial.date, startMin: dialog.initial.time ? timeToMinutes(dialog.initial.time) : null })
+                  : undefined
+              }
             />
           ) : null}
 
@@ -538,71 +606,48 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
             </>
           ) : null}
 
-          {dialog?.kind === "block" ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>Bloquear horário</DialogTitle>
-                <DialogDescription>Ninguém consegue marcar consulta no período bloqueado.</DialogDescription>
-              </DialogHeader>
-              <BlockForm
-                date={date}
-                professionals={data.professionals}
-                allowUnitWide={!isDentist}
-                onDone={closeDialog}
-                onCancel={closeDialog}
-              />
-            </>
+          {dialog?.kind === "commitment" ? (
+            <CommitmentForm
+              key={dialog.initial.id ?? "new"}
+              initial={dialog.initial}
+              professionals={data.professionals}
+              schedules={data.schedules}
+              isDentist={isDentist}
+              onDone={(text) => {
+                closeDialog();
+                if (text) setNotice(text);
+              }}
+              onCancel={closeDialog}
+              onSwitchTab={(tab) => switchTab(tab, { professionalId: dialog.initial.professionalId, date: dialog.initial.date, startMin: dialog.initial.startMin })}
+            />
           ) : null}
 
           {dialog?.kind === "blockInfo" ? (
-            <BlockInfo block={dialog.block} professionalName={dialog.block.professionalId ? nameById.get(dialog.block.professionalId) : null} onDone={closeDialog} onError={setMessage} />
+            <CommitmentDetails
+              block={dialog.block}
+              professionalName={dialog.block.professionalId ? (nameById.get(dialog.block.professionalId) ?? "Profissional") : null}
+              canEdit={!isDentist || dialog.block.professionalId !== null}
+              onEdit={() => setDialog({ kind: "commitment", initial: commitmentValues(dialog.block) })}
+              onDone={(text) => {
+                closeDialog();
+                if (text) setNotice(text);
+              }}
+            />
+          ) : null}
+
+          {dialog?.kind === "returnAlert" ? (
+            <ReturnAlertForm
+              professionals={data.professionals}
+              onDone={(text) => {
+                closeDialog();
+                if (text) setNotice(text);
+              }}
+              onCancel={closeDialog}
+            />
           ) : null}
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function BlockInfo({
-  block,
-  professionalName,
-  onDone,
-  onError,
-}: {
-  block: AgendaBlock;
-  professionalName: string | null | undefined;
-  onDone: () => void;
-  onError: (message: string) => void;
-}) {
-  const [pending, setPending] = useState(false);
-  return (
-    <>
-      <DialogHeader>
-        <DialogTitle>{block.reason || "Horário bloqueado"}</DialogTitle>
-        <DialogDescription>
-          {formatLongDate(block.date)} · {minutesToTime(block.startMin)} às {block.endMin === 1440 ? "24:00" : minutesToTime(block.endMin)} ·{" "}
-          {professionalName ?? "Unidade toda"}
-        </DialogDescription>
-      </DialogHeader>
-      <DialogFooter>
-        <Button variant="outline" onClick={onDone}>
-          Fechar
-        </Button>
-        <Button
-          variant="destructive"
-          disabled={pending}
-          onClick={async () => {
-            setPending(true);
-            const result = await deleteBlock(block.id);
-            setPending(false);
-            if (result.error) onError(result.error);
-            onDone();
-          }}
-        >
-          Remover bloqueio
-        </Button>
-      </DialogFooter>
-    </>
   );
 }
 

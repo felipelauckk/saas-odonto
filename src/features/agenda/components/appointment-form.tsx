@@ -1,13 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { cn } from "cn";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { SimpleSelect } from "@/components/forms/simple-select";
-import { SegmentedControl } from "@/components/app/segmented-control";
 import { Button } from "@/components/ui/button";
-import { DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -27,6 +24,7 @@ import type { ConfirmationMode, ReminderMode } from "../schemas";
 
 import { AppointmentProcedures, durationLabel, type FormProcedure } from "./appointment-procedures";
 import { PatientPicker } from "./patient-picker";
+import { Choice, EntryFooter, EntryHeader, Section, shortDate, type EntryTab } from "./entry-parts";
 import { SlotPicker } from "./slot-picker";
 
 export type AppointmentFormValues = {
@@ -74,76 +72,16 @@ type Props = {
   isDentist: boolean;
   onDone: (message?: string) => void;
   onCancel: () => void;
+  /** Trocar para a aba Compromisso (só ao criar). */
+  onSwitchTab?: (tab: EntryTab) => void;
 };
-
-const weekdayShort = new Intl.DateTimeFormat("pt-BR", {
-  timeZone: "UTC",
-  weekday: "short",
-  day: "2-digit",
-  month: "2-digit",
-});
-
-/** "Qui, 26/11" */
-function shortDate(date: string) {
-  const parts = weekdayShort.formatToParts(new Date(`${date}T00:00:00Z`));
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-  const wd = get("weekday").replace(".", "");
-  return `${wd.charAt(0).toUpperCase()}${wd.slice(1)}, ${get("day")}/${get("month")}`;
-}
-
-function Choice<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  value: T;
-  options: { value: T; label: string }[];
-  onChange: (v: T) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
-      {options.map((o) => {
-        const on = o.value === value;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            disabled={disabled}
-            onClick={() => onChange(o.value)}
-            className={cn(
-              "inline-flex h-9 items-center rounded-full border px-3.5 text-[0.8125rem] font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 pointer-coarse:h-11",
-              on ? "border-foreground bg-foreground font-semibold text-background" : "border-input bg-card hover:bg-muted",
-            )}
-          >
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function Section({ title, children, className }: { title?: string; children: React.ReactNode; className?: string }) {
-  return (
-    <section className={cn("space-y-4 border-t pt-5 first:border-t-0 first:pt-0", className)}>
-      {title ? <h3 className="text-[0.8125rem] font-semibold tracking-wide text-muted-foreground uppercase">{title}</h3> : null}
-      {children}
-    </section>
-  );
-}
 
 const alertText = (a: { label: string; details: string | null }) => {
   const label = a.label.replace(/\?\s*$/, "");
   return a.details ? `${label}: ${a.details}` : label;
 };
 
-export function AppointmentForm({ initial, professionals, chairs, procedures, tags, today, isDentist, onDone, onCancel }: Props) {
+export function AppointmentForm({ initial, professionals, chairs, procedures, tags, today, isDentist, onDone, onCancel, onSwitchTab }: Props) {
   const [values, setValues] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [patientError, setPatientError] = useState<string | undefined>();
@@ -276,25 +214,7 @@ export function AppointmentForm({ initial, professionals, chairs, procedures, ta
   return (
     <>
       <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col" noValidate>
-        <header className="space-y-3 border-b px-5 pt-5 pb-4 pr-12">
-          {values.id ? null : (
-            <SegmentedControl
-              label="O que marcar"
-              value="consulta"
-              onChange={() => undefined}
-              options={[
-                { value: "consulta", label: "Consulta" },
-                {
-                  value: "compromisso",
-                  label: "Compromisso",
-                  disabled: true,
-                  hint: "Em breve",
-                },
-              ]}
-            />
-          )}
-          <DialogTitle className="type-title">{values.id ? "Editar consulta" : "Nova consulta"}</DialogTitle>
-        </header>
+        <EntryHeader tab="consulta" onTab={values.id || !onSwitchTab ? undefined : onSwitchTab} title={values.id ? "Editar consulta" : "Nova consulta"} />
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
           {error ? <FormMessage state={{ status: "error", message: error }} /> : null}
@@ -528,19 +448,14 @@ export function AppointmentForm({ initial, professionals, chairs, procedures, ta
           </Section>
         </div>
 
-        <footer className="flex flex-col gap-3 border-t bg-muted/40 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center">
-          <p className="min-w-0 text-sm font-medium tabular-nums" aria-live="polite">
-            {summary}
-          </p>
-          <div className="flex gap-2 sm:ml-auto">
-            <Button type="button" variant="outline" onClick={onCancel} className="flex-1 sm:flex-none">
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={pending} className="flex-1 sm:flex-none">
-              {pending ? "Salvando..." : values.id ? "Salvar alterações" : "Marcar consulta"}
-            </Button>
-          </div>
-        </footer>
+        <EntryFooter summary={summary}>
+          <Button type="button" variant="outline" onClick={onCancel} className="flex-1 sm:flex-none">
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={pending} className="flex-1 sm:flex-none">
+            {pending ? "Salvando..." : values.id ? "Salvar alterações" : "Marcar consulta"}
+          </Button>
+        </EntryFooter>
       </form>
 
       {/* Fora do <form> da consulta: o envio do cadastro não pode subir até ele. */}

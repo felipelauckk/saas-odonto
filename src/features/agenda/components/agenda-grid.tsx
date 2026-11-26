@@ -227,6 +227,29 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <p className={cn("truncate text-sm font-semibold first-letter:uppercase", col.isToday && "text-primary")}>{col.label}</p>
                 {col.sublabel ? <p className="truncate text-xs text-muted-foreground">{col.sublabel}</p> : null}
+                {/* Dia inteiro: faixa no topo da coluna */}
+                {col.blocks.some((b) => b.allDay) ? (
+                  <div className="flex flex-col gap-1 pt-0.5">
+                    {col.blocks
+                      .filter((b) => b.allDay)
+                      .map((b) => (
+                        <button
+                          key={`${b.id}-${b.date}`}
+                          type="button"
+                          onClick={() => onBlockClick(b)}
+                          aria-label={`${b.title}, dia inteiro, ${b.kind === "event" ? "lembrete" : "bloqueado"}`}
+                          className={cn(
+                            "truncate rounded-md px-2 py-0.5 text-left text-xs font-semibold pointer-coarse:min-h-8",
+                            b.kind === "event"
+                              ? "border border-dashed border-tint-lilac-foreground/60 bg-tint-lilac/60 text-tint-lilac-foreground"
+                              : "border border-muted-foreground/25 bg-[repeating-linear-gradient(135deg,transparent,transparent_5px,var(--color-muted)_5px,var(--color-muted)_10px)] text-muted-foreground",
+                          )}
+                        >
+                          {b.title} · dia inteiro
+                        </button>
+                      ))}
+                  </div>
+                ) : null}
                 {col.occupancy !== undefined && col.occupancy !== null ? (
                   <span className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="h-1 w-16 overflow-hidden rounded-full bg-track" aria-hidden>
@@ -297,21 +320,45 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
                   />
                 ))}
 
-                {/* Bloqueios */}
+                {/* Bloqueios e eventos com horário (dia inteiro fica no cabeçalho; o bloqueio ainda escurece o dia) */}
                 {col.blocks.map((b) => {
                   const start = Math.max(b.startMin, range.startMin);
                   const end = Math.min(b.endMin, range.endMin);
                   if (end <= start) return null;
-                  return (
+                  const style = { top: px(start - range.startMin), height: px(end - start) };
+                  if (b.allDay) {
+                    return b.kind === "block" ? (
+                      <div
+                        key={`${b.id}-${b.date}`}
+                        aria-hidden
+                        className="pointer-events-none absolute inset-x-0 z-[1] bg-[repeating-linear-gradient(135deg,transparent,transparent_6px,var(--color-muted)_6px,var(--color-muted)_12px)]"
+                        style={style}
+                      />
+                    ) : null;
+                  }
+                  const time = `${minutesToTime(b.startMin)}–${minutesToTime(b.endMin === 1440 ? 1439 : b.endMin)}`;
+                  return b.kind === "event" ? (
                     <button
                       key={`${b.id}-${b.date}`}
                       type="button"
                       onClick={() => onBlockClick(b)}
-                      className="absolute inset-x-0 z-[1] overflow-hidden border-y border-muted-foreground/20 bg-[repeating-linear-gradient(135deg,transparent,transparent_6px,var(--color-muted)_6px,var(--color-muted)_12px)] px-2 py-1 text-left text-xs text-muted-foreground"
-                      style={{ top: px(start - range.startMin), height: px(end - start) }}
+                      aria-label={`${b.title} · ${time}, lembrete`}
+                      className="absolute right-1 left-1 z-[1] overflow-hidden rounded-md border border-dashed border-tint-lilac-foreground/60 bg-tint-lilac/40 px-2 py-0.5 text-left text-xs font-medium text-tint-lilac-foreground"
+                      style={style}
                     >
-                      <span className="rounded bg-background/90 px-1">
-                        {b.reason || "Bloqueado"} · {minutesToTime(b.startMin)}–{minutesToTime(b.endMin === 1440 ? 1439 : b.endMin)}
+                      {b.title} · {time}
+                    </button>
+                  ) : (
+                    <button
+                      key={`${b.id}-${b.date}`}
+                      type="button"
+                      onClick={() => onBlockClick(b)}
+                      aria-label={`${b.title} · ${time}, bloqueado`}
+                      className="absolute inset-x-0 z-[1] overflow-hidden border-y border-muted-foreground/20 bg-[repeating-linear-gradient(135deg,transparent,transparent_6px,var(--color-muted)_6px,var(--color-muted)_12px)] px-2 py-1 text-left text-xs text-muted-foreground"
+                      style={style}
+                    >
+                      <span className="rounded bg-background/90 px-1 font-medium">
+                        {b.title} · {time}
                       </span>
                     </button>
                   );

@@ -86,6 +86,19 @@ describe.skipIf(!hasSupabase)("agendamento online, check-in e portal", () => {
     expect((await requestBooking(slug, { unitId, professionalId: pro, procedureId: null, startsAt: first.startsAt, name: "Outra", phone: "11966665555" })).error).toMatch(/ocupado/);
   });
 
+  it("feriado de dia inteiro da clínica toda tira o dia; evento (lembrete) não tira nada", async () => {
+    // Longe dos outros testes deste arquivo (que usam os próximos dias).
+    const holiday = utcToZoned(new Date(Date.now() + 10 * 86_400_000)).date;
+    const meeting = utcToZoned(new Date(Date.now() + 11 * 86_400_000)).date;
+    await admin.from("schedule_blocks").insert([
+      { clinic_id: clinicId, unit_id: unitId, professional_id: null, title: "Feriado", kind: "block", all_day: true, starts_at: `${holiday}T00:00:00-03:00`, ends_at: `${meeting}T00:00:00-03:00` },
+      { clinic_id: clinicId, unit_id: unitId, professional_id: pro, title: "Reunião", kind: "event", all_day: false, starts_at: `${meeting}T09:00:00-03:00`, ends_at: `${meeting}T10:00:00-03:00` },
+    ]);
+    const slots = await listSlots(slug, { unitId, professionalId: pro, procedureId: null, from: holiday });
+    expect(slots!.filter((x) => x.date === holiday)).toEqual([]);
+    expect(slots!.filter((x) => x.date === meeting).map((x) => x.time)).toEqual(["09:00", "09:30"]);
+  });
+
   it("check-in: acha a consulta de hoje pelo telefone e marca chegou", async () => {
     const { data: pat } = await admin.from("patients").insert({ clinic_id: clinicId, full_name: "Carlos Checkin", whatsapp: "11955554444" }).select("id").single();
     const start = new Date(Date.now() + 30 * 60_000);

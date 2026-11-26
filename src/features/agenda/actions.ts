@@ -17,7 +17,8 @@ import { getSessionContext } from "@/features/tenancy/queries";
 import { sendAppointmentReminder } from "@/features/messaging/service";
 
 import { clipToDay, groupByPeriod, OUTSIDE_HOURS, slotStarts, type Range, type SlotGroup } from "./free-slots";
-import { appointmentSchema, blockSchema, moveAppointmentSchema, slotsQuerySchema, statusSchema } from "./schemas";
+import { commitmentDates } from "./commitments";
+import { appointmentSchema, commitmentSchema, commitmentScopes, moveAppointmentSchema, slotsQuerySchema, statusSchema, type CommitmentScope } from "./schemas";
 
 type Result = { error?: string; id?: string };
 
@@ -174,6 +175,8 @@ export async function loadFreeSlots(input: z.input<typeof slotsQuerySchema>): Pr
       .from("schedule_blocks")
       .select("starts_at, ends_at")
       .eq("unit_id", ctx.unitId)
+      // Evento é só lembrete: não ocupa o horário.
+      .eq("kind", "block")
       .or(`professional_id.is.null,professional_id.eq.${professionalId}`)
       .lt("starts_at", dayEnd.toISOString())
       .gt("ends_at", dayStart.toISOString()),
@@ -294,44 +297,127 @@ export async function setAppointmentStatus(input: z.input<typeof statusSchema>):
   return { id: parsed.data.id };
 }
 
-export async function createBlock(input: z.input<typeof blockSchema>): Promise<Result> {
-  const parsed = blockSchema.safeParse(input);
+// Compromissos (bloqueios e eventos) -------------------------------------------------------
+
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+function commitmentInterval(date: string, allDay: boolean, startTime: string, endTime: string) {
+  const startsAt = zonedToUtc(date, allDay ? "00:00" : startTime);
+  const endsAt = allDay || endTime === "24:00" ? zonedToUtc(addDays(date, 1), "00:00") : zonedToUtc(date, endTime);
+  return { starts_at: startsAt.toISOString(), ends_at: endsAt.toISOString() };
+}
+
+/** Consultas de pé que cruzam algum dos intervalos (do profissional, ou de qualquer um na clínica toda). */
+async function busyAppointments(supabase: Supabase, unitId: string, professionalId: string | null, intervals: { starts_at: string; ends_at: string }[]) {
+  if (!intervals.length) return [];
+  const from = intervals.reduce((m, i) => (i.starts_at < m ? i.starts_at : m), intervals[0]!.starts_at);
+  const to = intervals.reduce((m, i) => (i.ends_at > m ? i.ends_at : m), intervals[0]!.ends_at);
+  let q = supabase
+    .from("appointments")
+    .select("starts_at, ends_at")
+    .eq("unit_id", unitId)
+    .not("status", "in", "(canceled,no_show)")
+    .lt("starts_at", to)
+    .gt("ends_at", from);
+  if (professionalId) q = q.eq("professional_id", professionalId);
+  const { data } = await q;
+  return data ?? [];
+}
+
+const overlaps = (a: { starts_at: string; ends_at: string }, b: { starts_at: string; ends_at: string }) =>
+  Date.parse(a.starts_at) < Date.parse(b.ends_at) && Date.parse(a.ends_at) > Date.parse(b.starts_at);
+
+function blockError(error: PostgrestError): string {
+  const blocked = subscriptionErrorMessage(error);
+  if (blocked) return blocked;
+  if (error.code === "42501") return "Você só pode mexer na sua própria agenda.";
+  return "Não foi possível salvar o compromisso.";
+}
+
+export type CommitmentResult = Result & { created?: number; updated?: number; skipped?: string[] };
+
+/**
+ * Cria (com repetição) ou edita um compromisso. Bloqueio que cairia em cima de
+ * consulta não é criado nem movido: a data volta em `skipped`.
+ */
+export async function saveCommitment(input: z.input<typeof commitmentSchema>): Promise<CommitmentResult> {
+  const parsed = commitmentSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   const ctx = await activeContext();
   if (!ctx) return { error: "Sessão expirada. Entre novamente." };
+  const d = parsed.data;
+  const fields = { title: d.title, notes: d.notes, kind: d.kind, all_day: d.allDay, professional_id: d.professionalId };
 
-  const { professionalId, date, allDay, startTime, endTime, reason } = parsed.data;
-  const startsAt = zonedToUtc(date, allDay ? "00:00" : startTime);
-  const endsAt = allDay ? zonedToUtc(addDays(date, 1), "00:00") : zonedToUtc(date, endTime);
-
-  const { error } = await ctx.supabase.from("schedule_blocks").insert({
-    clinic_id: ctx.clinicId,
-    unit_id: ctx.unitId,
-    professional_id: professionalId,
-    starts_at: startsAt.toISOString(),
-    ends_at: endsAt.toISOString(),
-    reason,
-    created_by: ctx.session.user.id,
-  });
-  if (error) {
-    return {
-      error:
-        error.code === "42501"
-          ? "Você só pode bloquear a sua própria agenda."
-          : "Não foi possível bloquear o horário.",
-    };
+  if (d.id) {
+    const { data: current } = await ctx.supabase.from("schedule_blocks").select("id, unit_id, series_id, starts_at").eq("id", d.id).maybeSingle();
+    if (!current) return { error: "Compromisso não encontrado." };
+    let targets: { id: string; starts_at: string }[] = [{ id: current.id, starts_at: current.starts_at }];
+    if (current.series_id && d.scope !== "one") {
+      let q = ctx.supabase.from("schedule_blocks").select("id, starts_at").eq("series_id", current.series_id).order("starts_at");
+      if (d.scope === "following") q = q.gte("starts_at", current.starts_at);
+      const { data } = await q;
+      targets = data ?? targets;
+    }
+    // Cada ocorrência fica no seu dia; só "Só este" muda a data.
+    const planned = targets.map((t) => {
+      const day = d.scope === "one" || !current.series_id ? d.date : utcToZoned(t.starts_at).date;
+      return { id: t.id, date: day, ...commitmentInterval(day, d.allDay, d.startTime, d.endTime) };
+    });
+    const busy = d.kind === "block" ? await busyAppointments(ctx.supabase, current.unit_id, d.professionalId, planned) : [];
+    const skipped: string[] = [];
+    let updated = 0;
+    for (const p of planned) {
+      if (busy.some((a) => overlaps(a, p))) {
+        skipped.push(p.date);
+        continue;
+      }
+      const { data, error } = await ctx.supabase.from("schedule_blocks").update({ ...fields, starts_at: p.starts_at, ends_at: p.ends_at }).eq("id", p.id).select("id");
+      if (error) return { error: blockError(error), updated, skipped };
+      updated += data.length;
+    }
+    revalidatePath(AGENDA_PATH);
+    if (!updated && !skipped.length) return { error: "Sem permissão para alterar este compromisso." };
+    return { updated, skipped };
   }
+
+  const dates = commitmentDates(d.date, d.repeat, { until: d.until, count: d.count });
+  const planned = dates.map((date) => ({ date, ...commitmentInterval(date, d.allDay, d.startTime, d.endTime) }));
+  const busy = d.kind === "block" ? await busyAppointments(ctx.supabase, ctx.unitId, d.professionalId, planned) : [];
+  const skipped = planned.filter((p) => busy.some((a) => overlaps(a, p))).map((p) => p.date);
+  const rows = planned
+    .filter((p) => !skipped.includes(p.date))
+    .map((p) => ({
+      ...fields,
+      clinic_id: ctx.clinicId,
+      unit_id: ctx.unitId,
+      starts_at: p.starts_at,
+      ends_at: p.ends_at,
+      created_by: ctx.session.user.id,
+    }));
+  if (!rows.length) return { error: skipped.length === 1 ? "Já tem consulta nesse horário. Desmarque ou mude o horário antes de bloquear." : "Todas as datas já têm consulta nesse horário.", skipped };
+  const seriesId = rows.length > 1 ? randomUUID() : null;
+  const { error } = await ctx.supabase.from("schedule_blocks").insert(rows.map((r) => ({ ...r, series_id: seriesId })));
+  if (error) return { error: blockError(error) };
   revalidatePath(AGENDA_PATH);
-  return {};
+  return { created: rows.length, skipped };
 }
 
-export async function deleteBlock(id: string): Promise<Result> {
-  if (!z.uuid().safeParse(id).success) return { error: "Bloqueio inválido." };
+/** Exclui um compromisso; numa série, só este, este e os próximos ou todos. */
+export async function deleteCommitment(id: string, scope: CommitmentScope = "one"): Promise<Result & { deleted?: number }> {
+  if (!z.uuid().safeParse(id).success || !commitmentScopes.includes(scope)) return { error: "Compromisso inválido." };
   const supabase = await createClient();
-  const { data, error } = await supabase.from("schedule_blocks").delete().eq("id", id).select("id");
-  if (error || !data.length) return { error: "Não foi possível remover o bloqueio." };
+  const { data: current } = await supabase.from("schedule_blocks").select("id, series_id, starts_at").eq("id", id).maybeSingle();
+  if (!current) return { error: "Compromisso não encontrado." };
+  let q = supabase.from("schedule_blocks").delete();
+  if (!current.series_id || scope === "one") q = q.eq("id", id);
+  else {
+    q = q.eq("series_id", current.series_id);
+    if (scope === "following") q = q.gte("starts_at", current.starts_at);
+  }
+  const { data, error } = await q.select("id");
+  if (error || !data.length) return { error: "Não foi possível excluir o compromisso." };
   revalidatePath(AGENDA_PATH);
-  return {};
+  return { deleted: data.length };
 }
 
 export type PatientOption = { id: string; name: string; detail: string | null };

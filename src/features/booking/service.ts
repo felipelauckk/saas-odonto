@@ -78,7 +78,7 @@ export async function computeSlots(admin: Admin, page: BookingPage, input: { uni
   const [{ data: schedules }, { data: appts }, { data: blocks }] = await Promise.all([
     admin.from("professional_schedules").select("professional_id, weekday, start_time, end_time").eq("unit_id", input.unitId).in("professional_id", proIds),
     admin.from("appointments").select("professional_id, starts_at, ends_at, status").in("professional_id", proIds).lt("starts_at", end).gt("ends_at", start),
-    admin.from("schedule_blocks").select("professional_id, starts_at, ends_at").eq("unit_id", input.unitId).lt("starts_at", end).gt("ends_at", start),
+    admin.from("schedule_blocks").select("professional_id, starts_at, ends_at").eq("unit_id", input.unitId).eq("kind", "block").lt("starts_at", end).gt("ends_at", start),
   ]);
   const busyByProfessional = new Map<string, Busy[]>();
   const push = (pro: string, from: string, to: string) => busyByProfessional.set(pro, [...(busyByProfessional.get(pro) ?? []), { start: Date.parse(from), end: Date.parse(to) }]);

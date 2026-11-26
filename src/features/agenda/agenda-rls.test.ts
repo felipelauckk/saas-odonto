@@ -123,7 +123,7 @@ describe.skipIf(!hasSupabase)("agenda (RLS, conflitos e bloqueios)", () => {
       professional_id: drBeto,
       starts_at: at("16:00"),
       ends_at: at("18:00"),
-      reason: "Curso",
+      title: "Curso",
     });
     expect(blockError).toBeNull();
 

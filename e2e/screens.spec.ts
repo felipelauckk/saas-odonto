@@ -37,6 +37,8 @@ test.beforeAll(async () => {
     { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: patientId, starts_at: at("15:00"), ends_at: at("15:30"), status: "no_show" },
     { clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, patient_id: patientId, starts_at: at("16:00"), ends_at: at("17:00"), status: "confirmed", type: "Clareamento" },
   ]);
+  // Almoço bloqueado hoje (P2: compromissos).
+  await client.from("schedule_blocks").insert({ clinic_id: user.clinicId, unit_id: unitId, professional_id: professionalId, starts_at: at("12:00"), ends_at: at("13:00"), title: "Almoço" });
   // Vaga liberada: consulta desmarcada daqui a 2 dias e alguém na lista de espera.
   const later = new Date(Date.now() + 2 * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
   await client.from("appointments").insert({
@@ -261,4 +263,20 @@ test("print nova-consulta", async ({ page }, info) => {
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(500);
   await page.screenshot({ path: `${process.env.SCREENS_DIR ?? "docs/design/screens"}/${label}-nova-consulta-${info.project.name}.png` });
+});
+
+// Janela de compromisso (antes da P2: "Bloquear"; depois: "+ Novo" > "Novo compromisso").
+test("print novo-compromisso", async ({ page }, info) => {
+  await signIn(page, user);
+  await page.goto("/agenda");
+  const old = page.getByRole("button", { name: "Bloquear", exact: true });
+  if (await old.count()) await old.click();
+  else {
+    await page.getByRole("button", { name: "Novo", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Novo compromisso" }).click();
+  }
+  await page.getByRole("dialog").waitFor();
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `${process.env.SCREENS_DIR ?? "docs/design/screens"}/${label}-novo-compromisso-${info.project.name}.png` });
 });

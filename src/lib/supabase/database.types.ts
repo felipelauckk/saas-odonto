@@ -3543,38 +3543,50 @@ export type Database = {
       }
       schedule_blocks: {
         Row: {
+          all_day: boolean
           clinic_id: string
           created_at: string
           created_by: string | null
           ends_at: string
           id: string
+          kind: string
+          notes: string | null
           professional_id: string | null
-          reason: string | null
+          series_id: string | null
           starts_at: string
+          title: string
           unit_id: string
           updated_at: string
         }
         Insert: {
+          all_day?: boolean
           clinic_id: string
           created_at?: string
           created_by?: string | null
           ends_at: string
           id?: string
+          kind?: string
+          notes?: string | null
           professional_id?: string | null
-          reason?: string | null
+          series_id?: string | null
           starts_at: string
+          title?: string
           unit_id: string
           updated_at?: string
         }
         Update: {
+          all_day?: boolean
           clinic_id?: string
           created_at?: string
           created_by?: string | null
           ends_at?: string
           id?: string
+          kind?: string
+          notes?: string | null
           professional_id?: string | null
-          reason?: string | null
+          series_id?: string | null
           starts_at?: string
+          title?: string
           unit_id?: string
           updated_at?: string
         }

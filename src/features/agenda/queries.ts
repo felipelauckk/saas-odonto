@@ -41,11 +41,20 @@ export type AgendaProcedure = { procedureId: string | null; name: string; treatm
 
 export type AgendaBlock = {
   id: string;
+  /** null = clínica toda (na unidade). */
   professionalId: string | null;
+  title: string;
+  notes: string | null;
+  /** block impede marcar consulta; event é só lembrete. */
+  kind: "block" | "event";
+  allDay: boolean;
+  seriesId: string | null;
+  startsAt: string;
+  endsAt: string;
+  /** Pedaço do dia (horário de parede em São Paulo). */
   date: string;
   startMin: number;
   endMin: number;
-  reason: string | null;
 };
 
 export type AgendaData = {
@@ -114,7 +123,7 @@ export async function getAgendaData({
       .order("starts_at"),
     supabase
       .from("schedule_blocks")
-      .select("id, professional_id, starts_at, ends_at, reason")
+      .select("id, professional_id, starts_at, ends_at, title, notes, kind, all_day, series_id")
       .eq("unit_id", unitId)
       .lt("starts_at", rangeEnd)
       .gt("ends_at", rangeStart),
@@ -160,7 +169,13 @@ export async function getAgendaData({
     splitByDay(b.starts_at, b.ends_at).map((piece) => ({
       id: b.id,
       professionalId: b.professional_id,
-      reason: b.reason,
+      title: b.title,
+      notes: b.notes,
+      kind: b.kind === "event" ? ("event" as const) : ("block" as const),
+      allDay: b.all_day,
+      seriesId: b.series_id,
+      startsAt: b.starts_at,
+      endsAt: b.ends_at,
       ...piece,
     })),
   );
@@ -299,7 +314,7 @@ export async function getFreedSlot(unitId: string, now: Date = new Date()) {
   const supabase = await createClient();
   const from = now.toISOString();
   const to = zonedToUtc(addDays(utcToZoned(now).date, 8), "00:00").toISOString();
-  const [canceledRes, busyRes, waitRes, prosRes] = await Promise.all([
+  const [canceledRes, busyRes, waitRes, prosRes, blocksRes] = await Promise.all([
     supabase
       .from("appointments")
       .select("id, professional_id, unit_id, starts_at, ends_at")
@@ -319,17 +334,27 @@ export async function getFreedSlot(unitId: string, now: Date = new Date()) {
       .limit(2000),
     supabase.from("waitlist").select("id, unit_id, professional_id, period, notes, patients(full_name)").eq("status", "waiting").order("created_at"),
     supabase.from("professionals").select("id, name"),
+    // Bloqueios (não eventos) também ocupam: feriado ou almoço não é vaga.
+    supabase.from("schedule_blocks").select("professional_id, starts_at, ends_at").eq("unit_id", unitId).eq("kind", "block").lt("starts_at", to).gt("ends_at", from),
   ]);
-  for (const r of [canceledRes, busyRes, waitRes, prosRes]) if (r.error) throw r.error;
+  for (const r of [canceledRes, busyRes, waitRes, prosRes, blocksRes]) if (r.error) throw r.error;
 
   const toInterval = (startsAt: string, endsAt: string) => {
     const s = utcToZoned(startsAt);
     const e = utcToZoned(endsAt);
     return { date: s.date, startMin: s.minutes, endMin: e.date === s.date ? e.minutes : 24 * 60 };
   };
+  const blocks = blocksRes.data ?? [];
+  const blockedForAll = blocks.filter((b) => !b.professional_id);
+  const candidates = (canceledRes.data ?? []).filter(
+    (c) => !blockedForAll.some((b) => Date.parse(b.starts_at) < Date.parse(c.ends_at) && Date.parse(b.ends_at) > Date.parse(c.starts_at)),
+  );
   const picked = pickFreedSlot(
-    (canceledRes.data ?? []).map((c) => ({ id: c.id, unitId: c.unit_id, professionalId: c.professional_id, ...toInterval(c.starts_at, c.ends_at) })),
-    (busyRes.data ?? []).map((b) => ({ professionalId: b.professional_id, ...toInterval(b.starts_at, b.ends_at) })),
+    candidates.map((c) => ({ id: c.id, unitId: c.unit_id, professionalId: c.professional_id, ...toInterval(c.starts_at, c.ends_at) })),
+    [
+      ...(busyRes.data ?? []).map((b) => ({ professionalId: b.professional_id, ...toInterval(b.starts_at, b.ends_at) })),
+      ...blocks.filter((b) => b.professional_id).map((b) => ({ professionalId: b.professional_id!, ...toInterval(b.starts_at, b.ends_at) })),
+    ],
     (waitRes.data ?? []).map((w) => ({
       id: w.id,
       unitId: w.unit_id,

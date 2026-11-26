@@ -366,7 +366,7 @@ async function faltas(supabase: Supabase, f: ReportFilters): Promise<ReportResul
 async function ocupacao(supabase: Supabase, f: ReportFilters): Promise<ReportResult> {
   const { start, end } = rangeOf(f);
   let schedQ = supabase.from("professional_schedules").select("professional_id, unit_id, weekday, start_time, end_time, professionals(name, active)");
-  let blockQ = supabase.from("schedule_blocks").select("professional_id, unit_id, starts_at, ends_at").lt("starts_at", end).gt("ends_at", start);
+  let blockQ = supabase.from("schedule_blocks").select("professional_id, unit_id, starts_at, ends_at").eq("kind", "block").lt("starts_at", end).gt("ends_at", start);
   let chairQ = supabase.from("chairs").select("id, name, unit_id").eq("active", true);
   if (f.unitId) {
     schedQ = schedQ.eq("unit_id", f.unitId);

@@ -93,10 +93,13 @@ test("muda status com um clique e a falta aparece no relatório", async ({ page 
 
 test("bloqueio impede marcar no horário", async ({ page }) => {
   await page.goto(`/agenda?data=${DAY}`);
-  await page.getByRole("button", { name: "Bloquear" }).click();
+  await page.getByRole("button", { name: "Novo", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Novo compromisso" }).click();
   const dialog = page.getByRole("dialog");
-  await dialog.getByLabel("Motivo (opcional)").fill("Almoço");
-  await dialog.getByRole("button", { name: "Bloquear horário" }).click();
+  await dialog.getByRole("button", { name: "Almoço", exact: true }).click();
+  await dialog.getByRole("button", { name: "12:00", exact: true }).click();
+  await dialog.getByRole("button", { name: "12:45", exact: true }).click();
+  await dialog.getByRole("button", { name: "Criar compromisso" }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByRole("button", { name: /Almoço · 12:00–13:00/ })).toBeVisible();
 
