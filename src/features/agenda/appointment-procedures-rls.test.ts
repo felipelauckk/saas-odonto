@@ -98,6 +98,17 @@ describe.skipIf(!hasSupabase)("procedimentos da consulta (appointment_procedures
     expect((await reception.from("appointment_procedures").delete().eq("appointment_id", appointmentId).select("id")).data).toHaveLength(2);
   });
 
+  it("item do plano escrito à mão entra só com o nome; sem nome nem procedimento, não", async () => {
+    const appointmentId = await book(unitA, proBeto, "2031-02-11");
+    expect((await reception.from("appointment_procedures").insert({ clinic_id: clinicId, appointment_id: appointmentId, description: "Ajuste oclusal" })).error).toBeNull();
+    expect((await reception.from("appointment_procedures").insert({ clinic_id: clinicId, appointment_id: appointmentId })).error).not.toBeNull();
+  });
+
+  it("a consulta não tem mais procedure_id (lista só em appointment_procedures)", async () => {
+    const { error } = await admin.from("appointments").select("procedure_id").limit(1);
+    expect(error).not.toBeNull();
+  });
+
   it("dente e faces inválidos são recusados", async () => {
     const appointmentId = await book(unitA, proBeto, "2031-02-04");
     expect((await owner.from("appointment_procedures").insert({ clinic_id: clinicId, appointment_id: appointmentId, procedure_id: procedure, tooth: 19 })).error).not.toBeNull();

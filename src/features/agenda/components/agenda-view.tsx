@@ -304,7 +304,8 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
         key: procedureKey(),
         procedureId: p.procedureId,
         name: p.name,
-        durationMin: data.procedures.find((x) => x.id === p.procedureId)?.duration_min ?? 30,
+        // Item escrito à mão não tem duração cadastrada.
+        durationMin: data.procedures.find((x) => x.id === p.procedureId)?.duration_min ?? 0,
         treatmentItemId: p.treatmentItemId,
         tooth: p.tooth,
         faces: p.faces,

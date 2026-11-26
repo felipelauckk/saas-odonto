@@ -37,7 +37,7 @@ export type AgendaAppointment = {
   endsAt: string;
 };
 
-export type AgendaProcedure = { procedureId: string; name: string; treatmentItemId: string | null; tooth: number | null; faces: string[] | null };
+export type AgendaProcedure = { procedureId: string | null; name: string; treatmentItemId: string | null; tooth: number | null; faces: string[] | null };
 
 export type AgendaBlock = {
   id: string;
@@ -106,7 +106,7 @@ export async function getAgendaData({
     supabase
       .from("appointments")
       .select(
-        "id, patient_id, professional_id, chair_id, starts_at, ends_at, status, type, notes, confirmation_mode, reminder_mode, is_first_visit, arrived_at, cancel_reason, booked_online, reschedule_requested_at, patients(full_name, phone, whatsapp), appointment_tag_links(tag_id), appointment_procedures(procedure_id, treatment_item_id, tooth, faces, position, procedures(name))",
+        "id, patient_id, professional_id, chair_id, starts_at, ends_at, status, type, notes, confirmation_mode, reminder_mode, is_first_visit, arrived_at, cancel_reason, booked_online, reschedule_requested_at, patients(full_name, phone, whatsapp), appointment_tag_links(tag_id), appointment_procedures(procedure_id, description, treatment_item_id, tooth, faces, position, procedures(name))",
       )
       .eq("unit_id", unitId)
       .lt("starts_at", rangeEnd)
@@ -138,7 +138,7 @@ export async function getAgendaData({
       chairId: a.chair_id,
       procedures: [...a.appointment_procedures]
         .sort((x, y) => x.position - y.position)
-        .map((p) => ({ procedureId: p.procedure_id, name: p.procedures?.name ?? "Procedimento", treatmentItemId: p.treatment_item_id, tooth: p.tooth, faces: p.faces })),
+        .map((p) => ({ procedureId: p.procedure_id, name: p.description ?? p.procedures?.name ?? "Procedimento", treatmentItemId: p.treatment_item_id, tooth: p.tooth, faces: p.faces })),
       confirmationMode: a.confirmation_mode as ConfirmationMode,
       reminderMode: a.reminder_mode as ReminderMode,
       status: a.status,

@@ -11,8 +11,10 @@ import type { AgendaData } from "../queries";
 
 export type FormProcedure = {
   key: string;
-  procedureId: string;
+  /** null = item do plano escrito à mão (sem procedimento cadastrado). */
+  procedureId: string | null;
   name: string;
+  /** 0 = sem duração cadastrada (não entra na soma). */
   durationMin: number;
   treatmentItemId: string | null;
   tooth: number | null;
@@ -62,7 +64,7 @@ export function AppointmentProcedures({ value, onChange, catalog, planItems }: P
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-sm font-medium">{p.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  {[toothText(p), durationLabel(p.durationMin), p.treatmentItemId ? "do plano de tratamento" : null].filter(Boolean).join(" · ")}
+                  {[toothText(p), p.durationMin ? durationLabel(p.durationMin) : null, p.treatmentItemId ? "do plano de tratamento" : null].filter(Boolean).join(" · ")}
                 </span>
               </span>
               <Button type="button" variant="ghost" size="icon-sm" aria-label={`Tirar ${p.name}`} onClick={() => onChange(value.filter((x) => x.key !== p.key))}>
@@ -98,7 +100,7 @@ export function AppointmentProcedures({ value, onChange, catalog, planItems }: P
                         <span className="truncate text-[0.8125rem] font-medium">{i.name}</span>
                         <span className="text-xs text-muted-foreground">{toothText(i) ?? "Sem dente"}</span>
                       </span>
-                      <span className="text-[0.8125rem] text-muted-foreground tabular-nums">{durationLabel(i.durationMin)}</span>
+                      <span className="text-[0.8125rem] text-muted-foreground tabular-nums">{i.durationMin ? durationLabel(i.durationMin) : "sem duração"}</span>
                       <Plus className="size-4 shrink-0 text-primary" aria-hidden />
                     </button>
                   </li>

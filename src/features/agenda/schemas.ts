@@ -23,12 +23,22 @@ const tooth = z
   .int()
   .refine((t) => (Math.floor(t / 10) >= 1 && Math.floor(t / 10) <= 4 && t % 10 >= 1 && t % 10 <= 8) || (Math.floor(t / 10) >= 5 && Math.floor(t / 10) <= 8 && t % 10 >= 1 && t % 10 <= 5), "Dente inválido.");
 
-export const appointmentProcedureSchema = z.object({
-  procedureId: z.uuid(),
-  treatmentItemId: z.uuid().nullable().default(null),
-  tooth: tooth.nullable().default(null),
-  faces: z.array(z.enum(["M", "D", "O", "V", "L"])).max(5).nullable().default(null),
-});
+export const appointmentProcedureSchema = z
+  .object({
+    /** null = item do plano escrito à mão (sem procedimento cadastrado). */
+    procedureId: z.uuid().nullable(),
+    /** Nome do item do plano; vazio quando vem do catálogo. */
+    description: z
+      .string()
+      .trim()
+      .max(200)
+      .nullish()
+      .transform((v) => v || null),
+    treatmentItemId: z.uuid().nullable().default(null),
+    tooth: tooth.nullable().default(null),
+    faces: z.array(z.enum(["M", "D", "O", "V", "L"])).max(5).nullable().default(null),
+  })
+  .refine((p) => p.procedureId !== null || p.description !== null, { message: "Procedimento sem nome." });
 
 export const appointmentSchema = z.object({
   id: z.uuid().optional(),

@@ -241,6 +241,8 @@ export function AppointmentForm({ initial, professionals, chairs, procedures, ta
         chairId: values.chairId ?? "",
         procedures: values.procedures.map((p) => ({
           procedureId: p.procedureId,
+          // Do plano: guarda o nome do item (o único nome quando foi escrito à mão).
+          description: p.treatmentItemId ? p.name : null,
           treatmentItemId: p.treatmentItemId,
           tooth: p.tooth,
           faces: p.faces as ("M" | "D" | "O" | "V" | "L")[] | null,

@@ -41,7 +41,7 @@ export function AppointmentDetails({ appointment: a, professionalName, chairName
   const [reason, setReason] = useState<CancelReason>("patient_canceled");
   const [note, setNote] = useState("");
   // Retorno sugerido pelo primeiro procedimento da consulta.
-  const firstProcedureId = a.procedures[0]?.procedureId ?? null;
+  const firstProcedureId = a.procedures.find((p) => p.procedureId)?.procedureId ?? null;
   const defaultMonths = procedures.find((p) => p.id === firstProcedureId)?.return_months ?? 6;
   const [months, setMonths] = useState(String(defaultMonths));
   const [matches, setMatches] = useState<{ id: string; patientName: string; notes: string | null }[] | null>(null);

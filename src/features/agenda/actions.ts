@@ -69,6 +69,7 @@ async function setProcedures(supabase: Awaited<ReturnType<typeof createClient>>,
       clinic_id: clinicId,
       appointment_id: appointmentId,
       procedure_id: p.procedureId,
+      description: p.description,
       treatment_item_id: p.treatmentItemId,
       tooth: p.tooth,
       faces: p.faces?.length ? p.faces : null,
@@ -197,7 +198,7 @@ export async function loadFreeSlots(input: z.input<typeof slotsQuerySchema>): Pr
 
 // Dados do paciente para a consulta ----------------------------------------------------------
 
-export type PlanItemOption = { id: string; procedureId: string; name: string; tooth: number | null; faces: string[]; durationMin: number };
+export type PlanItemOption = { id: string; procedureId: string | null; name: string; tooth: number | null; faces: string[]; durationMin: number };
 export type AppointmentPatientInfo = {
   phone: string | null;
   whatsapp: string | null;
@@ -220,15 +221,15 @@ export async function loadAppointmentPatient(patientId: string, appointmentId?: 
       .select("id, procedure_id, description, tooth, faces, position, procedures(duration_min), treatment_plans!inner(patient_id, status, approved_at), appointment_procedures(appointment_id, appointments(status))")
       .eq("treatment_plans.patient_id", patientId)
       .in("treatment_plans.status", ["approved", "partially_approved"])
-      .eq("status", "approved")
-      .not("procedure_id", "is", null),
+      .eq("status", "approved"),
   ]);
   if (!patientRes.data) return null;
   const planItems = (itemsRes.data ?? [])
     // Já agendado em outra consulta que segue de pé: não oferece de novo.
     .filter((i) => !i.appointment_procedures.some((ap) => ap.appointment_id !== appointmentId && ap.appointments && !["canceled", "no_show"].includes(ap.appointments.status)))
     .sort((a, b) => (a.treatment_plans.approved_at ?? "").localeCompare(b.treatment_plans.approved_at ?? "") || a.position - b.position)
-    .map((i) => ({ id: i.id, procedureId: i.procedure_id!, name: i.description, tooth: i.tooth, faces: i.faces, durationMin: i.procedures?.duration_min ?? 30 }));
+    // Item escrito à mão (sem procedimento cadastrado) vem sem duração: a escolhida fica.
+    .map((i) => ({ id: i.id, procedureId: i.procedure_id, name: i.description, tooth: i.tooth, faces: i.faces, durationMin: i.procedures?.duration_min ?? 0 }));
   return {
     phone: patientRes.data.phone,
     whatsapp: patientRes.data.whatsapp,
@@ -466,7 +467,7 @@ export async function fillFromWaitlist(entryId: string, canceledAppointmentId: s
   if (!ctx) return { error: "Sessão expirada." };
   const [{ data: entry }, { data: slot }] = await Promise.all([
     ctx.supabase.from("waitlist").select("id, patient_id, status").eq("id", entryId).maybeSingle(),
-    ctx.supabase.from("appointments").select("unit_id, professional_id, chair_id, starts_at, ends_at, procedure_id, type").eq("id", canceledAppointmentId).maybeSingle(),
+    ctx.supabase.from("appointments").select("unit_id, professional_id, chair_id, starts_at, ends_at, type").eq("id", canceledAppointmentId).maybeSingle(),
   ]);
   if (!entry || entry.status !== "waiting" || !slot) return { error: "Não foi possível encaixar." };
   const { data, error } = await ctx.supabase

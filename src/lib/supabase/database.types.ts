@@ -209,10 +209,11 @@ export type Database = {
           appointment_id: string
           clinic_id: string
           created_at: string
+          description: string | null
           faces: string[] | null
           id: string
           position: number
-          procedure_id: string
+          procedure_id: string | null
           tooth: number | null
           treatment_item_id: string | null
           updated_at: string
@@ -221,10 +222,11 @@ export type Database = {
           appointment_id: string
           clinic_id: string
           created_at?: string
+          description?: string | null
           faces?: string[] | null
           id?: string
           position?: number
-          procedure_id: string
+          procedure_id?: string | null
           tooth?: number | null
           treatment_item_id?: string | null
           updated_at?: string
@@ -233,10 +235,11 @@ export type Database = {
           appointment_id?: string
           clinic_id?: string
           created_at?: string
+          description?: string | null
           faces?: string[] | null
           id?: string
           position?: number
-          procedure_id?: string
+          procedure_id?: string | null
           tooth?: number | null
           treatment_item_id?: string | null
           updated_at?: string
@@ -374,7 +377,6 @@ export type Database = {
           is_first_visit: boolean
           notes: string | null
           patient_id: string
-          procedure_id: string | null
           professional_id: string
           reminder_sent_at: string | null
           reschedule_requested_at: string | null
@@ -402,7 +404,6 @@ export type Database = {
           is_first_visit?: boolean
           notes?: string | null
           patient_id: string
-          procedure_id?: string | null
           professional_id: string
           reminder_sent_at?: string | null
           reschedule_requested_at?: string | null
@@ -430,7 +431,6 @@ export type Database = {
           is_first_visit?: boolean
           notes?: string | null
           patient_id?: string
-          procedure_id?: string | null
           professional_id?: string
           reminder_sent_at?: string | null
           reschedule_requested_at?: string | null
@@ -462,13 +462,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id", "clinic_id"]
-          },
-          {
-            foreignKeyName: "appointments_procedure_id_fkey"
-            columns: ["procedure_id"]
-            isOneToOne: false
-            referencedRelation: "procedures"
-            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "appointments_professional_id_clinic_id_fkey"

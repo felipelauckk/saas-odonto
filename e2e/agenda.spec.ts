@@ -164,7 +164,7 @@ test("a ficha do paciente lista as consultas", async ({ page }) => {
   await expect(page.getByText(/segunda-feira, 4 de março · 09:00–09:30/)).toBeVisible();
 });
 
-test("marca consulta com 3 procedimentos, um do plano de tratamento", async ({ page }) => {
+test("marca consulta com 3 procedimentos, um do plano, e um item do plano escrito à mão", async ({ page }) => {
   const client = admin();
   const { data: procs } = await client
     .from("procedures")
@@ -180,7 +180,11 @@ test("marca consulta com 3 procedimentos, um do plano de tratamento", async ({ p
     .insert({ clinic_id: user.clinicId, unit_id: seed.unitId, patient_id: seed.patientId, professional_id: seed.professionalId, status: "draft" })
     .select("id")
     .single();
-  await client.from("treatment_items").insert({ clinic_id: user.clinicId, plan_id: plan!.id, procedure_id: restauracao, description: "Restauração P1", tooth: 36, faces: ["O"], price_cents: 20000 });
+  await client.from("treatment_items").insert([
+    { clinic_id: user.clinicId, plan_id: plan!.id, procedure_id: restauracao, description: "Restauração P1", tooth: 36, faces: ["O"], price_cents: 20000, position: 0 },
+    // Escrito à mão no orçamento, sem procedimento cadastrado.
+    { clinic_id: user.clinicId, plan_id: plan!.id, procedure_id: null, description: "Ajuste oclusal P1", tooth: null, faces: [], price_cents: 5000, position: 1 },
+  ]);
   await client.from("treatment_plans").update({ status: "approved", approved_at: new Date().toISOString() }).eq("id", plan!.id);
   await client.from("treatment_items").update({ status: "approved" }).eq("plan_id", plan!.id);
 
@@ -194,14 +198,18 @@ test("marca consulta com 3 procedimentos, um do plano de tratamento", async ({ p
 
   await dialog.getByRole("button", { name: "Adicionar procedimento" }).click();
   await expect(dialog.getByText("Do plano de tratamento")).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Incluir do plano: Ajuste oclusal P1" })).toBeVisible();
   await dialog.getByRole("button", { name: "Incluir do plano: Restauração P1, dente 36" }).click();
   for (const name of ["Profilaxia P1", "Raspagem P1"]) {
     await dialog.getByRole("button", { name: "Adicionar procedimento" }).click();
     // Item do plano já incluído não aparece de novo.
-    await expect(dialog.getByRole("button", { name: /Incluir do plano/ })).toHaveCount(0);
+    await expect(dialog.getByRole("button", { name: /Incluir do plano: Restauração/ })).toHaveCount(0);
     await dialog.getByPlaceholder("Buscar procedimento").fill(name.slice(0, 6));
     await dialog.getByRole("button", { name: `Incluir ${name}` }).click();
   }
+  // Item do plano escrito à mão: entra sem duração (não muda a soma).
+  await dialog.getByRole("button", { name: "Adicionar procedimento" }).click();
+  await dialog.getByRole("button", { name: "Incluir do plano: Ajuste oclusal P1" }).click();
   // 40 + 30 + 20 min.
   await expect(dialog.getByLabel("Duração", { exact: true })).toContainText("1h30");
   await expect(slot(dialog, "09:00")).toHaveAttribute("aria-checked", "true");
@@ -212,21 +220,23 @@ test("marca consulta com 3 procedimentos, um do plano de tratamento", async ({ p
 
   const { data: appt } = await client
     .from("appointments")
-    .select("id, starts_at, ends_at, reminder_mode, appointment_procedures(position, tooth, treatment_item_id, procedure_id)")
+    .select("id, starts_at, ends_at, reminder_mode, appointment_procedures(position, tooth, treatment_item_id, procedure_id, description)")
     .eq("patient_id", seed.patientId)
     .single();
   expect(appt!.reminder_mode).toBe("none");
   expect((Date.parse(appt!.ends_at) - Date.parse(appt!.starts_at)) / 60_000).toBe(90);
   const list = [...appt!.appointment_procedures].sort((a, b) => a.position - b.position);
   const idOf = (name: string) => procs!.find((p) => p.name === name)!.id;
-  expect(list.map((p) => p.procedure_id)).toEqual([idOf("Restauração P1"), idOf("Profilaxia P1"), idOf("Raspagem P1")]);
+  expect(list.map((p) => p.procedure_id)).toEqual([idOf("Restauração P1"), idOf("Profilaxia P1"), idOf("Raspagem P1"), null]);
+  expect(list[3]!.description).toBe("Ajuste oclusal P1");
   expect(list[0]!.tooth).toBe(36);
   expect(list[0]!.treatment_item_id).not.toBeNull();
 
-  // Os três aparecem nos detalhes da consulta.
+  // Os quatro aparecem nos detalhes da consulta.
   await page.getByRole("button", { name: /Paciente Agenda, 09:00/ }).click();
   const details = page.getByRole("dialog").getByRole("list", { name: "Procedimentos" });
-  await expect(details.getByRole("listitem")).toHaveCount(3);
+  await expect(details.getByRole("listitem")).toHaveCount(4);
+  await expect(details.getByText("Ajuste oclusal P1")).toBeVisible();
 });
 
 test("no celular, a nova consulta ocupa a tela e o rodapé fica fixo", async ({ page, isMobile }) => {

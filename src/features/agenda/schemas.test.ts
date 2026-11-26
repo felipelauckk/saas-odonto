@@ -29,9 +29,12 @@ describe("appointmentSchema", () => {
     const base = { ...ids, date: "2026-11-16", time: "09:00", durationMin: 30 };
     const ok = appointmentSchema.parse({ ...base, procedures: [{ procedureId, tooth: 36, faces: ["O", "M"] }, { procedureId }] });
     expect(ok.procedures).toEqual([
-      { procedureId, treatmentItemId: null, tooth: 36, faces: ["O", "M"] },
-      { procedureId, treatmentItemId: null, tooth: null, faces: null },
+      { procedureId, description: null, treatmentItemId: null, tooth: 36, faces: ["O", "M"] },
+      { procedureId, description: null, treatmentItemId: null, tooth: null, faces: null },
     ]);
+    // Item do plano escrito à mão: sem procedimento, com nome.
+    expect(appointmentSchema.safeParse({ ...base, procedures: [{ procedureId: null, description: "Ajuste oclusal" }] }).success).toBe(true);
+    expect(appointmentSchema.safeParse({ ...base, procedures: [{ procedureId: null, description: " " }] }).success).toBe(false);
     expect(appointmentSchema.safeParse({ ...base, procedures: [{ procedureId, tooth: 19 }] }).success).toBe(false);
     expect(appointmentSchema.safeParse({ ...base, procedures: [{ procedureId, faces: ["X"] }] }).success).toBe(false);
     expect(appointmentSchema.safeParse({ ...base, confirmationMode: "sempre" }).success).toBe(false);
