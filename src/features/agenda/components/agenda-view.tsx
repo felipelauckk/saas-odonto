@@ -10,7 +10,7 @@ import { FormMessage } from "@/components/forms/form-message";
 import { SimpleSelect } from "@/components/forms/simple-select";
 import { SegmentedControl } from "@/components/app/segmented-control";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
@@ -61,12 +61,33 @@ type Props = {
 
 type DialogState =
   | { kind: "new"; initial: AppointmentFormValues }
-  | { kind: "details"; appointment: AgendaAppointment }
-  | { kind: "edit"; appointment: AgendaAppointment }
+  | { kind: "details"; appointment: AgendaAppointment; anchor: CardAnchor | null }
+  | { kind: "edit"; appointment: AgendaAppointment; focus?: "slots" }
   | { kind: "commitment"; initial: CommitmentFormValues }
   | { kind: "blockInfo"; block: AgendaBlock }
   | { kind: "returnAlert" }
   | null;
+
+type CardAnchor = { top: number; left: number; right: number };
+
+const CARD_WIDTH = 440;
+
+/**
+ * Cartão da consulta ao lado do cartão clicado (à direita; se não couber, à
+ * esquerda). Só no computador: no celular vira folha de baixo para cima.
+ */
+function cardPosition(anchor: CardAnchor | null): React.CSSProperties | undefined {
+  if (!anchor || typeof window === "undefined" || window.innerWidth < 640) return undefined;
+  const gap = 8;
+  const vw = window.innerWidth;
+  const fitsRight = anchor.right + gap + CARD_WIDTH <= vw - 16;
+  const fitsLeft = anchor.left - gap - CARD_WIDTH >= 16;
+  // Coluna larga (um profissional só): não cabe ao lado; vai para a borda mais longe do meio da consulta.
+  const left = fitsRight ? anchor.right + gap : fitsLeft ? anchor.left - gap - CARD_WIDTH : (anchor.left + anchor.right) / 2 > vw / 2 ? 16 : vw - 16 - CARD_WIDTH;
+  const top = Math.min(Math.max(anchor.top - 24, 16), Math.max(16, window.innerHeight - 640));
+  // O centro do diálogo vem da propriedade `translate` (Tailwind 4): zerada aqui.
+  return { left, top, translate: "none", maxHeight: `calc(100dvh - ${top + 16}px)` };
+}
 
 /** Atualiza a tela quando outra pessoa mexe na agenda da unidade. */
 function useAgendaRealtime(unitId: string) {
@@ -537,7 +558,9 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
               colorFor={(id) => colorById.get(id) ?? professionalColor(null)}
               tagColors={new Map(data.tags.map((t) => [t.id, t.color]))}
               onSlotClick={openNew}
-              onAppointmentClick={(appointment) => setDialog({ kind: "details", appointment })}
+              onAppointmentClick={(appointment, rect) =>
+                setDialog({ kind: "details", appointment, anchor: rect ? { top: rect.top, left: rect.left, right: rect.right } : null })
+              }
               onBlockClick={(block) => setDialog({ kind: "blockInfo", block })}
               onMove={handleMove}
             />
@@ -558,8 +581,12 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
       {/* Janelas */}
       <Dialog open={dialog !== null} onOpenChange={(open) => !open && closeDialog()}>
         <DialogContent
+          style={dialog?.kind === "details" ? cardPosition(dialog.anchor) : undefined}
           className={cn(
             "max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg",
+            // Cartão da consulta: 440px ao lado da consulta; no celular, folha de baixo.
+            dialog?.kind === "details" &&
+              "flex flex-col gap-0 overflow-hidden rounded-card p-0 sm:w-[440px] sm:max-w-[440px] max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:max-h-[88dvh] max-sm:max-w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-b-none",
             // Consulta: cabeçalho, corpo com rolagem própria e rodapé fixo; tela cheia no celular.
             (dialog?.kind === "new" || dialog?.kind === "edit" || dialog?.kind === "commitment") &&
               "flex flex-col gap-0 overflow-hidden rounded-card p-0 sm:max-w-2xl max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:max-w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none",
@@ -568,6 +595,7 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
           {dialog?.kind === "new" || dialog?.kind === "edit" ? (
             <AppointmentForm
               key={dialog.kind === "edit" ? dialog.appointment.id : "new"}
+              focusSlots={dialog.kind === "edit" && dialog.focus === "slots"}
               initial={dialog.kind === "edit" ? editValues(dialog.appointment) : dialog.initial}
               professionals={data.professionals}
               chairs={data.chairs}
@@ -589,21 +617,21 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
           ) : null}
 
           {dialog?.kind === "details" ? (
-            <>
-              <DialogHeader className="sr-only">
-                <DialogTitle>Consulta de {dialog.appointment.patientName}</DialogTitle>
-              </DialogHeader>
-              <AppointmentDetails
-                appointment={dialog.appointment}
-                professionalName={nameById.get(dialog.appointment.professionalId) ?? "Profissional"}
-                chairName={dialog.appointment.chairId ? (chairName.get(dialog.appointment.chairId) ?? null) : null}
-                procedures={data.procedures}
-                unitId={unitId}
-                onEdit={() => setDialog({ kind: "edit", appointment: dialog.appointment })}
-                onDone={closeDialog}
-                canSendReminder={!isDentist}
-              />
-            </>
+            <AppointmentDetails
+              appointment={dialog.appointment}
+              professionalName={nameById.get(dialog.appointment.professionalId) ?? "Profissional"}
+              professionalColor={colorById.get(dialog.appointment.professionalId)?.value ?? "var(--color-primary)"}
+              chairName={dialog.appointment.chairId ? (chairName.get(dialog.appointment.chairId) ?? null) : null}
+              tags={data.tags}
+              isDentist={isDentist}
+              procedures={data.procedures}
+              onEdit={(focus) => setDialog({ kind: "edit", appointment: dialog.appointment, focus })}
+              onDone={(text) => {
+                closeDialog();
+                if (text) setNotice(text);
+              }}
+              canSendReminder={!isDentist}
+            />
           ) : null}
 
           {dialog?.kind === "commitment" ? (
@@ -658,7 +686,7 @@ function AgendaLegend() {
     { label: "Confirmada", className: "border-[1.5px] border-primary bg-accent" },
     { label: "Na espera", className: "border-2 border-warning bg-card" },
     { label: "Em atendimento", className: "border border-primary bg-primary" },
-    { label: "Concluída", className: "bg-muted" },
+    { label: "Atendida", className: "bg-muted" },
     {
       label: "Faltou ou desmarcou",
       className:

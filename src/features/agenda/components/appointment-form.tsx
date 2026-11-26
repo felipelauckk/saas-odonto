@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { SimpleSelect } from "@/components/forms/simple-select";
@@ -74,6 +74,8 @@ type Props = {
   onCancel: () => void;
   /** Trocar para a aba Compromisso (só ao criar). */
   onSwitchTab?: (tab: EntryTab) => void;
+  /** "Remarcar" no cartão: abre rolado até a grade de horários. */
+  focusSlots?: boolean;
 };
 
 const alertText = (a: { label: string; details: string | null }) => {
@@ -81,7 +83,19 @@ const alertText = (a: { label: string; details: string | null }) => {
   return a.details ? `${label}: ${a.details}` : label;
 };
 
-export function AppointmentForm({ initial, professionals, chairs, procedures, tags, today, isDentist, onDone, onCancel, onSwitchTab }: Props) {
+export function AppointmentForm({
+  initial,
+  professionals,
+  chairs,
+  procedures,
+  tags,
+  today,
+  isDentist,
+  onDone,
+  onCancel,
+  onSwitchTab,
+  focusSlots = false,
+}: Props) {
   const [values, setValues] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [patientError, setPatientError] = useState<string | undefined>();
@@ -101,6 +115,12 @@ export function AppointmentForm({ initial, professionals, chairs, procedures, ta
   const patientId = values.patient?.id ?? null;
 
   const loadInfo = useCallback((id: string) => loadAppointmentPatient(id, initial.id ?? null).then((data) => setInfo({ patientId: id, data })), [initial.id]);
+
+  // "Remarcar": rola até a grade de horários ao abrir.
+  const slotsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (focusSlots) slotsRef.current?.scrollIntoView({ block: "start" });
+  }, [focusSlots]);
 
   useEffect(() => {
     if (!patientId) return;
@@ -323,19 +343,21 @@ export function AppointmentForm({ initial, professionals, chairs, procedures, ta
               />
             </div>
 
-            <SlotPicker
-              professionalId={values.professionalId}
-              professionalName={professionalName}
-              date={values.date}
-              durationMin={values.durationMin}
-              excludeId={values.id ?? null}
-              value={values.time}
-              onChange={(t) => {
-                set("time", t);
-                setTimeError(undefined);
-              }}
-              error={timeError}
-            />
+            <div ref={slotsRef} className="scroll-mt-4">
+              <SlotPicker
+                professionalId={values.professionalId}
+                professionalName={professionalName}
+                date={values.date}
+                durationMin={values.durationMin}
+                excludeId={values.id ?? null}
+                value={values.time}
+                onChange={(t) => {
+                  set("time", t);
+                  setTimeError(undefined);
+                }}
+                error={timeError}
+              />
+            </div>
 
             {chairs.length ? (
               <SimpleSelect

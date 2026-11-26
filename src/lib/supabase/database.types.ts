@@ -4642,6 +4642,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      appointment_has_clinical_record: {
+        Args: { _appointment_id: string }
+        Returns: boolean
+      }
       approve_plan_core: {
         Args: {
           _actor: string

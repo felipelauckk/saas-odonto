@@ -15,6 +15,7 @@ import { utcToZoned } from "@/lib/timezone";
 import { getSessionContext } from "@/features/tenancy/queries";
 
 import { sendAppointmentReminder } from "@/features/messaging/service";
+import { financialStatus, type PatientFinancialStatus } from "@/features/finance/patient-status";
 
 import { clipToDay, groupByPeriod, OUTSIDE_HOURS, slotStarts, type Range, type SlotGroup } from "./free-slots";
 import { commitmentDates } from "./commitments";
@@ -590,4 +591,107 @@ export async function findWaitlistMatches(appointmentId: string): Promise<{ id: 
   return (entries ?? [])
     .filter((e) => fitsWaitlist({ professionalId: e.professional_id, unitId: e.unit_id, period: e.period }, slot))
     .map((e) => ({ id: e.id, patientName: e.patients?.full_name ?? "", notes: e.notes }));
+}
+
+// Cartão da consulta (P3) -----------------------------------------------------------------
+
+export type AppointmentCardData = {
+  patient: { birthDate: string | null; phone: string | null; whatsapp: string | null; referredBy: string | null };
+  alerts: { label: string; details: string | null }[];
+  returnOverdue: boolean;
+  createdByName: string | null;
+  createdAt: string;
+  confirmedAt: string | null;
+  confirmedByWhatsApp: boolean;
+  arrivedAt: string | null;
+  /** null para quem não opera o financeiro (dentista). */
+  finance: { status: PatientFinancialStatus; paymentMethods: { id: string; name: string; fee_percent: number }[] } | null;
+  /** Gestão e sem evolução ligada. */
+  canDelete: boolean;
+};
+
+/** Dados do cartão que a grade não traz: lidos ao abrir, com a sessão do usuário. */
+export async function loadAppointmentCard(appointmentId: string): Promise<AppointmentCardData | null> {
+  if (!z.uuid().safeParse(appointmentId).success) return null;
+  const ctx = await activeContext();
+  if (!ctx) return null;
+  const { supabase } = ctx;
+  const role = ctx.session.clinic?.role ?? null;
+  const operatesFinance = role !== null && role !== "dentist";
+  const { data: appt } = await supabase
+    .from("appointments")
+    .select("id, patient_id, created_by, created_at, confirmed_at, arrived_at, patients(birth_date, phone, whatsapp, referred_by_patient_id, referred_by_partner_id)")
+    .eq("id", appointmentId)
+    .maybeSingle();
+  if (!appt?.patients) return null;
+  const p = appt.patients;
+  const today = utcToZoned(new Date()).date;
+
+  const [alertsRes, returnRes, creatorRes, confirmRes, referrerRes, partnerRes, clinicalRes, finance] = await Promise.all([
+    supabase.rpc("patient_alerts", { _patient_id: appt.patient_id }),
+    supabase.from("patient_returns").select("id", { count: "exact", head: true }).eq("patient_id", appt.patient_id).eq("status", "pending").lt("due_date", today),
+    appt.created_by ? supabase.from("profiles").select("full_name").eq("id", appt.created_by).maybeSingle() : Promise.resolve({ data: null }),
+    // Confirmação pelo botão do WhatsApp fica no log (a recepção e a gestão leem).
+    appt.confirmed_at
+      ? supabase.from("messages_log").select("id", { count: "exact", head: true }).eq("appointment_id", appt.id).eq("status", "received")
+      : Promise.resolve({ count: 0 }),
+    p.referred_by_patient_id ? supabase.from("patients").select("full_name").eq("id", p.referred_by_patient_id).maybeSingle() : Promise.resolve({ data: null }),
+    p.referred_by_partner_id ? supabase.from("referral_partners").select("name").eq("id", p.referred_by_partner_id).maybeSingle() : Promise.resolve({ data: null }),
+    role === "owner" || role === "manager" ? supabase.rpc("appointment_has_clinical_record", { _appointment_id: appt.id }) : Promise.resolve({ data: true }),
+    operatesFinance ? loadFinance(supabase, appt.patient_id, today) : Promise.resolve(null),
+  ]);
+
+  const referrer = (referrerRes.data as { full_name: string } | null)?.full_name ?? (partnerRes.data as { name: string } | null)?.name ?? null;
+  return {
+    patient: { birthDate: p.birth_date, phone: p.phone, whatsapp: p.whatsapp, referredBy: referrer ? referrer.split(" ")[0]! : null },
+    alerts: (alertsRes.data ?? []) as AppointmentCardData["alerts"],
+    returnOverdue: (returnRes.count ?? 0) > 0,
+    createdByName: (creatorRes.data as { full_name: string | null } | null)?.full_name ?? null,
+    createdAt: appt.created_at,
+    confirmedAt: appt.confirmed_at,
+    confirmedByWhatsApp: (confirmRes.count ?? 0) > 0,
+    arrivedAt: appt.arrived_at,
+    finance,
+    canDelete: (role === "owner" || role === "manager") && clinicalRes.data === false,
+  };
+}
+
+async function loadFinance(supabase: Supabase, patientId: string, today: string) {
+  const [recRes, planRes, methodsRes] = await Promise.all([
+    supabase.from("receivables").select("id, description, amount_cents, due_date, status, plan_id").eq("patient_id", patientId),
+    supabase
+      .from("treatment_plans")
+      .select("id")
+      .eq("patient_id", patientId)
+      .in("status", ["approved", "partially_approved", "completed"])
+      .order("approved_at", { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from("payment_methods").select("id, name, fee_percent").eq("active", true).order("name"),
+  ]);
+  return { status: financialStatus(recRes.data ?? [], today, planRes.data?.id ?? null), paymentMethods: methodsRes.data ?? [] };
+}
+
+/** Exclui a consulta (gestão; o banco recusa se houver evolução ligada). */
+export async function deleteAppointment(appointmentId: string): Promise<Result> {
+  if (!z.uuid().safeParse(appointmentId).success) return { error: "Consulta inválida." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("appointments").delete().eq("id", appointmentId).select("id");
+  if (error) return { error: agendaError(error) };
+  if (!data.length) return { error: "Só a gestão exclui, e só consulta sem evolução no prontuário. Use Desmarcar." };
+  revalidatePath(AGENDA_PATH);
+  return { id: appointmentId };
+}
+
+/** Marcadores direto do cartão: inclui ou tira um. */
+export async function toggleAppointmentTag(appointmentId: string, tagId: string, on: boolean): Promise<Result> {
+  if (!z.uuid().safeParse(appointmentId).success || !z.uuid().safeParse(tagId).success) return { error: "Inválido." };
+  const ctx = await activeContext();
+  if (!ctx) return { error: "Sessão expirada." };
+  const { error } = on
+    ? await ctx.supabase.from("appointment_tag_links").insert({ appointment_id: appointmentId, tag_id: tagId, clinic_id: ctx.clinicId })
+    : await ctx.supabase.from("appointment_tag_links").delete().eq("appointment_id", appointmentId).eq("tag_id", tagId);
+  if (error && error.code !== "23505") return { error: agendaError(error) };
+  revalidatePath(AGENDA_PATH);
+  return {};
 }

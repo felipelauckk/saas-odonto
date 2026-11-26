@@ -54,7 +54,8 @@ test("desmarcar pede motivo e oferece o horário a quem está na lista de espera
   await page.goto(`/agenda?data=${DAY}`);
   await page.getByRole("button", { name: /Paciente Agenda, 14:00/ }).click();
   const dialog = page.getByRole("dialog");
-  await dialog.getByRole("button", { name: "Cancelado" }).click();
+  await dialog.getByRole("button", { name: /^Status:/ }).click();
+  await page.getByRole("menuitem", { name: "Desmarcado" }).click();
   await dialog.getByRole("button", { name: "Clínica desmarcou" }).click();
   await dialog.getByRole("button", { name: "Desmarcar consulta" }).click();
   await expect(dialog.getByText("Da lista de espera, cabem neste horário:")).toBeVisible();
@@ -72,7 +73,8 @@ test("concluir a consulta permite agendar alerta de retorno", async ({ page }) =
   await page.goto(`/agenda?data=${DAY}`);
   await page.getByRole("button", { name: /Paciente Agenda, 10:00/ }).click();
   const dialog = page.getByRole("dialog");
-  await dialog.getByRole("button", { name: "Concluído" }).click();
+  await dialog.getByRole("button", { name: /^Status:/ }).click();
+  await page.getByRole("menuitem", { name: "Atendido" }).click();
   await dialog.getByLabel("Retorno em (meses)").fill("1");
   await dialog.getByRole("button", { name: "Agendar alerta" }).click();
   await expect(dialog.getByText("Definir alerta de retorno?")).toBeHidden();

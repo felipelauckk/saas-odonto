@@ -15,11 +15,11 @@ export const appointmentStatuses = [
 export const statusLabels: Record<AppointmentStatus, string> = {
   scheduled: "Agendado",
   confirmed: "Confirmado",
-  arrived: "Chegou",
+  arrived: "Na espera",
   in_progress: "Em atendimento",
-  done: "Concluído",
+  done: "Atendido",
   no_show: "Faltou",
-  canceled: "Cancelado",
+  canceled: "Desmarcado",
 };
 
 /** Status que liberam o horário (não contam como conflito). */

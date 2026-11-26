@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fitsWaitlist, periodOf, seriesDates } from "./advanced";
+import { fitsWaitlist, isLate, periodOf, seriesDates } from "./advanced";
 
 describe("seriesDates", () => {
   it("semanal, quinzenal e mensal (fim de mês)", () => {
@@ -24,5 +24,18 @@ describe("lista de espera", () => {
     expect(periodOf(8 * 60)).toBe("morning");
     expect(periodOf(12 * 60)).toBe("afternoon");
     expect(periodOf(18 * 60 + 30)).toBe("evening");
+  });
+});
+
+describe("atrasado", () => {
+  const startsAt = "2030-03-04T12:00:00.000Z";
+  const t = (min: number) => Date.parse(startsAt) + min * 60_000;
+  it("só depois de 10 minutos, sem chegada, e só para agendada ou confirmada", () => {
+    expect(isLate({ status: "scheduled", startsAt, arrivedAt: null }, t(10))).toBe(false);
+    expect(isLate({ status: "scheduled", startsAt, arrivedAt: null }, t(11))).toBe(true);
+    expect(isLate({ status: "confirmed", startsAt, arrivedAt: null }, t(30))).toBe(true);
+    expect(isLate({ status: "confirmed", startsAt, arrivedAt: startsAt }, t(30))).toBe(false);
+    expect(isLate({ status: "arrived", startsAt, arrivedAt: null }, t(30))).toBe(false);
+    expect(isLate({ status: "canceled", startsAt, arrivedAt: null }, t(30))).toBe(false);
   });
 });

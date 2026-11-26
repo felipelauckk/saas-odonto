@@ -38,7 +38,8 @@ type Props = {
   colorFor: (professionalId: string) => { value: string; soft: string };
   tagColors?: Map<string, string>;
   onSlotClick: (column: GridColumn, startMin: number) => void;
-  onAppointmentClick: (appointment: AgendaAppointment) => void;
+  /** O retângulo do cartão clicado posiciona os detalhes ao lado dele. */
+  onAppointmentClick: (appointment: AgendaAppointment, rect?: DOMRect) => void;
   onBlockClick: (block: AgendaBlock) => void;
   onMove: (target: MoveTarget) => Promise<boolean>;
 };
@@ -53,7 +54,7 @@ const CARD_STATUS: Record<AgendaAppointment["status"], string> = {
   confirmed: "Confirmada",
   arrived: "Na espera",
   in_progress: "Em atendimento",
-  done: "Concluída",
+  done: "Atendida",
   no_show: "Faltou",
   canceled: "Desmarcada",
 };
@@ -386,12 +387,12 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
                       onPointerMove={onPointerMove}
                       onPointerUp={onPointerUp}
                       onPointerCancel={() => setDrag(null)}
-                      onClick={() => {
+                      onClick={(e) => {
                         if (suppressClick.current) {
                           suppressClick.current = false;
                           return;
                         }
-                        onAppointmentClick(a);
+                        onAppointmentClick(a, e.currentTarget.getBoundingClientRect());
                       }}
                       aria-label={`${a.patientName}, ${minutesToTime(a.startMin)} a ${minutesToTime(a.endMin)}, ${statusLabels[a.status]}${a.isFirstVisit ? ", primeira consulta" : ""}`}
                       className={cn(

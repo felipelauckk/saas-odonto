@@ -280,3 +280,14 @@ test("print novo-compromisso", async ({ page }, info) => {
   await page.waitForTimeout(500);
   await page.screenshot({ path: `${process.env.SCREENS_DIR ?? "docs/design/screens"}/${label}-novo-compromisso-${info.project.name}.png` });
 });
+
+// Cartão da consulta ao clicar na agenda (P3).
+test("print consulta-card", async ({ page }, info) => {
+  await signIn(page, user);
+  await page.goto("/agenda");
+  await page.getByRole("button", { name: /Paciente Agenda, 09:00/ }).first().click();
+  await page.getByRole("dialog").waitFor();
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: `${process.env.SCREENS_DIR ?? "docs/design/screens"}/${label}-consulta-card-${info.project.name}.png` });
+});

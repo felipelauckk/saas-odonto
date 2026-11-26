@@ -21,6 +21,12 @@ test.afterEach(async () => {
   await user.cleanup();
 });
 
+/** Seletor de status do cartão da consulta. */
+async function setStatus(page: Page, dialog: Locator, label: string) {
+  await dialog.getByRole("button", { name: /^Status:/ }).click();
+  await page.getByRole("menuitem", { name: label }).click();
+}
+
 async function selectOption(page: Page, label: string, option: string) {
   await page.getByLabel(label, { exact: true }).click();
   await page.getByRole("option", { name: option, exact: true }).click();
@@ -80,10 +86,10 @@ test("muda status com um clique e a falta aparece no relatório", async ({ page 
 
   await page.getByRole("button", { name: /Paciente Agenda, 14:00/ }).click();
   const dialog = page.getByRole("dialog");
-  await dialog.getByRole("button", { name: "Confirmado" }).click();
-  await expect(dialog.getByRole("button", { name: "Confirmado" })).toHaveAttribute("aria-pressed", "true");
-  await dialog.getByRole("button", { name: "Faltou" }).click();
-  await expect(dialog.getByRole("button", { name: "Faltou" })).toHaveAttribute("aria-pressed", "true");
+  await setStatus(page, dialog, "Confirmado");
+  await expect(dialog.getByRole("button", { name: "Status: Confirmado" })).toBeVisible();
+  await setStatus(page, dialog, "Faltou");
+  await expect(dialog.getByRole("button", { name: "Status: Faltou" })).toBeVisible();
   await page.keyboard.press("Escape");
 
   await page.goto("/agenda/faltas?de=2030-03-01&ate=2030-03-10");
@@ -111,7 +117,7 @@ test("bloqueio impede marcar no horário", async ({ page }) => {
 });
 
 test("arrasta a consulta para remarcar", async ({ page, isMobile }) => {
-  test.skip(isMobile, "No toque, remarcar é pelo botão Editar ou remarcar");
+  test.skip(isMobile, "No toque, remarcar é pelo botão Remarcar do cartão");
   await insertAppointment("09:00", "09:30");
   await page.goto(`/agenda?data=${DAY}`);
 
@@ -134,7 +140,7 @@ test("remarca pela janela de edição", async ({ page }) => {
   await insertAppointment("09:00", "09:30");
   await page.goto(`/agenda?data=${DAY}`);
   await page.getByRole("button", { name: /Paciente Agenda, 09:00/ }).click();
-  await page.getByRole("button", { name: "Editar ou remarcar" }).click();
+  await page.getByRole("button", { name: "Remarcar" }).click();
   const dialog = page.getByRole("dialog");
   await slot(dialog, "15:30").click();
   await dialog.getByRole("button", { name: "Salvar alterações" }).click();

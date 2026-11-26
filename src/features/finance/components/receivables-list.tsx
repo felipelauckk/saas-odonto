@@ -51,7 +51,8 @@ type Props = {
   invoices?: { enabled: boolean; byReceivable: Record<string, { status: string; pdfUrl: string | null }> };
 };
 
-function ReceiveForm({ receivable, paymentMethods, onDone }: { receivable: ReceivableItem; paymentMethods: Props["paymentMethods"]; onDone: () => void }) {
+/** Baixa de uma parcela (também usada no cartão da consulta). */
+export function ReceiveForm({ receivable, paymentMethods, onDone }: { receivable: Pick<ReceivableItem, "id" | "amount_cents">; paymentMethods: Props["paymentMethods"]; onDone: () => void }) {
   const [amount, setAmount] = useState(centsToInput(receivable.amount_cents));
   const [method, setMethod] = useState(paymentMethods[0]?.id ?? "");
   const [date, setDate] = useState(todayIso());

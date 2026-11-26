@@ -39,3 +39,8 @@ export const cancelReasonLabels: Record<CancelReason, string> = {
   clinic_canceled: "Clínica desmarcou",
   rescheduled: "Remarcada",
 };
+
+/** "Atrasado": agendada ou confirmada, começou há mais de 10 min e o paciente não chegou. Não é status salvo. */
+export function isLate(a: { status: string; startsAt: string; arrivedAt: string | null }, now: number): boolean {
+  return (a.status === "scheduled" || a.status === "confirmed") && !a.arrivedAt && now - Date.parse(a.startsAt) > 10 * 60_000;
+}
