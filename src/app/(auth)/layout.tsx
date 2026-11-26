@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
     <div className="flex min-h-dvh bg-background">
       <section
         aria-label="Arcada"
-        className="relative hidden flex-1 flex-col justify-between overflow-hidden bg-brand-deep px-16 py-14 text-white lg:flex"
+        className="relative hidden flex-1 flex-col justify-between overflow-hidden bg-hero px-16 py-14 text-white lg:flex"
       >
         <svg
           aria-hidden
@@ -20,7 +20,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
         <BrandLogo variant="light" className="relative [&>svg]:size-10 [&>span]:text-3xl" />
         <div className="relative flex max-w-xl flex-col gap-5">
           <p className="text-5xl leading-[1.02] font-black tracking-tight text-balance xl:text-6xl">
-            Menos papel na recepção. <span className="text-brand-highlight">Mais sorrisos</span> na cadeira.
+            Menos papel na recepção. <span className="text-tint-mint">Mais sorrisos</span> na cadeira.
           </p>
           <p className="max-w-md text-base leading-relaxed text-white/80">
             Agenda, prontuário, orçamentos, financeiro e relacionamento com o paciente, num sistema só.

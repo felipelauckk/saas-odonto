@@ -40,7 +40,7 @@ function Steps({ current }: { current: 1 | 2 | 3 }) {
             <span
               className={cn(
                 "flex size-6 shrink-0 items-center justify-center rounded-full tabular-nums",
-                n < current ? "bg-primary text-primary-foreground" : n === current ? "bg-brand-deep text-brand-deep-foreground" : "bg-muted text-muted-foreground",
+                n < current ? "bg-primary text-primary-foreground" : n === current ? "bg-foreground text-background" : "bg-muted text-muted-foreground",
               )}
             >
               {n}
@@ -161,7 +161,7 @@ export function BookingWizard({ page, today, actions }: { page: BookingPage; tod
                     onClick={() => { setDay(d); setPicked(null); }}
                     className={cn(
                       "flex h-16 flex-col items-center justify-center rounded-xl border text-xs transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-40",
-                      on ? "border-brand-deep bg-brand-deep text-brand-deep-foreground" : "border-border bg-card hover:border-primary",
+                      on ? "border-foreground bg-foreground font-semibold text-background" : "border-border bg-card hover:border-primary",
                     )}
                   >
                     <span className={on ? "" : "text-muted-foreground"}>{WEEKDAY[weekdayOf(d)]}</span>

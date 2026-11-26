@@ -48,7 +48,7 @@ function ReferralField({ initial, initialName, partners }: { initial: string; in
             type="button"
             aria-pressed={kind === k}
             onClick={() => setKind(k)}
-            className={`h-8 rounded-full border px-3 text-sm pointer-coarse:h-11 ${kind === k ? "border-primary bg-primary/10" : "text-muted-foreground hover:bg-muted"}`}
+            className={`h-8 rounded-full border px-3 text-sm pointer-coarse:h-11 ${kind === k ? "border-foreground bg-foreground font-semibold text-background" : "text-muted-foreground hover:bg-muted"}`}
           >
             {k === "none" ? "Ninguém" : k === "patient" ? "Paciente" : "Parceiro"}
           </button>

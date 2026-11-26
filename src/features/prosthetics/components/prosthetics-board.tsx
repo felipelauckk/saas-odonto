@@ -48,7 +48,7 @@ export function ProstheticsBoard({ orders, options, today, canManage }: Props) {
       <div className="flex flex-wrap items-center gap-2">
         {(["all", "prosthesis", "aligner"] as const).map((k) => (
           <button key={k} type="button" aria-pressed={kindFilter === k} onClick={() => setKindFilter(k)}
-            className={cn("h-8 rounded-full border px-3 text-sm pointer-coarse:h-11", kindFilter === k ? "border-primary bg-primary/10" : "text-muted-foreground hover:bg-muted")}>
+            className={cn("h-8 rounded-full border px-3 text-sm pointer-coarse:h-11", kindFilter === k ? "border-foreground bg-foreground font-semibold text-background" : "text-muted-foreground hover:bg-muted")}>
             {k === "all" ? "Todas" : kindLabels[k]}
           </button>
         ))}

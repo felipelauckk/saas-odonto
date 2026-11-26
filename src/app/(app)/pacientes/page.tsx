@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { SearchX, Users } from "lucide-react";
+import { Activity, CalendarClock, FileText, SearchX, Users } from "lucide-react";
+
+import { KpiStrip, type Kpi } from "@/components/app/kpi-strip";
 
 import { EmptyState } from "@/components/feedback/empty-state";
 import { NewPatientSheet } from "@/features/patients/components/new-patient-sheet";
@@ -49,6 +51,18 @@ export default async function Page({ searchParams }: PageProps<"/pacientes">) {
 
   const newButton = <NewPatientSheet />;
 
+  // Resumo do topo: as mesmas contagens dos filtros rápidos (sem busca nem origem, para não mudar enquanto digita).
+  const c = counts.ok ? counts.value : null;
+  const kpis: Kpi[] | null =
+    c && !filters.q && !filters.source
+      ? [
+          { label: "Pacientes cadastrados", value: count.format(c.active), icon: Users, highlight: true, context: `${count.format(c.archived)} arquivados`, href: "/pacientes" },
+          { label: "Em tratamento", value: count.format(c.in_treatment), icon: Activity, tint: "sky", context: "orçamento aprovado com etapas por fazer", href: "/pacientes?situacao=em-tratamento" },
+          { label: "Orçamento em aberto", value: count.format(c.open_quote), icon: FileText, tint: "lilac", context: "apresentado, esperando resposta", href: "/pacientes?situacao=orcamento-aberto" },
+          { label: "Retorno vencido", value: count.format(c.return_overdue), icon: CalendarClock, tint: "rose", context: "retorno com data já passada", href: "/pacientes?situacao=retorno-vencido" },
+        ]
+      : null;
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -66,6 +80,7 @@ export default async function Page({ searchParams }: PageProps<"/pacientes">) {
         <EmptyState icon={Users} title="Nenhum paciente por enquanto" description="Cadastre o primeiro paciente da clínica." action={newButton} />
       ) : (
         <>
+          {kpis ? <KpiStrip items={kpis} label="Resumo dos pacientes" /> : null}
           <PatientFilters counts={counts.ok ? counts.value : null} />
           {patients.length ? (
             <div className="space-y-4">

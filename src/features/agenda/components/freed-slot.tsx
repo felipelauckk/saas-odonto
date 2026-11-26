@@ -24,27 +24,27 @@ export function FreedSlot({ slot, professionalName, matches, dayLabel }: Props) 
   const [done, setDone] = useState<string | null>(null);
 
   return (
-    <section aria-labelledby="vaga" className="space-y-3 rounded-card bg-brand-deep p-4 text-brand-deep-foreground">
+    <section aria-labelledby="vaga" className="space-y-3 rounded-card bg-hero p-4 text-white shadow-card">
       <div className="flex items-start gap-2">
-        <Sparkles className="mt-0.5 size-4 shrink-0 text-brand-highlight" strokeWidth={1.75} aria-hidden />
+        <Sparkles className="mt-0.5 size-4 shrink-0 text-white" strokeWidth={1.75} aria-hidden />
         <h2 id="vaga" className="type-section">
           Vaga {dayLabel}, {minutesToTime(slot.startMin)}, {professionalName}
         </h2>
       </div>
-      <p className="text-[0.8125rem] leading-relaxed text-brand-deep-foreground/80">
+      <p className="text-[0.8125rem] leading-relaxed text-white/90">
         Uma consulta foi desmarcada e o horário continua livre. Da lista de espera, cabem nele:
       </p>
       {done ? (
-        <p role="status" className="text-sm font-semibold text-brand-highlight">
+        <p role="status" className="text-sm font-semibold text-white">
           Pronto: {done} ficou com o horário das {minutesToTime(slot.startMin)}.
         </p>
       ) : (
         <ul>
           {matches.map((m) => (
-            <li key={m.id} className="flex min-h-11 items-center justify-between gap-2 border-t border-brand-deep-foreground/12 py-1.5">
+            <li key={m.id} className="flex min-h-11 items-center justify-between gap-2 border-t border-white/20 py-1.5">
               <span className="flex min-w-0 flex-col">
                 <span className="truncate text-sm font-medium">{m.patientName}</span>
-                {m.notes ? <span className="truncate text-xs text-brand-deep-foreground/70">{m.notes}</span> : null}
+                {m.notes ? <span className="truncate text-xs text-white/85">{m.notes}</span> : null}
               </span>
               <button
                 type="button"
@@ -61,7 +61,7 @@ export function FreedSlot({ slot, professionalName, matches, dayLabel }: Props) 
                     }
                   })
                 }
-                className="inline-flex h-8 shrink-0 items-center rounded-lg bg-brand-highlight px-3 text-[0.8125rem] font-semibold text-brand-deep outline-none hover:bg-brand-highlight/90 focus-visible:ring-3 focus-visible:ring-brand-highlight/60 disabled:opacity-60 pointer-coarse:h-11"
+                className="inline-flex h-8 shrink-0 items-center rounded-lg bg-white px-3 text-[0.8125rem] font-semibold text-accent-foreground outline-none hover:bg-white/90 focus-visible:ring-3 focus-visible:ring-white/60 disabled:opacity-60 pointer-coarse:h-11"
               >
                 Agendar
               </button>
@@ -70,7 +70,7 @@ export function FreedSlot({ slot, professionalName, matches, dayLabel }: Props) 
         </ul>
       )}
       {error ? (
-        <p role="alert" className="text-sm font-medium text-brand-highlight">
+        <p role="alert" className="text-sm font-medium text-white underline">
           {error}
         </p>
       ) : null}

@@ -15,9 +15,8 @@ const buttonVariants = cva(
         /** Suave: fundo névoa. */
         secondary:
           "bg-accent text-accent-foreground hover:bg-[color-mix(in_oklab,var(--accent),var(--primary)_10%)] aria-expanded:bg-[color-mix(in_oklab,var(--accent),var(--primary)_10%)]",
-        /** Sobre fundo escuro (petróleo profundo). */
-        "on-dark":
-          "bg-brand-highlight text-brand-deep hover:bg-[color-mix(in_oklab,var(--brand-highlight),white_15%)] focus-visible:ring-offset-brand-deep",
+        /** Sobre o degradê de destaque (bg-hero): branco com texto verde-azulado. */
+        "on-dark": "bg-white text-accent-foreground hover:bg-white/90 focus-visible:ring-white focus-visible:ring-offset-transparent",
         ghost:
           "text-foreground hover:bg-muted aria-expanded:bg-muted dark:hover:bg-muted/50",
         destructive:

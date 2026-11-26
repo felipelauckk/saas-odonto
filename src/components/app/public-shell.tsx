@@ -29,7 +29,7 @@ export function PublicShell({ clinicName, detail, footer = "Seus dados ficam pro
         <div className={cn("mx-auto flex w-full items-center gap-3 px-4 py-3.5", WIDTH[width])}>
           {clinicName ? (
             <>
-              <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-avatar bg-brand-deep text-sm font-black text-brand-deep-foreground">
+              <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-avatar bg-accent text-sm font-black text-accent-foreground">
                 {initials(clinicName)}
               </span>
               <span className="flex min-w-0 flex-col">

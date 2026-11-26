@@ -36,7 +36,7 @@ export default async function Page() {
             <li key={href}>
               <Link
                 href={href}
-                className="group flex h-full items-center gap-3.5 rounded-card border bg-card p-4 outline-none transition-colors hover:border-primary/40 hover:bg-accent/30 focus-visible:ring-3 focus-visible:ring-ring/40"
+                className="group flex h-full items-center gap-3.5 rounded-card border bg-card p-4 shadow-card outline-none transition-colors hover:border-primary/40 hover:bg-accent/30 focus-visible:ring-3 focus-visible:ring-ring/40"
               >
                 <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                   <Icon className="size-[1.125rem]" />

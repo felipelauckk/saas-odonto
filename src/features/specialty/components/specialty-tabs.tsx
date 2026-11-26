@@ -74,7 +74,7 @@ export function SpecialtyTabs({ patientId, templates, records, canWrite, selecte
       <nav aria-label="Fichas de especialidade" className="flex flex-wrap gap-2">
         {templates.map((t) => (
           <Link key={t.id} href={`/pacientes/${patientId}/fichas?ficha=${t.id}`} aria-current={t.id === current.id ? "page" : undefined}
-            className={cn("inline-flex h-8 items-center rounded-full border px-3 text-sm pointer-coarse:h-11", t.id === current.id ? "border-primary bg-primary/10 font-medium" : "text-muted-foreground hover:bg-muted")}>
+            className={cn("inline-flex h-8 items-center rounded-full border px-3 text-sm pointer-coarse:h-11", t.id === current.id ? "border-foreground bg-foreground font-semibold text-background" : "text-muted-foreground hover:bg-muted")}>
             {t.name}
             {records.some((r) => r.templateId === t.id) ? <span className="ml-1.5 size-1.5 rounded-full bg-primary" aria-label="com registro" /> : null}
           </Link>

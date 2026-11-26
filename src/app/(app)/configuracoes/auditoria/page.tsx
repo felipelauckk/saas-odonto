@@ -28,7 +28,7 @@ export default async function Page({ searchParams }: PageProps<"/configuracoes/a
             aria-current={(action ?? "") === value ? "page" : undefined}
             className={cn(
               "inline-flex h-8 items-center rounded-full border px-3 text-sm pointer-coarse:h-11",
-              (action ?? "") === value ? "border-primary bg-primary/10" : "text-muted-foreground hover:bg-muted",
+              (action ?? "") === value ? "border-foreground bg-foreground font-semibold text-background" : "text-muted-foreground hover:bg-muted",
             )}
           >
             {label}

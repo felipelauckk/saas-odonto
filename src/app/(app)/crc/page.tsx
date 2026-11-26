@@ -54,14 +54,14 @@ export default async function Page({ searchParams }: PageProps<"/crc">) {
                     aria-current={on ? "page" : undefined}
                     className={cn(
                       "flex min-h-11 items-center justify-between gap-3 rounded-xl border px-3.5 py-2 text-sm transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
-                      on ? "border-brand-deep bg-brand-deep font-semibold text-brand-deep-foreground" : "border-border bg-card hover:bg-muted",
+                      on ? "border-foreground bg-foreground font-semibold text-background" : "border-border bg-card hover:bg-muted",
                     )}
                   >
                     <span>{queueLabels[q]}</span>
                     <span
                       className={cn(
                         "min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-bold tabular-nums",
-                        on ? "bg-brand-highlight text-brand-deep" : "bg-muted text-foreground",
+                        on ? "bg-background/20 text-background" : "bg-muted text-foreground",
                       )}
                     >
                       {count(q)}

@@ -161,7 +161,7 @@ export function PatientFiles({ patientId, files, canWrite }: Props) {
   const chip = (active: boolean) =>
     cn(
       "inline-flex h-8 items-center rounded-full border px-3 text-sm transition-colors pointer-coarse:h-11",
-      active ? "border-primary bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-muted",
+      active ? "border-foreground bg-foreground font-semibold text-background" : "text-muted-foreground hover:bg-muted",
     );
 
   return (

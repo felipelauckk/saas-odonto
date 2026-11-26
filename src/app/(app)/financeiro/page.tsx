@@ -57,16 +57,16 @@ export default async function Page({ searchParams }: PageProps<"/financeiro">) {
   return (
     <div className="space-y-6">
       <dl className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border p-4">
+        <div className="rounded-card border bg-card p-5 shadow-card">
           <dt className="text-sm text-muted-foreground">A receber (em dia)</dt>
           <dd className="text-2xl font-semibold tabular-nums">{formatCurrency(summary.open)}</dd>
         </div>
-        <div className="rounded-xl border p-4">
+        <div className="rounded-card border bg-card p-5 shadow-card">
           <dt className="text-sm text-muted-foreground">Vencido</dt>
           <dd className="text-2xl font-semibold tabular-nums text-destructive">{formatCurrency(summary.overdue)}</dd>
           <dd className="text-xs text-muted-foreground">{summary.overdueCount} {summary.overdueCount === 1 ? "conta" : "contas"}</dd>
         </div>
-        <div className="rounded-xl border p-4">
+        <div className="rounded-card border bg-card p-5 shadow-card">
           <dt className="text-sm text-muted-foreground">Total da lista abaixo</dt>
           <dd className="text-2xl font-semibold tabular-nums">{formatCurrency(listed)}</dd>
         </div>
@@ -81,7 +81,7 @@ export default async function Page({ searchParams }: PageProps<"/financeiro">) {
               aria-current={filter === key ? "page" : undefined}
               className={cn(
                 "inline-flex h-8 items-center rounded-full border px-3 text-sm pointer-coarse:h-11",
-                filter === key ? "border-primary bg-primary/10" : "text-muted-foreground hover:bg-muted",
+                filter === key ? "border-foreground bg-foreground font-semibold text-background" : "text-muted-foreground hover:bg-muted",
               )}
             >
               {f.label}

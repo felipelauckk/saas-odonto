@@ -77,7 +77,7 @@ export function PatientFilters({ counts }: { counts: SegmentCounts | null }) {
             aria-label="Buscar paciente"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="h-12 w-full rounded-xl border border-input bg-card pr-4 pl-12 text-[0.9375rem] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+            className="h-12 w-full rounded-xl border bg-card pr-4 pl-12 text-[0.9375rem] shadow-card outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
           />
         </label>
         <Select items={sourceItems} value={source} onValueChange={(value) => navigate({ source: value === "all" ? null : String(value) })}>
@@ -93,7 +93,8 @@ export function PatientFilters({ counts }: { counts: SegmentCounts | null }) {
           </SelectContent>
         </Select>
       </div>
-      <div role="group" aria-label="Filtros rápidos" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+      <div role="group" aria-label="Filtros rápidos" className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
+        <div className="flex w-max gap-1 rounded-xl border bg-card p-1 shadow-card sm:w-auto sm:flex-wrap">
         {chips.map((c) => (
           <button
             key={c.key}
@@ -101,16 +102,17 @@ export function PatientFilters({ counts }: { counts: SegmentCounts | null }) {
             aria-pressed={c.pressed}
             onClick={() => navigate(c.go)}
             className={cn(
-              "inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-[0.8125rem] font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40 pointer-coarse:h-11",
-              c.pressed ? "border-brand-deep bg-brand-deep text-brand-deep-foreground" : "border-input bg-card text-foreground hover:bg-muted",
+              "inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-[0.8125rem] whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40 pointer-coarse:h-11",
+              c.pressed ? "bg-foreground font-semibold text-background" : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             {c.label}
             {c.n !== undefined ? (
-              <span className={cn("text-xs font-semibold tabular-nums", c.pressed ? "text-brand-deep-foreground/75" : "text-muted-foreground")}>{count.format(c.n)}</span>
+              <span className={cn("text-xs font-semibold tabular-nums", c.pressed ? "text-background/75" : "text-muted-foreground/80")}>{count.format(c.n)}</span>
             ) : null}
           </button>
         ))}
+        </div>
       </div>
     </div>
   );

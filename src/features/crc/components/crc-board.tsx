@@ -214,7 +214,7 @@ function ContactPanel({
   return (
     <section id="contato-painel" aria-labelledby="contato-nome" className="scroll-mt-4 space-y-4 rounded-card border bg-card p-4 sm:p-5">
       <div className="flex items-start gap-3">
-        <span aria-hidden className="flex size-11 shrink-0 items-center justify-center rounded-avatar bg-brand-deep text-sm font-black text-brand-deep-foreground">
+        <span aria-hidden className="flex size-11 shrink-0 items-center justify-center rounded-full bg-tint-sky text-sm font-black text-tint-sky-foreground">
           {initials(item.patientName)}
         </span>
         <div className="min-w-0 space-y-0.5">

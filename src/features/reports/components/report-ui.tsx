@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import Link from "next/link";
 import { Banknote, CalendarDays, ChevronRight, HandCoins, Package, Sparkles, UsersRound, type LucideIcon } from "lucide-react";
 
@@ -40,6 +41,15 @@ const GROUP_ICONS: Record<string, LucideIcon> = {
   "Equipe e materiais": Package,
 };
 
+/** Tom pastel do ícone de cada grupo (só decoração; o nome do grupo vai escrito). */
+const GROUP_TINTS: Record<string, string> = {
+  Dinheiro: "bg-tint-peach text-tint-peach-foreground",
+  Vendas: "bg-tint-lilac text-tint-lilac-foreground",
+  Agenda: "bg-tint-sky text-tint-sky-foreground",
+  Pacientes: "bg-tint-rose text-tint-rose-foreground",
+  "Equipe e materiais": "bg-tint-mint text-tint-mint-foreground",
+};
+
 /** Todos os relatórios, em cartões por assunto. */
 export function ReportNav() {
   return (
@@ -47,9 +57,9 @@ export function ReportNav() {
       {REPORT_GROUPS.map((g) => {
         const Icon = GROUP_ICONS[g.title] ?? Banknote;
         return (
-          <section key={g.title} aria-labelledby={`grupo-${g.title}`} className="rounded-card border bg-card p-2">
+          <section key={g.title} aria-labelledby={`grupo-${g.title}`} className="rounded-card border bg-card p-2 shadow-card">
             <h2 id={`grupo-${g.title}`} className="flex items-center gap-2.5 px-3 pt-2.5 pb-2 type-section">
-              <span aria-hidden className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+              <span aria-hidden className={cn("flex size-8 items-center justify-center rounded-lg", GROUP_TINTS[g.title] ?? "bg-accent text-accent-foreground")}>
                 <Icon className="size-4" />
               </span>
               {g.title}

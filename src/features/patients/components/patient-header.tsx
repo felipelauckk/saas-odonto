@@ -38,7 +38,7 @@ export function PatientHeader({ patient, canExport = false, portal = null }: Pro
         <div className="flex min-w-0 items-center gap-4">
           <span
             aria-hidden
-            className="flex size-14 shrink-0 items-center justify-center rounded-avatar bg-brand-deep text-xl font-black text-brand-deep-foreground sm:size-[4.5rem] sm:text-2xl"
+            className="flex size-14 shrink-0 items-center justify-center rounded-avatar bg-accent text-xl font-black text-accent-foreground sm:size-[4.5rem] sm:text-2xl"
           >
             {initials(patient.full_name)}
           </span>

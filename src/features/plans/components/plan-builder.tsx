@@ -152,7 +152,7 @@ export function PlanBuilder(props: Props) {
   const chip = (active: boolean) =>
     cn(
       "inline-flex h-8 shrink-0 items-center rounded-full border px-3 text-[0.8125rem] font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40 pointer-coarse:h-11",
-      active ? "border-brand-deep bg-brand-deep text-brand-deep-foreground" : "border-input bg-card hover:bg-muted",
+      active ? "border-foreground bg-foreground font-semibold text-background" : "border-input bg-card hover:bg-muted",
     );
 
   return (
@@ -390,12 +390,12 @@ export function PlanBuilder(props: Props) {
               <Input id="plan-valid" type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
             </div>
           </section>
-          <section className="space-y-4 rounded-card bg-brand-deep p-5 text-brand-deep-foreground" aria-label="Total">
+          <section className="space-y-4 rounded-card bg-hero p-5 text-white shadow-card" aria-label="Total">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-sm text-brand-deep-foreground/80">Total</span>
+              <span className="text-sm text-white/90">Total</span>
               <span className="type-title tabular-nums">{formatCurrency(total)}</span>
             </div>
-            <p className="text-xs text-brand-deep-foreground/70">Desconto, forma de pagamento e parcelas são definidos na aprovação.</p>
+            <p className="text-xs text-white/90">Desconto, forma de pagamento e parcelas são definidos na aprovação.</p>
             <Button type="button" variant="on-dark" onClick={submit} disabled={pending || !items.length} className="w-full">
               {pending ? "Salvando..." : props.planId ? "Salvar alterações" : "Criar orçamento"}
             </Button>

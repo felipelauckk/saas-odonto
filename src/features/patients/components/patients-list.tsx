@@ -19,6 +19,20 @@ import { nextVisitLabel } from "../summary";
 const GRID = "lg:grid lg:grid-cols-[minmax(0,2.2fr)_4.5rem_6.5rem_minmax(0,1.4fr)_minmax(0,1.3fr)_6.5rem_6rem] lg:items-center lg:gap-4";
 const GRID_NO_BALANCE = "lg:grid lg:grid-cols-[minmax(0,2.2fr)_4.5rem_6.5rem_minmax(0,1.4fr)_minmax(0,1.3fr)_6rem] lg:items-center lg:gap-4";
 
+/** Cor do avatar: sempre a mesma para o mesmo paciente (tons pastel, só decoração). */
+const AVATAR_TINTS = [
+  "bg-tint-sky text-tint-sky-foreground",
+  "bg-tint-mint text-tint-mint-foreground",
+  "bg-tint-lilac text-tint-lilac-foreground",
+  "bg-tint-peach text-tint-peach-foreground",
+  "bg-tint-rose text-tint-rose-foreground",
+];
+function avatarTint(id: string) {
+  let h = 0;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return AVATAR_TINTS[h % AVATAR_TINTS.length];
+}
+
 function lastVisit(iso: string | null) {
   if (!iso) return null;
   const date = utcToZoned(iso).date;
@@ -37,8 +51,8 @@ function Cell({ label, className, children }: { label: string; className?: strin
 export function PatientsList({ patients, showBalance }: { patients: PatientListRow[]; showBalance: boolean }) {
   const grid = showBalance ? GRID : GRID_NO_BALANCE;
   return (
-    <div className="overflow-hidden rounded-card border bg-card">
-      <div aria-hidden className={cn("hidden border-b border-border-soft px-5 py-2.5 type-label text-muted-foreground", grid)}>
+    <div className="overflow-hidden rounded-card border bg-card shadow-card">
+      <div aria-hidden className={cn("hidden border-b px-5 py-3 text-xs font-semibold text-muted-foreground", grid)}>
         <span>Paciente</span>
         <span>Idade</span>
         <span>Última visita</span>
@@ -47,7 +61,7 @@ export function PatientsList({ patients, showBalance }: { patients: PatientListR
         {showBalance ? <span className="text-right">Em aberto</span> : null}
         <span>Origem</span>
       </div>
-      <ul className="divide-y divide-border-soft">
+      <ul className="divide-y">
         {patients.map((p) => {
           const situation = patientSituation({
             overdueCents: Number(p.overdue_cents),
@@ -63,10 +77,10 @@ export function PatientsList({ patients, showBalance }: { patients: PatientListR
             <li key={p.id}>
               <Link
                 href={`/pacientes/${p.id}`}
-                className={cn("flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-3 outline-none transition-colors hover:bg-muted/60 focus-visible:bg-muted sm:px-5", grid)}
+                className={cn("flex min-h-16 flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-3 outline-none transition-colors hover:bg-muted/60 focus-visible:bg-muted sm:px-5", grid)}
               >
                 <span className="flex min-w-0 flex-1 items-center gap-3 lg:flex-none">
-                  <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-avatar bg-accent text-xs font-bold text-accent-foreground">
+                  <span aria-hidden className={cn("flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold", avatarTint(p.id))}>
                     {initials(p.full_name)}
                   </span>
                   <span className="flex min-w-0 flex-col">

@@ -250,7 +250,7 @@ function LostForm({ onConfirm, onCancel }: { onConfirm: (reason: string) => void
       <div className="flex flex-wrap gap-2">
         {LOST_REASONS.map((r) => (
           <button key={r} type="button" aria-pressed={reason === r} onClick={() => setReason(r)}
-            className={cn("h-8 rounded-full border px-3 text-sm pointer-coarse:h-11", reason === r ? "border-primary bg-primary/10" : "hover:bg-muted")}>
+            className={cn("h-8 rounded-full border px-3 text-sm pointer-coarse:h-11", reason === r ? "border-foreground bg-foreground font-semibold text-background" : "hover:bg-muted")}>
             {r}
           </button>
         ))}

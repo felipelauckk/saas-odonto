@@ -33,7 +33,7 @@ export default async function Page({ searchParams }: PageProps<"/financeiro/paga
               key={key}
               href={key === "abertas" ? "/financeiro/pagar" : `/financeiro/pagar?status=${key}`}
               aria-current={filter === key ? "page" : undefined}
-              className={cn("inline-flex h-8 items-center rounded-full border px-3 text-sm pointer-coarse:h-11", filter === key ? "border-primary bg-primary/10" : "text-muted-foreground hover:bg-muted")}
+              className={cn("inline-flex h-8 items-center rounded-full border px-3 text-sm pointer-coarse:h-11", filter === key ? "border-foreground bg-foreground font-semibold text-background" : "text-muted-foreground hover:bg-muted")}
             >
               {f.label}
             </Link>
