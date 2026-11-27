@@ -8,7 +8,7 @@ import { AgendaView } from "@/features/agenda/components/agenda-view";
 import { FreedSlot } from "@/features/agenda/components/freed-slot";
 import { MiniCalendar } from "@/features/agenda/components/mini-calendar";
 import { WaitingRoom } from "@/features/agenda/components/waiting-room";
-import { getAgendaData, getFreedSlot, getMonthOccupancy, getWaitingRoom } from "@/features/agenda/queries";
+import { getAgendaData, getFreedSlot, getMonthOccupancy, getUpcomingReturns, getWaitingRoom } from "@/features/agenda/queries";
 import { agendaParamsSchema } from "@/features/agenda/schemas";
 import { requireClinic } from "@/features/tenancy/guards";
 import { formatPhone } from "@/lib/documents";
@@ -62,10 +62,11 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
     if (p) presetPatient = { id: p.id, name: p.full_name, detail: phone ? formatPhone(phone) : null };
   }
 
-  const [levels, waiting, freed] = await Promise.all([
+  const [levels, waiting, freed, returns] = await Promise.all([
     optional("agenda", getMonthOccupancy(unit.id, date.slice(0, 7), data.professionals.map((p) => p.id))),
     optional("agenda", getWaitingRoom(unit.id, today)),
     optional("agenda", getFreedSlot(unit.id)),
+    optional("agenda", getUpcomingReturns(5)),
   ]);
 
   const hrefFor = (day: string) => {
@@ -78,9 +79,40 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
     return q ? `/agenda?${q}` : "/agenda";
   };
 
+  const calendar = levels.ok ? <MiniCalendar date={date} today={today} levels={levels.value} hrefFor={hrefFor} /> : <BlockError what="o calendário" />;
+
   const aside = (
     <>
-      {levels.ok ? <MiniCalendar date={date} today={today} levels={levels.value} hrefFor={hrefFor} /> : <BlockError what="o calendário" />}
+      {returns.ok ? (
+        <section aria-labelledby="alertas-retorno" className="rounded-card border bg-card p-4 shadow-card">
+          <div className="flex items-baseline justify-between gap-2 pb-1">
+            <h2 id="alertas-retorno" className="type-section">
+              Alertas de retorno
+            </h2>
+            <Link href="/agenda/retornos" className="text-xs font-semibold text-primary hover:underline">
+              Ver todos
+            </Link>
+          </div>
+          {returns.value.length ? (
+            <ul className="divide-y">
+              {returns.value.map((r) => (
+                <li key={r.id} className="flex items-center justify-between gap-2 py-1.5 text-[0.8125rem]">
+                  <Link href={`/pacientes/${r.patientId}`} className="min-w-0 truncate hover:underline" title={r.reason}>
+                    {r.patientName}
+                  </Link>
+                  <span className={r.dueDate < today ? "shrink-0 font-semibold text-destructive tabular-nums" : "shrink-0 text-muted-foreground tabular-nums"}>
+                    {r.dueDate.slice(8, 10)}/{r.dueDate.slice(5, 7)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhum retorno pendente.</p>
+          )}
+        </section>
+      ) : (
+        <BlockError what="os alertas de retorno" />
+      )}
       <section aria-labelledby="sala" className="space-y-1 rounded-card border bg-card p-4">
         <div className="flex items-baseline justify-between gap-2 pb-1">
           <h2 id="sala" className="type-section">
@@ -122,7 +154,7 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
   );
 
   return (
-    <div className="space-y-5">
+    <div>
       <AgendaView
         data={data}
         unitId={unit.id}
@@ -134,6 +166,7 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
         isDentist={isDentist}
         presetPatient={presetPatient}
         subtitle={session.units.length > 1 ? unit.name : isDentist ? "Sua agenda" : undefined}
+        calendar={calendar}
         aside={aside}
       />
     </div>

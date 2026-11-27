@@ -46,7 +46,6 @@ type Props = {
 
 const px = (minutes: number) => (minutes / 60) * HOUR_HEIGHT;
 
-const pct = new Intl.NumberFormat("pt-BR", { style: "percent", maximumFractionDigits: 0 });
 
 /** Texto do estado no cartão (sempre escrito: a cor nunca é o único sinal). */
 const CARD_STATUS: Record<AgendaAppointment["status"], string> = {
@@ -59,19 +58,24 @@ const CARD_STATUS: Record<AgendaAppointment["status"], string> = {
   canceled: "Desmarcada",
 };
 
-/** Aparência do cartão por estado (R4). */
+/**
+ * Aparência do cartão: bloco preenchido na cor suave do profissional, com uma
+ * barra forte à esquerda. O estado muda o contorno e vem sempre escrito no cartão.
+ */
 function cardLook(status: AgendaAppointment["status"], color: { value: string; soft: string }) {
+  const filled = { backgroundColor: color.soft, borderLeftColor: color.value };
   switch (status) {
     case "scheduled":
-      return { className: "border-[1.5px] border-dashed border-warning bg-card", style: {}, sub: "text-muted-foreground" };
+      // Não confirmada: contorno tracejado.
+      return { className: "border border-l-[3px] border-dashed border-l-solid", style: { ...filled, borderColor: `color-mix(in oklab, ${color.value} 55%, transparent)`, borderLeftColor: color.value }, sub: "text-muted-foreground" };
     case "confirmed":
-      return { className: "border-[1.5px]", style: { backgroundColor: color.soft, borderColor: color.value }, sub: "text-muted-foreground" };
+      return { className: "border-l-[3px]", style: filled, sub: "text-muted-foreground" };
     case "arrived":
-      return { className: "border-2 border-warning bg-card", style: {}, sub: "text-warning" };
+      return { className: "border-l-[3px] ring-2 ring-warning ring-inset", style: filled, sub: "text-warning" };
     case "in_progress":
-      return { className: "border text-primary-foreground", style: { backgroundColor: color.value, borderColor: color.value }, sub: "text-primary-foreground/85" };
+      return { className: "border-l-[3px] text-primary-foreground", style: { backgroundColor: color.value, borderLeftColor: color.value }, sub: "text-primary-foreground/85" };
     case "done":
-      return { className: "border border-border bg-muted text-muted-foreground", style: {}, sub: "text-muted-foreground" };
+      return { className: "border-l-[3px] border-l-muted-foreground/40 bg-muted text-muted-foreground", style: {}, sub: "text-muted-foreground" };
     default:
       return {
         className:
@@ -125,8 +129,9 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
     setPendingMove(null);
   }
 
-  const hours: number[] = [];
-  for (let m = range.startMin; m < range.endMin; m += 60) hours.push(m);
+  // Horário escrito de 15 em 15 minutos (a hora cheia em destaque).
+  const marks: number[] = [];
+  for (let m = range.startMin; m < range.endMin; m += 15) marks.push(m);
   const slots: number[] = [];
   for (let m = range.startMin; m < range.endMin; m += 30) slots.push(m);
 
@@ -201,33 +206,27 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
   }
 
   return (
-    <div className="overflow-auto rounded-card border bg-card" style={{ maxHeight: "calc(100dvh - 15rem)", minHeight: "24rem" }}>
-      <div className="relative min-w-full" style={{ width: "max-content" }} ref={gridRef}>
+    // Sem rolagem própria: as colunas se ajustam à largura e a página rola inteira.
+    <div className="overflow-x-clip rounded-card border bg-card">
+      <div className="relative w-full" ref={gridRef}>
         {/* Cabeçalho */}
         <div className="sticky top-0 z-20 flex border-b bg-card">
-          <div className="sticky left-0 z-10 w-14 shrink-0 bg-card" />
+          <div className="w-12 shrink-0 bg-card" />
           {columns.map((col) => (
             <div
               key={col.key}
-              className={cn(
-                "flex min-w-40 flex-1 items-center gap-2.5 border-l border-border-soft px-3 py-3 sm:min-w-48",
-                col.isToday && "bg-primary/5",
-              )}
+              className={cn("flex min-w-0 flex-1 flex-col items-stretch gap-1 border-l border-border-soft px-2 pt-2 pb-1.5 text-center", col.isToday && "bg-primary/5")}
+              // Linha na cor do profissional embaixo do nome.
+              style={{ boxShadow: `inset 0 -3px 0 ${col.color?.value ?? "var(--color-border)"}` }}
             >
-              {col.color && col.initials ? (
-                <span
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold ring-2 ring-card"
-                  style={{ backgroundColor: col.color.soft, color: col.color.value, boxShadow: `0 0 0 3.5px ${col.color.value}` }}
-                  aria-hidden
-                >
-                  {col.initials}
-                </span>
-              ) : col.color ? (
-                <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: col.color.value }} aria-hidden />
-              ) : null}
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <p className={cn("truncate text-sm font-semibold first-letter:uppercase", col.isToday && "text-primary")}>{col.label}</p>
+              <div className="flex min-w-0 flex-col">
+                <p className={cn("truncate text-[0.8125rem] font-bold first-letter:uppercase", col.isToday && "text-primary")} title={col.label}>
+                  {col.label}
+                </p>
                 {col.sublabel ? <p className="truncate text-xs text-muted-foreground">{col.sublabel}</p> : null}
+                <p className="text-[0.6875rem] text-muted-foreground tabular-nums">
+                  Pacientes: {new Set(col.appointments.filter((x) => !FREEING_STATUSES.includes(x.status)).map((x) => x.id)).size}
+                </p>
                 {/* Dia inteiro: faixa no topo da coluna */}
                 {col.blocks.some((b) => b.allDay) ? (
                   <div className="flex flex-col gap-1 pt-0.5">
@@ -251,14 +250,6 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
                       ))}
                   </div>
                 ) : null}
-                {col.occupancy !== undefined && col.occupancy !== null ? (
-                  <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="h-1 w-16 overflow-hidden rounded-full bg-track" aria-hidden>
-                      <span className="block h-full rounded-full" style={{ width: `${col.occupancy * 100}%`, backgroundColor: col.color?.value ?? "var(--color-primary)" }} />
-                    </span>
-                    {pct.format(col.occupancy)} ocupado
-                  </span>
-                ) : null}
               </div>
             </div>
           ))}
@@ -266,10 +257,14 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
 
         <div className="flex">
           {/* Horas */}
-          <div className="sticky left-0 z-10 w-14 shrink-0 bg-card" style={{ height }}>
-            {hours.map((m) => (
-              <div key={m} className="absolute right-2 -translate-y-1/2 text-xs text-muted-foreground tabular-nums" style={{ top: px(m - range.startMin) }}>
-                {m === range.startMin ? null : minutesToTime(m)}
+          <div className="relative w-12 shrink-0 bg-card" style={{ height }}>
+            {marks.map((m) => (
+              <div
+                key={m}
+                className={cn("absolute right-1.5 text-[0.6875rem] tabular-nums", m % 60 === 0 ? "font-semibold text-foreground" : "text-muted-foreground")}
+                style={{ top: px(m - range.startMin) + 1 }}
+              >
+                {minutesToTime(m).replace(/^0/, "")}
               </div>
             ))}
             {columns.some((c) => c.isToday) && now !== null && now >= range.startMin && now <= range.endMin ? (
@@ -289,21 +284,32 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
               <div
                 key={col.key}
                 data-col-index={colIndex}
-                className={cn("relative min-w-40 flex-1 border-l border-border-soft sm:min-w-48", col.isToday && "bg-primary/[0.02]")}
+                className="relative min-w-0 flex-1 border-l border-border-soft"
                 style={{ height }}
               >
-                {/* Fora do expediente */}
+                {/* Fora do expediente hachurado; expediente com uma faixa clara na cor do profissional */}
                 {col.working ? (
-                  <div className="pointer-events-none absolute inset-0 bg-muted/60">
+                  <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(135deg,var(--color-muted),var(--color-muted)_5px,var(--color-card)_5px,var(--color-card)_10px)]">
                     {col.working.map((w, i) => (
                       <div
                         key={i}
-                        className="absolute inset-x-0 bg-background"
-                        style={{ top: px(w.startMin - range.startMin), height: px(w.endMin - w.startMin) }}
+                        className="absolute inset-x-0"
+                        style={{
+                          top: px(w.startMin - range.startMin),
+                          height: px(w.endMin - w.startMin),
+                          backgroundColor: col.color ? `color-mix(in oklab, ${col.color.value} 7%, var(--color-card))` : "var(--color-card)",
+                        }}
                       />
                     ))}
                   </div>
                 ) : null}
+
+                {/* Linhas pontilhadas dos quartos de hora */}
+                {marks
+                  .filter((m) => m % 30 !== 0)
+                  .map((m) => (
+                    <div key={`q${m}`} aria-hidden className="pointer-events-none absolute inset-x-0 border-t border-dotted border-border-soft/60" style={{ top: px(m - range.startMin) }} />
+                  ))}
 
                 {/* Linhas e horários livres clicáveis */}
                 {slots.map((m) => (
@@ -314,8 +320,8 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
                     aria-label={`Marcar consulta ${col.label} às ${minutesToTime(m)}`}
                     onClick={() => onSlotClick(col, m)}
                     className={cn(
-                      "absolute inset-x-0 border-t hover:bg-primary/5 focus-visible:bg-primary/10 focus-visible:outline-none",
-                      m % 60 !== 0 ? "border-border-soft" : "border-track",
+                      "absolute inset-x-0 border-t hover:bg-primary/8 focus-visible:bg-primary/10 focus-visible:outline-none",
+                      m % 60 !== 0 ? "border-border-soft/70" : "border-track",
                     )}
                     style={{ top: px(m - range.startMin), height: px(30) }}
                   />

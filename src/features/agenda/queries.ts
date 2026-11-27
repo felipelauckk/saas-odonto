@@ -368,3 +368,16 @@ export async function getFreedSlot(unitId: string, now: Date = new Date()) {
   const professionalName = (prosRes.data ?? []).find((p) => p.id === picked.slot.professionalId)?.name ?? "Profissional";
   return { ...picked, professionalName };
 }
+
+/** Próximos alertas de retorno pendentes (os vencidos primeiro), para a coluna da agenda. */
+export async function getUpcomingReturns(limit: number) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("patient_returns")
+    .select("id, patient_id, due_date, reason, patients(full_name)")
+    .eq("status", "pending")
+    .order("due_date")
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map((r) => ({ id: r.id, patientId: r.patient_id, dueDate: r.due_date, reason: r.reason, patientName: r.patients?.full_name ?? "Paciente" }));
+}

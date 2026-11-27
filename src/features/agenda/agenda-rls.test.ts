@@ -176,10 +176,11 @@ describe.skipIf(!hasSupabase)("agenda (RLS, conflitos e bloqueios)", () => {
     expect(error).not.toBeNull();
   });
 
-  it("ninguém apaga consulta e outra clínica não vê nada", async () => {
+  it("recepção não apaga consulta e outra clínica não vê nada", async () => {
+    // Desde a P3 só a gestão exclui (e só sem evolução): appointment-delete-rls.test.ts.
     const { data: rows } = await owner.from("appointments").select("id").limit(1);
-    const { error } = await owner.from("appointments").delete().eq("id", rows![0]!.id);
-    expect(error).not.toBeNull();
+    const { data: deleted } = await reception.from("appointments").delete().eq("id", rows![0]!.id).select("id");
+    expect(deleted ?? []).toEqual([]);
 
     const { data: foreign } = await other.from("appointments").select("id");
     expect(foreign).toEqual([]);
