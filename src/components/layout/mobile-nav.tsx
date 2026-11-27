@@ -15,13 +15,15 @@ import { Brand } from "./brand";
 import { SidebarContent } from "./sidebar";
 
 type MobileNavProps = {
+  bell?: ReactNode;
+  hasNews?: boolean;
   top?: ReactNode;
   bottom?: ReactNode;
   canManage?: boolean;
   isDentist?: boolean;
 };
 
-export function MobileNav({ top, bottom, canManage, isDentist }: MobileNavProps) {
+export function MobileNav({ top, bottom, bell, hasNews, canManage, isDentist }: MobileNavProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -42,11 +44,13 @@ export function MobileNav({ top, bottom, canManage, isDentist }: MobileNavProps)
             bottom={bottom}
             canManage={canManage}
             isDentist={isDentist}
+            hasNews={hasNews}
             onNavigate={() => setOpen(false)}
           />
         </SheetContent>
       </Sheet>
       <Brand />
+      {bell ? <div className="ml-auto">{bell}</div> : null}
     </header>
   );
 }

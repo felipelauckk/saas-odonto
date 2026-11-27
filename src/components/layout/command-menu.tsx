@@ -2,17 +2,18 @@
 
 import { useEffect, useId, useMemo, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Search, User, UserPlus, type LucideIcon } from "lucide-react";
+import { FileText, Search, Settings2, User, UserPlus, type LucideIcon } from "lucide-react";
 import { cn } from "cn";
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { findPatients, type PatientOption } from "@/features/agenda/actions";
 
 import { visibleNavGroups, type NavAccess } from "./nav-items";
+import { searchShortcuts } from "./search-entries";
 
 const OPEN_EVENT = "arcada:open-search";
 
-type Entry = { id: string; group: string; label: string; detail?: string | null; href: string; icon: LucideIcon };
+type Entry = { id: string; group: string; label: string; detail?: string | null; href: string; icon: LucideIcon; keywords?: string[] };
 
 const quickActions: Entry[] = [
   { id: "action-patient", group: "Ações", label: "Novo paciente", href: "/pacientes/novo", icon: UserPlus },
@@ -97,7 +98,11 @@ export function CommandMenu(access: NavAccess) {
     const pages: Entry[] = visibleNavGroups(access).flatMap((group) =>
       group.items.map((item) => ({ id: `page-${item.href}`, group: "Ir para", label: item.label, href: item.href, icon: item.icon })),
     );
-    const matches = (entry: Entry) => !term || normalize(entry.label).includes(term);
+    const matches = (entry: Entry) => !term || normalize(entry.label).includes(term) || (entry.keywords ?? []).some((k) => normalize(k).includes(term));
+    // Funções e configurações só aparecem quando a pessoa digita.
+    const shortcuts: Entry[] = term
+      ? searchShortcuts(access).map((s) => ({ id: `fn-${s.href}-${s.label}`, group: "Funções e configurações", label: s.label, href: s.href, icon: Settings2, keywords: s.keywords }))
+      : [];
     const patientEntries: Entry[] =
       trimmed.length >= 2 && patients.query === trimmed
         ? patients.items.map((p) => ({
@@ -109,7 +114,13 @@ export function CommandMenu(access: NavAccess) {
             icon: User,
           }))
         : [];
-    return [...patientEntries, ...quickActions.filter(matches), ...pages.filter(matches)];
+    const pageHrefs = new Set(pages.map((p) => p.href));
+    return [
+      ...patientEntries,
+      ...quickActions.filter(matches),
+      ...pages.filter(matches),
+      ...shortcuts.filter((s) => matches(s) && !pageHrefs.has(s.href)).slice(0, 8),
+    ];
   }, [access, trimmed, patients]);
 
   const searching = trimmed.length >= 2 && patients.query !== trimmed;

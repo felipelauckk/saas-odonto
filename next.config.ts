@@ -27,7 +27,8 @@ const nextConfig: NextConfig = {
   // Gera PDFs no servidor (orçamentos, recibos).
   serverExternalPackages: ["@react-pdf/renderer"],
   // Fontes dos PDFs (Montserrat) lidas do disco: precisam ir junto nas funções da Vercel.
-  outputFileTracingIncludes: { "/**": ["./src/lib/pdf/fonts/*.ttf"] },
+  // Ajuda e novidades (Markdown em content/) também são lidas do disco.
+  outputFileTracingIncludes: { "/**": ["./src/lib/pdf/fonts/*.ttf", "./content/**/*.md"] },
   experimental: {
     // Logo da clínica (até 1 MB) chega por Server Action; o padrão de 1 MB
     // não cabe o arquivo + o envelope do formulário. Arquivos clínicos maiores

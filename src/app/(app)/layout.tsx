@@ -9,6 +9,17 @@ import { UserMenu } from "@/features/auth/components/user-menu";
 import { WorkspaceSwitcher } from "@/features/tenancy/components/workspace-switcher";
 import { getSessionContext } from "@/features/tenancy/queries";
 import { canManageClinic, roleLabels } from "@/features/tenancy/roles";
+import { getNews } from "@/features/help/content";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
+import { createClient } from "@/lib/supabase/server";
+
+/** Alguma novidade mais nova do que a última que a pessoa viu? */
+async function hasUnseenNews(userId: string): Promise<boolean> {
+  const [news, supabase] = await Promise.all([getNews(), createClient()]);
+  if (!news[0]) return false;
+  const { data } = await supabase.from("profiles").select("news_seen_at").eq("id", userId).maybeSingle();
+  return !data?.news_seen_at || data.news_seen_at.slice(0, 10) < news[0].date;
+}
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const session = await getSessionContext();
@@ -24,11 +35,12 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   );
   const userSubtitle = [roleLabels[clinic.role], clinic.cro ? `CRO ${clinic.cro}` : null].filter(Boolean).join(" · ");
   const userMenu = <UserMenu name={user.fullName} email={user.email} subtitle={userSubtitle} />;
+  const hasNews = await hasUnseenNews(user.id);
 
   return (
     <div className="min-h-full">
-      <Sidebar top={switcher} bottom={userMenu} canManage={canManage} isDentist={isDentist} />
-      <MobileNav top={switcher} bottom={userMenu} canManage={canManage} isDentist={isDentist} />
+      <Sidebar top={switcher} bottom={userMenu} bell={<NotificationBell clinicId={clinic.id} className="max-lg:hidden" />} hasNews={hasNews} canManage={canManage} isDentist={isDentist} />
+      <MobileNav top={switcher} bottom={userMenu} bell={<NotificationBell clinicId={clinic.id} className="lg:hidden" />} hasNews={hasNews} canManage={canManage} isDentist={isDentist} />
       <CommandMenu canManage={canManage} isDentist={isDentist} />
       <main className="lg:pl-62">
         <SubscriptionBanner
