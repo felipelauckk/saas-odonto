@@ -116,3 +116,9 @@ export async function seedClinical(user: TestUser) {
     .single();
   return { patientId: patient!.id };
 }
+
+/** Ids das origens padrão da clínica (patient_sources), pela chave: instagram, google, site... */
+export async function sourceIds(user: TestUser): Promise<Record<string, string>> {
+  const { data } = await admin().from("patient_sources").select("id, key").eq("clinic_id", user.clinicId).not("key", "is", null);
+  return Object.fromEntries((data ?? []).map((s) => [s.key as string, s.id]));
+}

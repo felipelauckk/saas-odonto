@@ -212,12 +212,14 @@ export async function createBookedAppointment(page: BookingPage, p: BookingPaylo
     .limit(1);
   let patientId = existing?.[0]?.id ?? null;
   if (!patientId) {
-    const { data: created, error } = await admin.from("patients").insert({ clinic_id: page.clinicId, full_name: p.name, phone: p.phone, whatsapp: p.phone, source: "site" }).select("id").single();
+    // Origem "Site" da lista da clínica.
+    const { data: site } = await admin.from("patient_sources").select("id").eq("clinic_id", page.clinicId).eq("key", "site").maybeSingle();
+    const { data: created, error } = await admin.from("patients").insert({ clinic_id: page.clinicId, full_name: p.name, phone: p.phone, whatsapp: p.phone, source_id: site?.id ?? null }).select("id").single();
     if (error) return { error: "Não foi possível concluir. Tente de novo." };
     patientId = created.id;
     const { data: stage } = await admin.from("crm_stages").select("id").eq("clinic_id", page.clinicId).eq("auto_key", "new").maybeSingle();
     if (stage) {
-      await admin.from("leads").insert({ clinic_id: page.clinicId, name: p.name, phone: p.phone, source: "site", stage_id: stage.id, patient_id: patientId, interest: "Agendou pelo site", from_public_form: true });
+      await admin.from("leads").insert({ clinic_id: page.clinicId, name: p.name, phone: p.phone, source_id: site?.id ?? null, stage_id: stage.id, patient_id: patientId, interest: "Agendou pelo site", from_public_form: true });
     }
   }
 

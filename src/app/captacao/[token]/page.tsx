@@ -3,7 +3,6 @@ import { PublicNotice, PublicShell } from "@/components/app/public-shell";
 import { Link2Off } from "lucide-react";
 import { z } from "zod";
 
-import { leadSources, type LeadSource } from "@/features/crm/labels";
 import { PublicLeadForm } from "@/features/crm/components/public-lead-form";
 import { loadLeadForm } from "@/features/crm/public-form";
 
@@ -15,7 +14,8 @@ export default async function Page({ params, searchParams }: PageProps<"/captaca
   const { token } = await params;
   const query = await searchParams;
   const clinic = await loadLeadForm(token);
-  const source = z.enum(leadSources as [LeadSource, ...LeadSource[]]).catch("site").parse(query.origem);
+  // ?origem=<chave da origem> (instagram, google, site...); desconhecida vira "site".
+  const source = z.string().regex(/^[a-z_]{2,20}$/).catch("site").parse(query.origem);
   const campaignId = z.uuid().nullable().catch(null).parse(query.campanha ?? null);
 
   return (

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { createTestUser, hasSupabase, signIn, type TestUser } from "./support/test-user";
+import { createTestUser, hasSupabase, seedAgenda, signIn, type TestUser } from "./support/test-user";
 
 test.skip(!hasSupabase, "Precisa do Supabase configurado no .env.local");
 
@@ -25,9 +25,9 @@ async function createPatient(page: Page, data: { name: string; cpf?: string; pho
   await page.goto("/pacientes/novo");
   await page.getByLabel("Nome completo").fill(data.name);
   if (data.cpf) await page.getByLabel("CPF", { exact: true }).fill(data.cpf);
-  if (data.birth) await page.getByLabel("Data de nascimento").fill(data.birth);
+  if (data.birth) await page.getByLabel("Data de nascimento", { exact: true }).fill(data.birth);
   if (data.guardian) await page.getByLabel("Nome do responsável").fill(data.guardian);
-  if (data.phone) await page.getByLabel("Telefone", { exact: true }).fill(data.phone);
+  if (data.phone) await page.getByLabel("Celular", { exact: true }).fill(data.phone);
   await page.getByRole("button", { name: "Cadastrar paciente" }).click();
   await expect(page.getByRole("heading", { level: 1, name: data.name })).toBeVisible();
 }
@@ -37,9 +37,14 @@ test("cadastra paciente com CEP preenchendo o endereço e consentimento LGPD", a
   await expect(page.getByText("Nenhum paciente por enquanto")).toBeVisible();
   await page.getByRole("link", { name: "Novo paciente" }).first().click();
 
+  // Cadastro rápido no painel; o endereço fica no completo.
   await page.getByLabel("Nome completo").fill("Joana Conceição");
   await page.getByLabel("CPF", { exact: true }).fill("529.982.247-25");
-  await page.getByLabel("Telefone", { exact: true }).fill("(11) 98888-7777");
+  await page.getByLabel("Celular", { exact: true }).fill("(11) 98888-7777");
+  await expect(page.getByLabel("CEP")).toBeHidden();
+  await page.getByRole("button", { name: "Preencher cadastro completo" }).click();
+  // O que já foi digitado continua lá.
+  await expect(page.getByLabel("Nome completo")).toHaveValue("Joana Conceição");
   await page.getByLabel("CEP").fill("01310-100");
   await expect(page.getByLabel("Rua")).toHaveValue("Avenida Paulista");
   await expect(page.getByLabel("Cidade")).toHaveValue("São Paulo");
@@ -55,14 +60,20 @@ test("cadastra paciente com CEP preenchendo o endereço e consentimento LGPD", a
   await expect(page.getByRole("main").getByRole("link", { name: "WhatsApp" })).toHaveAttribute("href", "https://wa.me/5511988887777");
 });
 
-test("menor de idade exige responsável", async ({ page }) => {
+test("menor de idade exige responsável: o erro aparece no bloco certo e a tela rola até ele", async ({ page }) => {
   await page.goto("/pacientes/novo");
   await page.getByLabel("Nome completo").fill("Pedro Criança");
-  await page.getByLabel("Data de nascimento").fill("2020-03-10");
+  await page.getByLabel("Data de nascimento", { exact: true }).fill("2020-03-10");
+  await expect(page.getByText("6 anos · menor de idade")).toBeVisible();
   await page.getByRole("button", { name: "Cadastrar paciente" }).click();
-  await expect(page.getByText("Paciente menor de idade: informe o responsável.")).toBeVisible();
+  const block = page.getByRole("region", { name: "Responsável e família" });
+  await expect(block.getByText("Paciente menor de idade: informe o nome do responsável.")).toBeVisible();
+  await expect(block.getByText("Informe o CPF do responsável.")).toBeVisible();
+  await expect(block.getByLabel("Nome do responsável")).toBeInViewport();
 
   await page.getByLabel("Nome do responsável").fill("Carla Criança");
+  await page.getByLabel("CPF do responsável").fill("529.982.247-25");
+  await page.getByLabel("Telefone do responsável").fill("(11) 97777-6666");
   await page.getByRole("button", { name: "Cadastrar paciente" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Pedro Criança" })).toBeVisible();
   await expect(page.getByText("Menor de idade")).toBeVisible();
@@ -110,9 +121,19 @@ test("edita, arquiva e reativa", async ({ page }) => {
   await createPatient(page, { name: "Bruno Alves" });
 
   await page.getByRole("link", { name: "Editar dados" }).click();
-  await page.getByLabel("E-mail").fill("bruno@example.com");
-  await page.getByRole("button", { name: "Salvar alterações" }).click();
+  await page.getByRole("textbox", { name: /E-mail/ }).fill("bruno@example.com");
+  await page.getByLabel("Profissão").fill("Engenheiro");
+  await page.getByRole("button", { name: "Salvar", exact: true }).click();
   await expect(page.getByText("bruno@example.com")).toBeVisible();
+  await expect(page.getByText("Engenheiro")).toBeVisible();
+
+  // Histórico: quem mudou o quê.
+  await page.getByRole("button", { name: "Ver histórico" }).click();
+  const history = page.getByRole("dialog");
+  await expect(history.getByText("Cadastro alterado · Pessoa Teste")).toBeVisible();
+  await expect(history.getByText("Profissão:")).toBeVisible();
+  await expect(history.getByText("Engenheiro")).toBeVisible();
+  await page.keyboard.press("Escape");
 
   await page.getByRole("button", { name: "Arquivar" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Arquivar" }).click();
@@ -126,4 +147,67 @@ test("edita, arquiva e reativa", async ({ page }) => {
 
   await page.getByRole("button", { name: "Reativar paciente" }).click();
   await expect(page.getByRole("button", { name: "Arquivar" })).toBeVisible();
+});
+
+test("origens da clínica: a nova aparece no cadastro, no filtro de Pacientes e no CRM", async ({ page }) => {
+  await page.goto("/configuracoes/pacientes");
+  await page.getByLabel("Nome da nova origem").fill("Feira de saúde");
+  await page.getByRole("button", { name: "Incluir origem" }).click();
+  await expect(page.getByText("Origem incluída.")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Origens" }).getByText("Feira de saúde")).toBeVisible();
+
+  // Cadastro com a origem nova; "Indicação" mostra "Indicado por".
+  await page.goto("/pacientes/novo");
+  await page.getByLabel("Nome completo").fill("Rita Feira");
+  await page.getByLabel("Como conheceu a clínica").selectOption({ label: "Indicação" });
+  await expect(page.getByText("Indicado por")).toBeVisible();
+  await page.getByLabel("Como conheceu a clínica").selectOption({ label: "Feira de saúde" });
+  await page.getByRole("button", { name: "Cadastrar paciente" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Rita Feira" })).toBeVisible();
+  await expect(page.getByText("feira de saúde").first()).toBeVisible();
+
+  // Filtro de Pacientes.
+  await page.goto("/pacientes");
+  await page.getByLabel("Origem").click();
+  await page.getByRole("option", { name: "Feira de saúde" }).click();
+  await expect(page).toHaveURL(/source=/);
+  await expect(page.getByRole("link", { name: /Rita Feira/ })).toBeVisible();
+
+  // CRM: a mesma lista no novo lead.
+  await page.goto("/crm");
+  await page.getByRole("button", { name: "Novo lead" }).click();
+  await page.getByRole("dialog").getByLabel("Origem").click();
+  await expect(page.getByRole("option", { name: "Feira de saúde" })).toBeVisible();
+});
+
+test("outros telefones e redes sociais aparecem na aba Dados", async ({ page }) => {
+  await page.goto("/pacientes/novo");
+  await page.getByLabel("Nome completo").fill("Lia Contatos");
+  await page.getByRole("button", { name: "Adicionar telefone" }).click();
+  await page.getByLabel("Nome do telefone 1").fill("Trabalho");
+  await page.getByLabel("Número do telefone 1").fill("(11) 3333-4444");
+  await page.getByLabel("Instagram").fill("@lia.contatos");
+  await page.getByText("Não tem e-mail").click();
+  await page.getByRole("button", { name: "Cadastrar paciente" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Lia Contatos" })).toBeVisible();
+  await expect(page.getByText("Telefone: Trabalho")).toBeVisible();
+  await expect(page.getByText("(11) 3333-4444")).toBeVisible();
+  await expect(page.getByText("@lia.contatos")).toBeVisible();
+  await expect(page.getByText("Não tem e-mail")).toBeVisible();
+});
+
+test("cadastro rápido pela Nova consulta: cadastra e já seleciona o paciente", async ({ page }) => {
+  await seedAgenda(user);
+  await page.goto("/agenda?data=2030-03-04");
+  await page.getByRole("button", { name: "Marcar consulta Dra. Ana às 09:00" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Paciente").fill("Nina Rápida");
+  await dialog.getByRole("button", { name: 'Cadastrar "Nina Rápida"' }).click();
+  const sheet = page.getByRole("dialog", { name: "Novo paciente" });
+  await expect(sheet.getByLabel("Nome completo")).toHaveValue("Nina Rápida");
+  await sheet.getByLabel("Celular", { exact: true }).fill("(11) 96666-5555");
+  await sheet.getByRole("button", { name: "Cadastrar paciente" }).click();
+  await expect(sheet).toBeHidden();
+  await expect(page.getByRole("dialog").getByText("Nina Rápida")).toBeVisible();
+  await expect(page.getByRole("dialog").getByText("WhatsApp (11) 96666-5555")).toBeVisible();
 });

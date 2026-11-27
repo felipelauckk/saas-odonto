@@ -7,7 +7,7 @@ import { appendFileSync } from "node:fs";
 
 import { expect, test } from "@playwright/test";
 
-import { admin, createTestUser, hasSupabase, seedAgenda, signIn, type TestUser } from "./support/test-user";
+import { admin, createTestUser, hasSupabase, seedAgenda, signIn, sourceIds, type TestUser } from "./support/test-user";
 
 const label = process.env.SCREENS;
 test.skip(!label || !hasSupabase, "Só com SCREENS=<rótulo>.");
@@ -21,6 +21,7 @@ let leadToken = "";
 test.beforeAll(async () => {
   user = await createTestUser();
   const { unitId, professionalId, patientId } = await seedAgenda(user);
+  const src = await sourceIds(user);
   const client = admin();
   await client.from("patients").insert([
     { clinic_id: user.clinicId, full_name: "Marina Alves", phone: "11977776666" },
@@ -75,7 +76,7 @@ test.beforeAll(async () => {
   const { data: stage } = await client.from("crm_stages").select("id").eq("clinic_id", user.clinicId).eq("auto_key", "new").single();
   if (stage) {
     await client.from("leads").insert(
-      Array.from({ length: 6 }, (_, i) => ({ clinic_id: user.clinicId, stage_id: stage.id, name: `Contato ${i + 1}`, source: "instagram" as const, patient_id: i < 2 ? patientId : null })),
+      Array.from({ length: 6 }, (_, i) => ({ clinic_id: user.clinicId, stage_id: stage.id, name: `Contato ${i + 1}`, source_id: src.instagram, patient_id: i < 2 ? patientId : null })),
     );
   }
   const { data: stages } = await client.from("crm_stages").select("id, kind, position").eq("clinic_id", user.clinicId).order("position");
@@ -83,14 +84,14 @@ test.beforeAll(async () => {
   const won = (stages ?? []).find((st) => st.kind === "won");
   const ago = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
   const more = [
-    { name: "Rodrigo Prates", source: "indicacao" as const, interest: "Implante, perdeu um molar", stage: openStages[1], days: 1 },
-    { name: "Camila Freitas", source: "instagram" as const, interest: "Alinhadores para a filha", stage: openStages[1], days: 9 },
-    { name: "Henrique Lopes", source: "site" as const, interest: "Revisão e limpeza", stage: openStages[2], days: 2 },
-    { name: "Diego Martins", source: "google" as const, interest: "Dor no dente, pediu encaixe", stage: openStages[0], days: 0 },
-    { name: "Luciana Ferreira", source: "indicacao" as const, interest: "Implante 46", stage: won, days: 3 },
+    { name: "Rodrigo Prates", source: "indicacao", interest: "Implante, perdeu um molar", stage: openStages[1], days: 1 },
+    { name: "Camila Freitas", source: "instagram", interest: "Alinhadores para a filha", stage: openStages[1], days: 9 },
+    { name: "Henrique Lopes", source: "site", interest: "Revisão e limpeza", stage: openStages[2], days: 2 },
+    { name: "Diego Martins", source: "google", interest: "Dor no dente, pediu encaixe", stage: openStages[0], days: 0 },
+    { name: "Luciana Ferreira", source: "indicacao", interest: "Implante 46", stage: won, days: 3 },
   ];
   await client.from("leads").insert(
-    more.filter((m) => m.stage).map((m) => ({ clinic_id: user.clinicId, stage_id: m.stage!.id, name: m.name, source: m.source, interest: m.interest, stage_changed_at: ago(m.days) })),
+    more.filter((m) => m.stage).map((m) => ({ clinic_id: user.clinicId, stage_id: m.stage!.id, name: m.name, source_id: src[m.source], interest: m.interest, stage_changed_at: ago(m.days) })),
   );
 
   // Ficha: paciente com alerta na anamnese, dentes registrados, plano aprovado e consultas.
@@ -98,7 +99,7 @@ test.beforeAll(async () => {
   await client.from("professionals").update({ member_id: owner!.id }).eq("id", professionalId);
   const { data: mariana } = await client
     .from("patients")
-    .insert({ clinic_id: user.clinicId, full_name: "Mariana Costa", birth_date: "1992-03-12", phone: "51998124410", whatsapp: "51998124410", source: "indicacao" })
+    .insert({ clinic_id: user.clinicId, full_name: "Mariana Costa", birth_date: "1992-03-12", phone: "51998124410", whatsapp: "51998124410", source_id: src.indicacao })
     .select("id")
     .single();
   fichaId = mariana!.id;
@@ -146,9 +147,9 @@ test.beforeAll(async () => {
   const { data: others } = await client
     .from("patients")
     .insert([
-      { clinic_id: user.clinicId, full_name: "Bruno Lima", birth_date: `1985-${String(thisMonth).padStart(2, "0")}-20`, phone: "51991112222", source: "instagram" },
-      { clinic_id: user.clinicId, full_name: "Carla Souza", birth_date: "1979-07-02", phone: "51993334444", source: "google" },
-      { clinic_id: user.clinicId, full_name: "Diego Ramos", birth_date: "2001-01-15", phone: "51995556666", source: "site", archived_at: new Date().toISOString() },
+      { clinic_id: user.clinicId, full_name: "Bruno Lima", birth_date: `1985-${String(thisMonth).padStart(2, "0")}-20`, phone: "51991112222", source_id: src.instagram },
+      { clinic_id: user.clinicId, full_name: "Carla Souza", birth_date: "1979-07-02", phone: "51993334444", source_id: src.google },
+      { clinic_id: user.clinicId, full_name: "Diego Ramos", birth_date: "2001-01-15", phone: "51995556666", source_id: src.site, archived_at: new Date().toISOString() },
     ])
     .select("id, full_name");
   // Financeiro: caixa dos últimos 6 meses, contas a pagar da semana.
@@ -207,6 +208,9 @@ for (const [name, path] of [
   ["captacao", "/captacao/{lead}"],
   ["paciente", "/pacientes/{ficha}"],
   ["odontograma", "/pacientes/{ficha}/odontograma"],
+  ["paciente-novo", "/pacientes/novo"],
+  ["paciente-editar", "/pacientes/{ficha}/editar"],
+  ["config-pacientes", "/configuracoes/pacientes"],
 ] as const) {
   test(`print ${name}`, async ({ page }, info) => {
     await signIn(page, user);

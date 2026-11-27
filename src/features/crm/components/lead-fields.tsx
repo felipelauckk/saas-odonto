@@ -11,17 +11,19 @@ import { findPatients, type PatientOption } from "@/features/agenda/actions";
 import type { ActionState } from "@/lib/action-state";
 import { formatPhone } from "@/lib/documents";
 
-import { leadSources, sourceLabels } from "../labels";
+import { sourceOptions, type PatientSourceOption } from "@/features/patients/sources";
 import type { CrmLead } from "../queries";
 
 export type LeadOptions = {
   campaigns: { id: string; name: string; active: boolean }[];
   partners: { id: string; name: string; active: boolean }[];
   procedures: { id: string; name: string }[];
+  /** Origens da clínica (patient_sources). */
+  sources: PatientSourceOption[];
 };
 
 /** Quem indicou: ninguém, um paciente (busca) ou um parceiro. Vai no campo "referral". */
-function ReferralField({ initial, initialName, partners }: { initial: string; initialName: string | null; partners: LeadOptions["partners"] }) {
+export function ReferralField({ initial, initialName, partners }: { initial: string; initialName: string | null; partners: LeadOptions["partners"] }) {
   const [kind, setKind] = useState<"none" | "patient" | "partner">(initial.startsWith("patient:") ? "patient" : initial.startsWith("partner:") ? "partner" : "none");
   const [patient, setPatient] = useState<PatientOption | null>(initial.startsWith("patient:") ? { id: initial.slice(8), name: initialName ?? "Paciente", detail: null } : null);
   const [partnerId, setPartnerId] = useState(initial.startsWith("partner:") ? initial.slice(8) : "");
@@ -110,10 +112,10 @@ export function LeadFields({ lead, state, options }: { lead?: CrmLead; state: Ac
         <FormField label="Telefone" name="phone" inputMode="tel" defaultValue={v?.phone ?? (lead?.phone ? formatPhone(lead.phone) : "")} errors={e?.phone} />
         <FormField label="E-mail" name="email" type="email" defaultValue={v?.email ?? lead?.email ?? ""} errors={e?.email} />
         <SelectField
-          name="source"
+          name="sourceId"
           label="Origem"
-          defaultValue={v?.source ?? lead?.source ?? "instagram"}
-          options={leadSources.map((s) => ({ value: s, label: sourceLabels[s] }))}
+          defaultValue={v?.sourceId ?? lead?.sourceId ?? options.sources.find((s) => s.key === "instagram")?.id ?? "none"}
+          options={[{ value: "none", label: "Não informada" }, ...sourceOptions(options.sources, lead?.sourceId).map((s) => ({ value: s.id, label: s.name }))]}
         />
         <SelectField
           name="campaignId"

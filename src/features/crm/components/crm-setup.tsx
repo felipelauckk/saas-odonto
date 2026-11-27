@@ -16,7 +16,7 @@ import { formatCurrency } from "@/lib/format";
 import { centsToInput } from "@/lib/money";
 
 import { deleteStage, moveStage, regenerateLeadFormLink, saveCampaign, savePartner, saveStage } from "../actions";
-import { leadSources, sourceLabels, type LeadSource } from "../labels";
+import { sourceOptions, type PatientSourceOption } from "@/features/patients/sources";
 import type { CrmStage } from "../queries";
 
 function useRun() {
@@ -85,16 +85,16 @@ export function StagesSetup({ stages }: { stages: CrmStage[] }) {
   );
 }
 
-type Campaign = { id: string; name: string; source: LeadSource | null; cost_cents: number; active: boolean };
+type Campaign = { id: string; name: string; source_id: string | null; cost_cents: number; active: boolean };
 type Partner = { id: string; name: string; phone: string | null; notes: string | null; active: boolean };
 
-function CampaignFields({ c, values, errors }: { c?: Campaign; values?: Record<string, string>; errors?: Partial<Record<string, string[]>> }) {
+function CampaignFields({ c, values, errors, sources }: { c?: Campaign; values?: Record<string, string>; errors?: Partial<Record<string, string[]>>; sources: PatientSourceOption[] }) {
   return (
     <>
       {c ? <input type="hidden" name="id" value={c.id} /> : null}
       <FormField label="Nome" name="name" defaultValue={values?.name ?? c?.name ?? ""} errors={errors?.name} />
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField name="source" label="Origem" defaultValue={values?.source ?? c?.source ?? "none"} options={[{ value: "none", label: "Qualquer" }, ...leadSources.map((s) => ({ value: s, label: sourceLabels[s] }))]} />
+        <SelectField name="sourceId" label="Origem" defaultValue={values?.sourceId ?? c?.source_id ?? "none"} options={[{ value: "none", label: "Qualquer" }, ...sourceOptions(sources, c?.source_id).map((s) => ({ value: s.id, label: s.name }))]} />
         <FormField label="Valor investido (R$)" name="cost" inputMode="decimal" placeholder="0,00" defaultValue={values?.cost ?? (c ? centsToInput(c.cost_cents) : "")} errors={errors?.cost} />
       </div>
       <SwitchField name="active" label="Ativa" defaultChecked={c?.active ?? true} />
@@ -102,11 +102,12 @@ function CampaignFields({ c, values, errors }: { c?: Campaign; values?: Record<s
   );
 }
 
-export function CampaignsSetup({ campaigns }: { campaigns: Campaign[] }) {
+export function CampaignsSetup({ campaigns, sources }: { campaigns: Campaign[]; sources: PatientSourceOption[] }) {
+  const sourceName = new Map(sources.map((s) => [s.id, s.name]));
   return (
     <div className="space-y-3">
       <FormDialog title="Nova campanha" action={saveCampaign} submitLabel="Criar" trigger={<Button variant="outline"><Plus aria-hidden />Nova campanha</Button>}>
-        {(state) => <CampaignFields values={state.values} errors={state.fieldErrors} />}
+        {(state) => <CampaignFields values={state.values} errors={state.fieldErrors} sources={sources} />}
       </FormDialog>
       {campaigns.length ? (
         <ul className="divide-y rounded-xl border">
@@ -114,11 +115,11 @@ export function CampaignsSetup({ campaigns }: { campaigns: Campaign[] }) {
             <li key={c.id} className="flex items-center gap-3 px-4 py-2 text-sm">
               <span className="flex-1">
                 {c.name}
-                <span className="text-muted-foreground"> · {c.source ? sourceLabels[c.source] : "Qualquer origem"} · {formatCurrency(c.cost_cents)}</span>
+                <span className="text-muted-foreground"> · {(c.source_id && sourceName.get(c.source_id)) || "Qualquer origem"} · {formatCurrency(c.cost_cents)}</span>
               </span>
               {!c.active ? <Badge variant="secondary">Inativa</Badge> : null}
               <FormDialog title="Editar campanha" action={saveCampaign} trigger={<Button variant="ghost" size="icon" aria-label={`Editar ${c.name}`}><Pencil /></Button>}>
-                {(state) => <CampaignFields c={c} values={state.values} errors={state.fieldErrors} />}
+                {(state) => <CampaignFields c={c} values={state.values} errors={state.fieldErrors} sources={sources} />}
               </FormDialog>
             </li>
           ))}

@@ -40,11 +40,13 @@ describe.skipIf(!hasSupabase)("relatórios (dados no banco)", () => {
     // Atende no dia da semana de "past", 08:00–12:00.
     await admin.from("professional_schedules").insert({ clinic_id: clinicId, unit_id: unitId, professional_id: pro, weekday: weekdayOf(past), start_time: "08:00", end_time: "12:00" });
     const [, m, d] = addDays(today, 5).split("-");
+    const { data: srcs } = await admin.from("patient_sources").select("id, key").eq("clinic_id", clinicId);
+    const src = (key: string) => srcs!.find((s) => s.key === key)!.id;
     const { data: pats } = await admin
       .from("patients")
       .insert([
-        { clinic_id: clinicId, full_name: "Ana Relatório", source: "instagram", birth_date: `1990-${m}-${d}`, address: { city: "Campinas", state: "SP", district: "Centro" } },
-        { clinic_id: clinicId, full_name: "Bia Relatório", source: "google", birth_date: "2015-01-01", address: { city: "Campinas", state: "SP", district: "Cambuí" } },
+        { clinic_id: clinicId, full_name: "Ana Relatório", source_id: src("instagram"), birth_date: `1990-${m}-${d}`, address: { city: "Campinas", state: "SP", district: "Centro" } },
+        { clinic_id: clinicId, full_name: "Bia Relatório", source_id: src("google"), birth_date: "2015-01-01", address: { city: "Campinas", state: "SP", district: "Cambuí" } },
       ])
       .select("id, full_name");
     ana = pats!.find((x) => x.full_name.startsWith("Ana"))!.id;
@@ -104,6 +106,8 @@ describe.skipIf(!hasSupabase)("relatórios (dados no banco)", () => {
     expect((await run("orcamentos"))!.total).toMatchObject({ issued: 1, approved: 1, conversion: 1, ticket: 40000 });
     const first = await run("primeira-consulta");
     expect(first!.total).toMatchObject({ total: 2, attended: 1, noShow: 1, treatment: 1, conversion: 1 });
+    // Agrupada pela origem da lista da clínica.
+    expect(first!.rows.map((r) => r.group).sort()).toEqual(["Google", "Instagram"]);
   });
 
   it("faltas e ocupação da agenda", async () => {

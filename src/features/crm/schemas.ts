@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { onlyDigits } from "@/lib/documents";
 
-import { leadSources, type LeadSource } from "./labels";
 
 const optionalText = (max: number) =>
   z
@@ -31,7 +30,7 @@ export const leadSchema = z
     name: z.string().trim().min(2, "Informe o nome.").max(160),
     phone: phoneField,
     email: optionalText(160).refine((v) => v === null || z.email().safeParse(v).success, "E-mail inválido."),
-    source: z.enum(leadSources as [LeadSource, ...LeadSource[]]),
+    sourceId: optionalUuid,
     campaignId: optionalUuid,
     procedureId: optionalUuid,
     interest: optionalText(160),
@@ -60,7 +59,8 @@ export const publicLeadSchema = z.object({
   phone: phoneField.refine((v) => v !== null, "Informe seu telefone com DDD."),
   interest: optionalText(160),
   message: optionalText(1000),
-  source: z.enum(leadSources as [LeadSource, ...LeadSource[]]).catch("site"),
+  /** Chave da origem na lista (instagram, site...); desconhecida vira "site". */
+  source: z.string().regex(/^[a-z_]{2,20}$/).catch("site"),
   campaignId: z.uuid().nullable().catch(null),
   website: z.string().max(0).optional(), // armadilha para robôs
   startedAt: z.coerce.number(),

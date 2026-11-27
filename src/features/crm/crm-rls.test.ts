@@ -53,7 +53,8 @@ describe.skipIf(!hasSupabase)("CRM (funil e captação)", () => {
 
   it("clínica nova tem o funil padrão; recepção cria lead; dentista e outra clínica não veem", async () => {
     expect(Object.keys(stage).sort()).toEqual(["attended", "evaluation_scheduled", "lost", "new", "quote_presented", "talking", "won"]);
-    const { error } = await reception.from("leads").insert({ clinic_id: clinicId, name: "Lead Teste", phone: "11977776666", source: "instagram", stage_id: stage.new! });
+    const { data: instagram } = await reception.from("patient_sources").select("id").eq("key", "instagram").single();
+    const { error } = await reception.from("leads").insert({ clinic_id: clinicId, name: "Lead Teste", phone: "11977776666", source_id: instagram!.id, stage_id: stage.new! });
     expect(error).toBeNull();
     expect((await dentist.from("leads").select("id")).data).toEqual([]);
     expect((await dentist.from("leads").insert({ clinic_id: clinicId, name: "X", stage_id: stage.new! })).error).not.toBeNull();
@@ -117,8 +118,8 @@ describe.skipIf(!hasSupabase)("CRM (funil e captação)", () => {
     expect(await submitPublicLeadCore({ ...base, name: "Rápido", phone: "11933334444", startedAt: String(Date.now()) })).toEqual({});
     expect((await submitPublicLeadCore({ ...base, token: "0".repeat(32) })).error).toBe("Formulário indisponível.");
 
-    const { data: leads } = await admin.from("leads").select("name, source, stage_id, from_public_form, interest, phone").eq("clinic_id", clinicId).eq("from_public_form", true);
-    expect(leads).toEqual([{ name: "Maria do Site", source: "google", stage_id: stage.new, from_public_form: true, interest: "Clareamento", phone: "11955554444" }]);
+    const { data: leads } = await admin.from("leads").select("name, patient_sources(key), stage_id, from_public_form, interest, phone").eq("clinic_id", clinicId).eq("from_public_form", true);
+    expect(leads).toEqual([{ name: "Maria do Site", patient_sources: { key: "google" }, stage_id: stage.new, from_public_form: true, interest: "Clareamento", phone: "11955554444" }]);
     // Reenvio do mesmo telefone em seguida não duplica.
     await submitPublicLeadCore(base);
     expect((await admin.from("leads").select("id").eq("clinic_id", clinicId).eq("from_public_form", true)).data).toHaveLength(1);

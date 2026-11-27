@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { z } from "zod";
 
 import { SubpageHeader } from "@/components/layout/subpage-header";
-import { sourceLabels } from "@/features/crm/labels";
 import { getCrmReport } from "@/features/crm/queries";
 import { PeriodFilter } from "@/features/payables/components/period-filter";
 import { requireFrontDesk } from "@/features/tenancy/guards";
@@ -39,7 +38,7 @@ export default async function Page({ searchParams }: PageProps<"/crm/relatorio">
             </thead>
             <tbody className="divide-y tabular-nums">
               {report.bySource.length ? report.bySource.map((r) => (
-                <tr key={r.source}><td className="px-4 py-2">{sourceLabels[r.source]}</td><td className={td}>{r.leads}</td><td className={td}>{r.converted}</td><td className={td}>{r.won}</td><td className={td}>{rate(r.won, r.leads)}</td><td className={td}>{r.lost}</td></tr>
+                <tr key={r.sourceId}><td className="px-4 py-2">{r.name}</td><td className={td}>{r.leads}</td><td className={td}>{r.converted}</td><td className={td}>{r.won}</td><td className={td}>{rate(r.won, r.leads)}</td><td className={td}>{r.lost}</td></tr>
               )) : <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Nenhum lead no período.</td></tr>}
             </tbody>
           </table>

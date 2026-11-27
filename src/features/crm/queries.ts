@@ -4,7 +4,7 @@ import { fetchAll } from "@/lib/supabase/fetch-all";
 import { createClient } from "@/lib/supabase/server";
 import { addDays, zonedToUtc } from "@/lib/timezone";
 
-import type { LeadSource, StageKind } from "./labels";
+import type { StageKind } from "./labels";
 
 export type CrmStage = { id: string; name: string; position: number; kind: StageKind; autoKey: string | null };
 export type CrmLead = {
@@ -12,7 +12,8 @@ export type CrmLead = {
   name: string;
   phone: string | null;
   email: string | null;
-  source: LeadSource;
+  /** Origem (patient_sources). */
+  sourceId: string | null;
   campaignId: string | null;
   procedureId: string | null;
   interest: string | null;
@@ -43,13 +44,13 @@ export async function getCrmBoard(today: string) {
       supabase
         .from("leads")
         .select(
-          "id, name, phone, email, source, campaign_id, procedure_id, interest, notes, stage_id, stage_changed_at, lost_reason, patient_id, referred_by_patient_id, referred_by_partner_id, created_at, from_public_form, crm_stages(kind), referrer:patients!leads_referred_by_patient_id_clinic_id_fkey(full_name), referral_partners(name)",
+          "id, name, phone, email, source_id, campaign_id, procedure_id, interest, notes, stage_id, stage_changed_at, lost_reason, patient_id, referred_by_patient_id, referred_by_partner_id, created_at, from_public_form, crm_stages(kind), referrer:patients!leads_referred_by_patient_id_clinic_id_fkey(full_name), referral_partners(name)",
         )
         .order("created_at", { ascending: false })
         .order("id")
         .range(a, b),
     ).then((data) => ({ data, error: null })),
-    supabase.from("crm_campaigns").select("id, name, source, cost_cents, active").order("name"),
+    supabase.from("crm_campaigns").select("id, name, source_id, cost_cents, active").order("name"),
     supabase.from("referral_partners").select("id, name, phone, notes, active").order("name"),
     supabase.from("procedures").select("id, name").eq("active", true).order("name"),
   ]);
@@ -62,7 +63,7 @@ export async function getCrmBoard(today: string) {
       name: l.name,
       phone: l.phone,
       email: l.email,
-      source: l.source,
+      sourceId: l.source_id,
       campaignId: l.campaign_id,
       procedureId: l.procedure_id,
       interest: l.interest,
@@ -88,11 +89,11 @@ export async function getCrmBoard(today: string) {
 /** Conversão por origem e campanha, e ranking de indicação, para leads criados no período. */
 export async function getCrmReport(from: string, to: string) {
   const supabase = await createClient();
-  const [leadsRes, campaignsRes, patientsRes] = await Promise.all([
+  const [leadsRes, campaignsRes, patientsRes, sourcesRes] = await Promise.all([
     fetchAll((a, b) =>
       supabase
         .from("leads")
-        .select("id, source, campaign_id, patient_id, referred_by_patient_id, referred_by_partner_id, crm_stages(kind)")
+        .select("id, source_id, patient_id, campaign_id, referred_by_patient_id, referred_by_partner_id, crm_stages(kind)")
         .gte("created_at", zonedToUtc(from, "00:00").toISOString())
         .lt("created_at", zonedToUtc(addDays(to, 1), "00:00").toISOString())
         .order("id")
@@ -109,17 +110,19 @@ export async function getCrmReport(from: string, to: string) {
         .order("id")
         .range(a, b),
     ).then((data) => ({ data, error: null })),
+    supabase.from("patient_sources").select("id, name"),
   ]);
   if (leadsRes.error) throw leadsRes.error;
   if (patientsRes.error) throw patientsRes.error;
+  const sourceName = new Map((sourcesRes.data ?? []).map((s) => [s.id, s.name]));
   const leads = leadsRes.data ?? [];
 
   type Row = { leads: number; converted: number; won: number; lost: number };
   const empty = (): Row => ({ leads: 0, converted: 0, won: 0, lost: 0 });
-  const bySource = new Map<LeadSource, Row>();
+  const bySource = new Map<string, Row>();
   const byCampaign = new Map<string, Row>();
   for (const l of leads) {
-    for (const [map, key] of [[bySource, l.source], [byCampaign, l.campaign_id]] as const) {
+    for (const [map, key] of [[bySource, l.source_id], [byCampaign, l.campaign_id]] as const) {
       if (!key) continue;
       const row = (map as Map<string, Row>).get(key) ?? empty();
       row.leads++;
@@ -163,7 +166,7 @@ export async function getCrmReport(from: string, to: string) {
 
   return {
     total: leads.length,
-    bySource: [...bySource.entries()].map(([source, r]) => ({ source, ...r })).sort((a, b) => b.leads - a.leads),
+    bySource: [...bySource.entries()].map(([sourceId, r]) => ({ sourceId, name: sourceName.get(sourceId) ?? "Origem", ...r })).sort((a, b) => b.leads - a.leads),
     byCampaign: (campaignsRes.data ?? [])
       .map((c) => ({ id: c.id, name: c.name, costCents: c.cost_cents, ...(byCampaign.get(c.id) ?? empty()) }))
       .filter((c) => c.leads > 0 || c.costCents > 0)

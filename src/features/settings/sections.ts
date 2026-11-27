@@ -1,4 +1,5 @@
 import {
+  UserRoundSearch,
   Armchair,
   Building2,
   CalendarCheck,
@@ -73,6 +74,7 @@ export const SETTINGS_AREAS: readonly SettingsArea[] = [
       { href: "/configuracoes/cadeiras", title: "Cadeiras", description: "Cadeiras de cada unidade", icon: Armchair },
       { href: "/configuracoes/procedimentos", title: "Procedimentos e preços", description: "Preço e duração", icon: ClipboardList },
       { href: "/configuracoes/marcadores", title: "Marcadores", description: "Etiquetas das consultas", icon: Tags },
+      { href: "/configuracoes/pacientes", title: "Pacientes e captação", description: "Origens, prontuário e cadastro", icon: UserRoundSearch },
       { href: "/configuracoes/laboratorios", title: "Laboratórios", description: "Próteses, preços e prazos", icon: FlaskConical },
     ],
   },

@@ -1,18 +1,8 @@
 import type { Database } from "@/lib/supabase/database.types";
 
-export type PatientSource = Database["public"]["Enums"]["patient_source"];
 export type PatientGender = Database["public"]["Enums"]["patient_gender"];
 
-export const patientSources = ["indicacao", "instagram", "google", "site", "outro"] as const satisfies readonly PatientSource[];
 export const patientGenders = ["female", "male", "other", "not_informed"] as const satisfies readonly PatientGender[];
-
-export const sourceLabels: Record<PatientSource, string> = {
-  indicacao: "Indicação",
-  instagram: "Instagram",
-  google: "Google",
-  site: "Site",
-  outro: "Outro",
-};
 
 export const genderLabels: Record<PatientGender, string> = {
   female: "Feminino",
@@ -36,3 +26,19 @@ export const PATIENT_TABS = [
   { slug: "documentos", label: "Documentos" },
   { slug: "agendamentos", label: "Agendamentos" },
 ] as const;
+
+export const maritalLabels: Record<"solteiro" | "casado" | "uniao_estavel" | "divorciado" | "viuvo", string> = {
+  solteiro: "Solteiro(a)",
+  casado: "Casado(a)",
+  uniao_estavel: "União estável",
+  divorciado: "Divorciado(a)",
+  viuvo: "Viúvo(a)",
+};
+
+export const educationLabels: Record<"fundamental" | "medio" | "superior" | "pos" | "nao_informado", string> = {
+  fundamental: "Fundamental",
+  medio: "Médio",
+  superior: "Superior",
+  pos: "Pós-graduação",
+  nao_informado: "Prefere não informar",
+};

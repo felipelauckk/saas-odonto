@@ -10,7 +10,7 @@ import { formatCurrencyWhole } from "@/lib/format";
 import { initials } from "@/lib/initials";
 import { utcToZoned } from "@/lib/timezone";
 
-import { sourceLabels } from "../labels";
+import type { PatientSourceOption } from "../sources";
 import type { PatientListRow } from "../queries";
 import { patientSituation } from "../situation";
 import { nextVisitLabel } from "../summary";
@@ -48,7 +48,8 @@ function Cell({ label, className, children }: { label: string; className?: strin
   );
 }
 
-export function PatientsList({ patients, showBalance }: { patients: PatientListRow[]; showBalance: boolean }) {
+export function PatientsList({ patients, showBalance, sources }: { patients: PatientListRow[]; showBalance: boolean; sources: PatientSourceOption[] }) {
+  const sourceName = new Map(sources.map((s) => [s.id, s.name]));
   const grid = showBalance ? GRID : GRID_NO_BALANCE;
   return (
     <div className="overflow-hidden rounded-card border bg-card shadow-card">
@@ -120,7 +121,7 @@ export function PatientsList({ patients, showBalance }: { patients: PatientListR
                   </Cell>
                 ) : null}
                 <Cell label="Origem" className="hidden text-muted-foreground lg:inline">
-                  {p.source ? sourceLabels[p.source] : "—"}
+                  {(p.source_id && sourceName.get(p.source_id)) || "—"}
                 </Cell>
               </Link>
             </li>

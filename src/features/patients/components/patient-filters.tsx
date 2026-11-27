@@ -7,7 +7,7 @@ import { cn } from "cn";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { patientSources, sourceLabels } from "../labels";
+import { sourceOptions, type PatientSourceOption } from "../sources";
 import { SEGMENTS } from "../situation";
 
 export type SegmentCounts = {
@@ -22,7 +22,7 @@ export type SegmentCounts = {
 const count = new Intl.NumberFormat("pt-BR");
 
 /** Busca, filtros rápidos com contagem e origem. Tudo fica na URL (dá para compartilhar e voltar). */
-export function PatientFilters({ counts }: { counts: SegmentCounts | null }) {
+export function PatientFilters({ counts, sources }: { counts: SegmentCounts | null; sources: PatientSourceOption[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -59,7 +59,7 @@ export function PatientFilters({ counts }: { counts: SegmentCounts | null }) {
     { key: "archived", label: "Arquivados", n: counts?.archived, pressed: archived, go: { situacao: null, status: "archived" } },
   ];
 
-  const sourceItems = [{ value: "all", label: "Todas as origens" }, ...patientSources.map((s) => ({ value: s, label: sourceLabels[s] }))];
+  const sourceItems = [{ value: "all", label: "Todas as origens" }, ...sourceOptions(sources, source).map((s) => ({ value: s.id, label: s.name }))];
 
   return (
     <div className="space-y-3">

@@ -72,20 +72,23 @@ export const CLINIC_TABLES = [
   "procedures",
   "payment_methods",
   "anamnesis_templates",
+  "patient_phones",
   "patients",
+  "patient_sources",
   "referral_partners",
 ] as const;
 
 export async function purgeClinic(admin: SupabaseClient, clinicId: string): Promise<void> {
   const storage = admin.storage.from("clinic");
   // Arquivos guardados no Storage: as leituras vão juntas, numa ida só.
-  const [files, bills, docs, sigs, closings, logo] = await Promise.all([
+  const [files, bills, docs, sigs, closings, logo, photos] = await Promise.all([
     admin.from("patient_files").select("storage_path").eq("clinic_id", clinicId),
     admin.from("payables").select("attachment_path").eq("clinic_id", clinicId).not("attachment_path", "is", null),
     admin.from("patient_documents").select("pdf_path").eq("clinic_id", clinicId),
     admin.from("signature_requests").select("signed_pdf_path, signature_path").eq("clinic_id", clinicId),
     admin.from("commission_closings").select("pdf_path").eq("clinic_id", clinicId).not("pdf_path", "is", null),
     storage.list(`${clinicId}/logo`),
+    admin.from("patients").select("photo_path").eq("clinic_id", clinicId).not("photo_path", "is", null),
   ]);
   const paths: string[] = [
     ...((files.data ?? []) as { storage_path: string }[]).map((f) => f.storage_path),
@@ -96,6 +99,7 @@ export async function purgeClinic(admin: SupabaseClient, clinicId: string): Prom
     ),
     ...((closings.data ?? []) as { pdf_path: string }[]).map((c) => c.pdf_path),
     ...(logo.data ?? []).map((f) => `${clinicId}/logo/${f.name}`),
+    ...((photos.data ?? []) as { photo_path: string }[]).map((p) => p.photo_path),
   ];
   if (paths.length) await storage.remove(paths);
 

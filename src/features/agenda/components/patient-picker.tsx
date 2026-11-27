@@ -16,10 +16,12 @@ type PatientPickerProps = {
   error?: string;
   /** Esconde o telefone no cartão (quem usa já mostra o contato logo abaixo). */
   hideDetail?: boolean;
+  /** Cadastro rápido completo (painel "Novo paciente"); sem isso, cadastra só nome e telefone aqui. */
+  onCreateNew?: (name: string) => void;
 };
 
 /** Escolhe o paciente pelo nome, CPF ou telefone; cadastra um novo se não achar. */
-export function PatientPicker({ value, onChange, error, hideDetail = false }: PatientPickerProps) {
+export function PatientPicker({ value, onChange, error, hideDetail = false, onCreateNew }: PatientPickerProps) {
   const id = useId();
   const [query, setQuery] = useState("");
   const [found, setResults] = useState<PatientOption[]>([]);
@@ -143,7 +145,7 @@ export function PatientPicker({ value, onChange, error, hideDetail = false }: Pa
             </div>
           </div>
         ) : (
-          <Button type="button" variant="outline" size="sm" onClick={() => setCreating(true)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => (onCreateNew ? onCreateNew(query.trim()) : setCreating(true))}>
             <UserPlus aria-hidden />
             {results.length ? "Não é nenhum destes: cadastrar novo" : `Cadastrar "${query.trim()}"`}
           </Button>

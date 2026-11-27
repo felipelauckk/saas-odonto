@@ -9,7 +9,6 @@ import { subscriptionErrorMessage } from "@/lib/db-errors";
 import { parseBRLToCents } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 
-import { leadSources, patientSourceFor, type LeadSource } from "./labels";
 import { leadSchema, phoneField, referralColumns } from "./schemas";
 
 type Result = { error?: string };
@@ -42,7 +41,7 @@ export async function saveLead(_prev: ActionState, formData: FormData): Promise<
     name: d.name,
     phone: d.phone,
     email: d.email,
-    source: d.source,
+    source_id: d.sourceId,
     campaign_id: d.campaignId,
     procedure_id: d.procedureId,
     interest: d.interest,
@@ -88,7 +87,7 @@ export async function convertLead(id: string): Promise<Result & { patientId?: st
   if (!ctx) return { error: "Sem permissão." };
   const { data: lead } = await ctx.supabase
     .from("leads")
-    .select("id, name, phone, email, source, patient_id, referred_by_patient_id, referred_by_partner_id")
+    .select("id, name, phone, email, source_id, patient_id, referred_by_patient_id, referred_by_partner_id")
     .eq("id", id)
     .maybeSingle();
   if (!lead) return { error: "Lead não encontrado." };
@@ -113,7 +112,7 @@ export async function convertLead(id: string): Promise<Result & { patientId?: st
         phone: lead.phone,
         whatsapp: lead.phone,
         email: lead.email,
-        source: patientSourceFor[lead.source],
+        source_id: lead.source_id,
         referred_by_patient_id: lead.referred_by_patient_id,
         referred_by_partner_id: lead.referred_by_partner_id,
       })
@@ -196,7 +195,7 @@ export async function saveCampaign(_prev: ActionState, formData: FormData): Prom
     .object({
       id: z.string().optional().transform((v) => v || undefined).pipe(z.uuid().optional()),
       name: z.string().trim().min(2, "Informe o nome.").max(80),
-      source: z.string().optional().transform((v) => (v && v !== "none" ? v : null)).pipe(z.enum(leadSources as [LeadSource, ...LeadSource[]]).nullable()),
+      sourceId: z.string().optional().transform((v) => (v && v !== "none" ? v : null)).pipe(z.uuid().nullable()),
       cost: z.string().optional().transform((v, c) => {
         const cents = parseBRLToCents(v ? v : "0");
         if (cents === null) {
@@ -211,8 +210,8 @@ export async function saveCampaign(_prev: ActionState, formData: FormData): Prom
   if (!parsed.success) return { status: "error", message: "Confira os campos.", fieldErrors: z.flattenError(parsed.error).fieldErrors, values };
   const ctx = await manager();
   if (!ctx) return { status: "error", message: "Sem permissão.", values };
-  const { id, name, source, cost, active } = parsed.data;
-  const row = { name, source, cost_cents: cost, active };
+  const { id, name, sourceId, cost, active } = parsed.data;
+  const row = { name, source_id: sourceId, cost_cents: cost, active };
   const { error } = id
     ? await ctx.supabase.from("crm_campaigns").update(row).eq("id", id)
     : await ctx.supabase.from("crm_campaigns").insert({ ...row, clinic_id: ctx.clinicId });

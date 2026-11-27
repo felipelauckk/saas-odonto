@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { admin, createTestUser, hasSupabase, seedAgenda, signIn, type TestUser } from "./support/test-user";
+import { admin, createTestUser, hasSupabase, seedAgenda, signIn, sourceIds, type TestUser } from "./support/test-user";
 
 test.skip(!hasSupabase, "Precisa do Supabase configurado no .env.local");
 
@@ -44,14 +44,15 @@ test("cria lead, move no funil e marca como perdido com motivo", async ({ page }
 
 test("agendar avaliação converte o lead em paciente e abre a agenda", async ({ page }) => {
   const { data: stage } = await admin().from("crm_stages").select("id").eq("clinic_id", user.clinicId).eq("auto_key", "new").single();
-  await admin().from("leads").insert({ clinic_id: user.clinicId, name: "Davi Google", phone: "11944443333", source: "google", stage_id: stage!.id });
+  const src = await sourceIds(user);
+  await admin().from("leads").insert({ clinic_id: user.clinicId, name: "Davi Google", phone: "11944443333", source_id: src.google, stage_id: stage!.id });
   await page.goto("/crm");
   await page.getByRole("button", { name: /Davi Google/ }).click();
   await page.getByRole("button", { name: "Agendar avaliação" }).click();
   await expect(page).toHaveURL(/\/agenda\?paciente=/);
   await expect(page.getByRole("dialog").getByText("Davi Google")).toBeVisible();
-  const { data: patient } = await admin().from("patients").select("source").eq("clinic_id", user.clinicId).eq("full_name", "Davi Google").single();
-  expect(patient!.source).toBe("google");
+  const { data: patient } = await admin().from("patients").select("source_id").eq("clinic_id", user.clinicId).eq("full_name", "Davi Google").single();
+  expect(patient!.source_id).toBe(src.google);
 });
 
 test("formulário público cria lead no funil", async ({ page }) => {

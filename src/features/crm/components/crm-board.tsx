@@ -17,24 +17,13 @@ import { formatPhone } from "@/lib/documents";
 import { toWhatsAppNumber } from "@/lib/messaging/render";
 
 import { convertLead, moveLead, saveLead } from "../actions";
-import { leadSources, sourceLabels, type LeadSource } from "../labels";
+import { sourcePillClass } from "@/features/patients/sources";
 import type { CrmLead, CrmStage } from "../queries";
 import { LeadFields, type LeadOptions } from "./lead-fields";
 
 type Props = { stages: CrmStage[]; leads: CrmLead[]; options: LeadOptions; now: number };
 
 const STAGE_DOT = { open: "bg-warning", won: "bg-success", lost: "bg-destructive" } as const;
-
-/** Origem do lead: cor + nome escrito (a cor nunca é o único sinal). */
-const SOURCE_PILL: Record<LeadSource, string> = {
-  instagram: "bg-source-instagram-soft text-source-instagram",
-  google: "bg-source-google-soft text-source-google",
-  indicacao: "bg-success-soft text-success",
-  site: "bg-accent text-accent-foreground",
-  anuncio: "bg-warning-soft text-warning",
-  passante: "bg-muted text-muted-foreground",
-  outro: "bg-muted text-muted-foreground",
-};
 
 function daysIn(lead: CrmLead, now: number) {
   return Math.floor((now - Date.parse(lead.stageChangedAt)) / 86_400_000);
@@ -57,11 +46,13 @@ export function CrmBoard({ stages, leads, options, now }: Props) {
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
 
-  const [source, setSource] = useState<LeadSource | null>(null);
-  const sources = useMemo(() => leadSources.filter((s) => leads.some((l) => l.source === s)), [leads]);
+  const [source, setSource] = useState<string | null>(null);
+  const sourceById = useMemo(() => new Map(options.sources.map((s) => [s.id, s])), [options.sources]);
+  // Só as origens que têm lead no funil, na ordem da lista da clínica.
+  const sources = useMemo(() => options.sources.filter((s) => leads.some((l) => l.sourceId === s.id)).map((s) => s.id), [leads, options.sources]);
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return leads.filter((l) => (!source || l.source === source) && (!q || `${l.name} ${l.phone ?? ""}`.toLowerCase().includes(q)));
+    return leads.filter((l) => (!source || l.sourceId === source) && (!q || `${l.name} ${l.phone ?? ""}`.toLowerCase().includes(q)));
   }, [leads, query, source]);
   const kindOf = (l: CrmLead) => stages.find((st) => st.id === l.stageId)?.kind ?? "open";
   const funnel = {
@@ -104,7 +95,7 @@ export function CrmBoard({ stages, leads, options, now }: Props) {
                   source === src ? "bg-card text-foreground shadow-segment" : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {src ? sourceLabels[src] : "Todas"}
+                {src ? (sourceById.get(src)?.name ?? "Origem") : "Todas"}
               </button>
             ))}
           </div>
@@ -164,7 +155,9 @@ export function CrmBoard({ stages, leads, options, now }: Props) {
                     >
                       <span className="block font-semibold">{lead.name}</span>
                       <span className="flex items-baseline gap-1.5 text-xs">
-                        <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 font-semibold", SOURCE_PILL[lead.source])}>{sourceLabels[lead.source]}</span>
+                        {lead.sourceId && sourceById.get(lead.sourceId) ? (
+                          <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 font-semibold", sourcePillClass(sourceById.get(lead.sourceId)))}>{sourceById.get(lead.sourceId)!.name}</span>
+                        ) : null}
                         {lead.interest || lead.campaignId ? (
                           <span className="min-w-0 text-muted-foreground">
                             {[lead.interest, lead.campaignId ? campaignName.get(lead.campaignId) : null].filter(Boolean).join(" · ")}
@@ -294,7 +287,7 @@ function LeadDetails({
         <dt className="text-muted-foreground">Telefone</dt>
         <dd>{lead.phone ? formatPhone(lead.phone) : "—"}</dd>
         <dt className="text-muted-foreground">Origem</dt>
-        <dd>{sourceLabels[lead.source]}</dd>
+        <dd>{options.sources.find((x) => x.id === lead.sourceId)?.name ?? "Não informada"}</dd>
         {lead.referralName ? (
           <>
             <dt className="text-muted-foreground">Indicado por</dt>

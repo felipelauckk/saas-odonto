@@ -34,10 +34,10 @@ export function NewPatientSheet() {
         <SheetContent side="right" className="w-full overflow-y-auto data-[side=right]:sm:max-w-2xl">
           <SheetHeader>
             <SheetTitle className="type-title">Novo paciente</SheetTitle>
-            <SheetDescription>Depois de cadastrar, a ficha do paciente abre sozinha.</SheetDescription>
+            <SheetDescription>O essencial para começar. Depois de cadastrar, a ficha do paciente abre sozinha.</SheetDescription>
           </SheetHeader>
           <div className="px-4 pb-6">
-            <PatientForm />
+            <PatientForm mode="quick" />
           </div>
         </SheetContent>
       </Sheet>

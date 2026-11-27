@@ -3,7 +3,6 @@ import "server-only";
 import { getStatement } from "@/features/commissions/queries";
 import { cancelReasonLabels, type CancelReason } from "@/features/agenda/advanced";
 import { queueLabels, crcQueues } from "@/features/crc/labels";
-import { sourceLabels as leadSourceLabels } from "@/features/crm/labels";
 import { getCrmReport } from "@/features/crm/queries";
 import { buildDre } from "@/features/payables/reports";
 import { todayIso } from "@/lib/dates";
@@ -20,7 +19,6 @@ const rangeOf = (f: ReportFilters) => ({ start: zonedToUtc(f.from, "00:00").toIS
 const ratio = (a: number, b: number) => (b ? a / b : null);
 const sum = (rows: Row[], key: string) => rows.reduce((s, r) => s + (Number(r[key]) || 0), 0);
 
-const patientSourceLabels: Record<string, string> = { indicacao: "Indicação", instagram: "Instagram", google: "Google", site: "Site", outro: "Outro" };
 
 /** Divide uma lista de ids em pedaços para consultas com `in`. */
 function chunks<T>(list: T[], size = 200): T[][] {
@@ -224,7 +222,7 @@ async function primeiraConsulta(supabase: Supabase, f: ReportFilters): Promise<R
   const appts = await fetchAll((a, b) => {
     let q = supabase
       .from("appointments")
-      .select("id, patient_id, starts_at, status, patients(source)")
+      .select("id, patient_id, starts_at, status, patients(patient_sources(name))")
       .eq("is_first_visit", true)
       .neq("status", "canceled")
       .gte("starts_at", start)
@@ -245,7 +243,7 @@ async function primeiraConsulta(supabase: Supabase, f: ReportFilters): Promise<R
   }
   const groups = new Map<string, Row>();
   for (const a of appts) {
-    const key = a.patients?.source ? (patientSourceLabels[a.patients.source] ?? a.patients.source) : "Não informada";
+    const key = a.patients?.patient_sources?.name ?? "Não informada";
     const row = groupRows(groups, key, () => ({ group: key, total: 0, attended: 0, noShow: 0, treatment: 0 }));
     row.total = Number(row.total) + 1;
     if (["arrived", "in_progress", "done"].includes(a.status)) row.attended = Number(row.attended) + 1;
@@ -738,7 +736,7 @@ async function crcCrm(supabase: Supabase, f: ReportFilters): Promise<ReportResul
     const s = stats?.find((x) => x.queue === q);
     rows.push({ area: "CRC", group: queueLabels[q], count: s?.contacted ?? 0, success: q === "birthdays" ? null : (s?.recovered ?? 0), rate: q === "birthdays" ? null : ratio(s?.recovered ?? 0, s?.contacted ?? 0), value: q === "birthdays" ? null : Number(s?.recovered_cents ?? 0) });
   }
-  for (const s of crm.bySource) rows.push({ area: "CRM", group: leadSourceLabels[s.source], count: s.leads, success: s.won, rate: ratio(s.won, s.leads), value: null });
+  for (const s of crm.bySource) rows.push({ area: "CRM", group: s.name, count: s.leads, success: s.won, rate: ratio(s.won, s.leads), value: null });
   const crcRows = rows.filter((r) => r.area === "CRC");
   return {
     columns: [

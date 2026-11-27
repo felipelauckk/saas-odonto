@@ -12,7 +12,7 @@ import { formatCpfCnpj, formatPhone } from "@/lib/documents";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
-import { genderLabels, sourceLabels } from "./labels";
+import { genderLabels } from "./labels";
 import { PDF_COLORS, registerPdfFonts } from "@/lib/pdf/fonts";
 
 const s = StyleSheet.create({
@@ -35,7 +35,7 @@ export async function renderPatientExport(patientId: string, clinicName: string)
   registerPdfFonts();
   const supabase = await createClient();
   const [patientRes, anamnesesRes, toothRes, notesRes, apptRes, plansRes, recvRes, filesRes] = await Promise.all([
-    supabase.from("patients").select("*").eq("id", patientId).maybeSingle(),
+    supabase.from("patients").select("*, patient_sources(name)").eq("id", patientId).maybeSingle(),
     supabase.from("anamneses").select("answers, created_at").eq("patient_id", patientId).order("created_at", { ascending: false }).limit(1),
     supabase.from("tooth_records").select("tooth, faces, condition, created_at").eq("patient_id", patientId).order("created_at"),
     supabase.from("clinical_notes").select("body, created_at, complements_note_id, professionals(name)").eq("patient_id", patientId).order("created_at"),
@@ -75,7 +75,7 @@ export async function renderPatientExport(patientId: string, clinicName: string)
         {field("E-mail", patient.email)}
         {field("Endereço", address ? [address.street, address.number, address.complement, address.district, address.city, address.state, address.cep].filter(Boolean).join(", ") : null)}
         {field("Responsável legal", patient.guardian_name ? `${patient.guardian_name}${patient.guardian_cpf ? ` (CPF ${formatCpfCnpj(patient.guardian_cpf)})` : ""}` : null)}
-        {field("Como conheceu", patient.source ? sourceLabels[patient.source] : null)}
+        {field("Como conheceu", patient.patient_sources?.name ?? null)}
         {field("Consentimento LGPD", patient.consent_lgpd_at ? formatDateTime(patient.consent_lgpd_at) : "Não registrado")}
         {field("Observações", patient.notes)}
 

@@ -7,7 +7,6 @@ import { ageFromBirthDate, formatIsoDate } from "@/lib/dates";
 import { formatPhone } from "@/lib/documents";
 import { initials } from "@/lib/initials";
 
-import { sourceLabels } from "../labels";
 import type { Patient } from "../queries";
 import { MINOR_AGE } from "../schemas";
 import { patientSince } from "../summary";
@@ -62,7 +61,7 @@ export function PatientHeader({ patient, canExport = false, portal = null }: Pro
               ) : null}
               <span>
                 Paciente desde {patientSince(patient.created_at)}
-                {patient.source ? ` · ${sourceLabels[patient.source].toLowerCase()}` : ""}
+                {patient.patient_sources?.name ? ` · ${patient.patient_sources.name.toLowerCase()}` : ""}
               </span>
             </p>
           </div>

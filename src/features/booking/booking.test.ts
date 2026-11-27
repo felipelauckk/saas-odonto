@@ -72,8 +72,8 @@ describe.skipIf(!hasSupabase)("agendamento online, check-in e portal", () => {
     expect(ok.error).toBeUndefined();
     expect(ok.when).toContain("09:00");
 
-    const { data: patient } = await admin.from("patients").select("id, source").eq("clinic_id", clinicId).eq("phone", "11977776666").single();
-    expect(patient!.source).toBe("site");
+    const { data: patient } = await admin.from("patients").select("id, patient_sources(key)").eq("clinic_id", clinicId).eq("phone", "11977776666").single();
+    expect(patient!.patient_sources?.key).toBe("site");
     const { data: appt } = await admin.from("appointments").select("booked_online, professional_id").eq("patient_id", patient!.id).single();
     expect(appt).toEqual({ booked_online: true, professional_id: pro });
     const { data: lead } = await admin.from("leads").select("crm_stages(auto_key)").eq("patient_id", patient!.id).single();

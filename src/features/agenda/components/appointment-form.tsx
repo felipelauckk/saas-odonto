@@ -111,7 +111,7 @@ export function AppointmentForm({
     patientId: string;
     data: AppointmentPatientInfo | null;
   } | null>(null);
-  const [editing, setEditing] = useState<{ status: "loading" } | { status: "ready"; patient: Patient } | null>(null);
+  const [editing, setEditing] = useState<{ status: "loading" } | { status: "ready"; patient: Patient } | { status: "create"; name: string } | null>(null);
   const patientId = values.patient?.id ?? null;
 
   const loadInfo = useCallback((id: string) => loadAppointmentPatient(id, initial.id ?? null).then((data) => setInfo({ patientId: id, data })), [initial.id]);
@@ -266,6 +266,7 @@ export function AppointmentForm({
                 }}
                 error={patientError}
                 hideDetail
+                onCreateNew={(name) => setEditing({ status: "create", name })}
               />
             )}
             {values.patient ? (
@@ -481,14 +482,27 @@ export function AppointmentForm({
       </form>
 
       {/* Fora do <form> da consulta: o envio do cadastro não pode subir até ele. */}
-      <Sheet open={editing?.status === "ready"} onOpenChange={(open) => !open && setEditing(null)}>
+      <Sheet open={editing?.status === "ready" || editing?.status === "create"} onOpenChange={(open) => !open && setEditing(null)}>
         <SheetContent side="right" className="w-full overflow-y-auto data-[side=right]:sm:max-w-2xl">
           <SheetHeader>
-            <SheetTitle className="type-title">Editar cadastro</SheetTitle>
+            <SheetTitle className="type-title">{editing?.status === "create" ? "Novo paciente" : "Editar cadastro"}</SheetTitle>
             <SheetDescription>Ao salvar, você volta para a consulta com tudo o que já preencheu.</SheetDescription>
           </SheetHeader>
           <div className="px-4 pb-6">
             {editing?.status === "ready" ? <PatientForm patient={editing.patient} onSaved={afterPatientSaved} onCancel={() => setEditing(null)} /> : null}
+            {editing?.status === "create" ? (
+              <PatientForm
+                mode="quick"
+                defaults={{ fullName: editing.name }}
+                onCancel={() => setEditing(null)}
+                onSaved={(created) => {
+                  setEditing(null);
+                  if (!created) return;
+                  set("patient", { id: created.id, name: created.name, detail: created.phone });
+                  setPatientError(undefined);
+                }}
+              />
+            ) : null}
           </div>
         </SheetContent>
       </Sheet>

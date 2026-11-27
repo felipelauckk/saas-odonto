@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { CrmBoard, NewLeadButton } from "@/features/crm/components/crm-board";
 import { getCrmBoard } from "@/features/crm/queries";
+import { getPatientSources } from "@/features/patients/queries";
 import { requireFrontDesk } from "@/features/tenancy/guards";
 import { todayIso } from "@/lib/dates";
 
@@ -13,8 +14,8 @@ export const metadata: Metadata = { title: "CRM" };
 
 export default async function Page() {
   await requireFrontDesk();
-  const board = await getCrmBoard(todayIso());
-  const options = { campaigns: board.campaigns, partners: board.partners, procedures: board.procedures };
+  const [board, sources] = await Promise.all([getCrmBoard(todayIso()), getPatientSources()]);
+  const options = { campaigns: board.campaigns, partners: board.partners, procedures: board.procedures, sources };
   return (
     <div className="space-y-6">
       <PageHeader

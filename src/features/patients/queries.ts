@@ -4,23 +4,25 @@ import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
 
-import { PAGE_SIZE, type PatientSource } from "./labels";
+import { PAGE_SIZE } from "./labels";
+import type { PatientSourceOption } from "./sources";
 
 type SearchParams = {
   q: string;
   status: "active" | "archived";
-  source: PatientSource | null;
+  /** Origem (id da lista patient_sources). */
+  sourceId: string | null;
   segment: "in_treatment" | "open_quote" | "return_overdue" | "birthday" | null;
   page: number;
 };
 
-/** Lista da tela de pacientes, já com última/próxima visita, saldo e situação (função `patient_list`). */
-export async function searchPatients({ q, status, source, segment, page }: SearchParams) {
+/** Lista da tela de pacientes, já com última/próxima visita, saldo e situação (função `patients_page`). */
+export async function searchPatients({ q, status, sourceId, segment, page }: SearchParams) {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("patient_list", {
+  const { data, error } = await supabase.rpc("patients_page", {
     _query: q,
     _segment: status === "archived" ? "archived" : (segment ?? "active"),
-    _source: source ?? undefined,
+    _source_id: sourceId ?? undefined,
     _limit: PAGE_SIZE,
     _offset: (page - 1) * PAGE_SIZE,
   });
@@ -32,9 +34,9 @@ export async function searchPatients({ q, status, source, segment, page }: Searc
 export type PatientListRow = Awaited<ReturnType<typeof searchPatients>>["patients"][number];
 
 /** Quantos pacientes há em cada filtro rápido, com a mesma busca e origem. */
-export async function getSegmentCounts({ q, source }: { q: string; source: PatientSource | null }) {
+export async function getSegmentCounts({ q, sourceId }: { q: string; sourceId: string | null }) {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("patient_segment_counts", { _query: q, _source: source ?? undefined });
+  const { data, error } = await supabase.rpc("patients_segment_counts", { _query: q, _source_id: sourceId ?? undefined });
   if (error) throw error;
   const row = data[0];
   const n = (v: number | undefined) => Number(v ?? 0);
@@ -51,9 +53,16 @@ export async function getSegmentCounts({ q, source }: { q: string; source: Patie
 /** Cache por requisição: o layout da ficha e a aba usam o mesmo resultado. */
 export const getPatient = cache(async (id: string) => {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("patients").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase.from("patients").select("*, patient_sources(name, key), referral_partners(name), patient_phones(id, label, number)").eq("id", id).maybeSingle();
   if (error) throw error;
-  return data;
+  if (!data) return null;
+  // Quem indicou (paciente): leitura à parte, a relação do paciente com ele mesmo não é embutível.
+  let referrerName: string | null = null;
+  if (data.referred_by_patient_id) {
+    const { data: ref } = await supabase.from("patients").select("full_name").eq("id", data.referred_by_patient_id).maybeSingle();
+    referrerName = ref?.full_name ?? null;
+  }
+  return { ...data, referrer_name: referrerName };
 });
 
 export type Patient = NonNullable<Awaited<ReturnType<typeof getPatient>>>;
@@ -109,4 +118,12 @@ export const getPatientSummary = cache(async (patientId: string, withBalance: bo
         }
       : null,
   };
+});
+
+/** Origens da clínica (todas, com as desativadas), na ordem da lista. */
+export const getPatientSources = cache(async (): Promise<PatientSourceOption[]> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("patient_sources").select("id, name, key, active, position").order("position").order("name");
+  if (error) throw error;
+  return data ?? [];
 });
