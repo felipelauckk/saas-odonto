@@ -53,7 +53,7 @@ test("busca global com Ctrl/⌘+K leva à página escolhida", async ({ page, isM
   const search = page.getByRole("combobox", { name: "Buscar paciente, página ou ação" });
   await expect(search).toBeFocused();
   await search.fill("finan");
-  await expect(page.getByRole("option", { name: "Financeiro" })).toBeVisible();
+  await expect(page.getByRole("option", { name: "Financeiro", exact: true })).toBeVisible();
   await search.press("Enter");
   await expect(page).toHaveURL(/\/financeiro$/);
 });

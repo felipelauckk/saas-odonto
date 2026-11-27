@@ -36,7 +36,8 @@ test("edita o texto do lembrete com prévia e envia lembrete pela agenda", async
 
   await page.goto("/agenda?data=2030-03-04");
   await page.getByRole("button", { name: /Paciente Agenda, 09:00/ }).click();
-  await page.getByRole("button", { name: "Enviar lembrete" }).click();
+  await page.getByRole("button", { name: "Mais ações" }).click();
+  await page.getByRole("menuitem", { name: "Enviar lembrete" }).click();
   await expect(page.getByText(/Lembrete registrado \(envio simulado/)).toBeVisible();
 
   await page.goto("/configuracoes/mensagens");

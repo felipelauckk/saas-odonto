@@ -47,7 +47,7 @@ test("todos os relatórios abrem sem erro", async ({ page }) => {
   test.slow();
   await page.goto("/relatorios");
   const links = (await page.getByRole("main").getByRole("link").evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).getAttribute("href")!))).filter((h) => h.startsWith("/relatorios/"));
-  expect(links).toHaveLength(15);
+  expect(links).toHaveLength(16);
   for (const href of links) {
     const response = await page.goto(href);
     expect(response!.status(), href).toBe(200);
