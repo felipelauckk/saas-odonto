@@ -32,7 +32,7 @@ export function ProfessionalFormsMatrix({ templates, professionals, chosen }: { 
           <thead className="border-b bg-muted/40 text-left text-muted-foreground">
             <tr>
               <th scope="col" className="px-3 py-2 font-medium">Profissional</th>
-              {active.map((t) => <th key={t.id} scope="col" className="px-3 py-2 text-center font-medium">{t.name}</th>)}
+              {active.map((t) => <th key={t.id} scope="col" className="px-2 py-2 text-center font-medium">{t.name}</th>)}
             </tr>
           </thead>
           <tbody className="divide-y">

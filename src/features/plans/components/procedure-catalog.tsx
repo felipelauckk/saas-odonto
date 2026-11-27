@@ -54,7 +54,7 @@ export function ProcedureCatalog<P extends CatalogProcedure>({ procedures, onPic
         />
       </label>
       {categories.length ? (
-        <div role="group" aria-label="Categorias" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+        <div role="group" aria-label="Categorias" className="flex flex-wrap gap-1.5">
           <button type="button" aria-pressed={category === null} onClick={() => setCategory(null)} className={chip(category === null)}>
             Todos
           </button>

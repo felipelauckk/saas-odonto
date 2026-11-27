@@ -124,7 +124,7 @@ export default async function Page({ params, searchParams }: PageProps<"/relator
             <thead className="border-b border-border-soft text-left text-muted-foreground">
               <tr>
                 {result.columns.map((c) => (
-                  <th key={c.key} scope="col" className={`px-4 py-3 type-label whitespace-nowrap ${num(c.type)}`}>
+                  <th key={c.key} scope="col" className={`px-3 py-3 type-label whitespace-nowrap sm:whitespace-normal ${num(c.type)}`}>
                     {c.label}
                   </th>
                 ))}
@@ -134,7 +134,7 @@ export default async function Page({ params, searchParams }: PageProps<"/relator
               {result.rows.map((row, i) => (
                 <tr key={i}>
                   {result.columns.map((c) => (
-                    <td key={c.key} className={`px-4 py-2.5 ${num(c.type)}`}>
+                    <td key={c.key} className={`px-3 py-2.5 ${num(c.type)}`}>
                       {formatCell(c, row[c.key])}
                     </td>
                   ))}
@@ -145,7 +145,7 @@ export default async function Page({ params, searchParams }: PageProps<"/relator
               <tfoot className="border-t font-semibold">
                 <tr>
                   {result.columns.map((c) => (
-                    <td key={c.key} className={`px-4 py-2.5 ${num(c.type)}`}>
+                    <td key={c.key} className={`px-3 py-2.5 ${num(c.type)}`}>
                       {result.total![c.key] === null || result.total![c.key] === undefined ? "" : formatCell(c, result.total![c.key])}
                     </td>
                   ))}

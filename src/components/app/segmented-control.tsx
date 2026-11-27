@@ -15,7 +15,7 @@ type Props<T extends string> = {
 /** Escolha entre poucas opções lado a lado (ex.: Dia / Semana). */
 export function SegmentedControl<T extends string>({ label, options, value, onChange, className }: Props<T>) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn("inline-flex rounded-lg bg-track p-0.5", className)}>
+    <div role="radiogroup" aria-label={label} className={cn("inline-flex max-w-full rounded-lg bg-track p-0.5", className)}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -28,7 +28,7 @@ export function SegmentedControl<T extends string>({ label, options, value, onCh
             title={o.hint}
             onClick={() => onChange(o.value)}
             className={cn(
-              "h-9 rounded-md px-3.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:h-11",
+              "h-9 rounded-md px-2.5 text-[0.8125rem] font-medium whitespace-nowrap transition-colors outline-none sm:px-3.5 sm:text-sm focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:h-11",
               active ? "bg-card text-foreground shadow-segment" : "text-muted-foreground hover:text-foreground disabled:text-muted-foreground/60 disabled:hover:text-muted-foreground/60",
             )}
           >

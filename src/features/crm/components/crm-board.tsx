@@ -116,15 +116,16 @@ export function CrmBoard({ stages, leads, options, now }: Props) {
       </dl>
       {error ? <FormMessage state={{ status: "error", message: error }} /> : null}
 
-      <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:-mx-8 sm:px-8">
-        <div className="flex gap-3">
+      {/* Celular: desliza de lado (sem barra). Do tablet para cima: colunas quebram de linha, sem rolagem. */}
+      <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-3 sm:grid sm:grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] sm:items-start">
           {stages.map((stage) => {
             const column = visible.filter((l) => l.stageId === stage.id);
             return (
               <section
                 key={stage.id}
                 aria-label={`${stage.name}, ${column.length} leads`}
-                className={cn("flex w-72 shrink-0 flex-col gap-2 rounded-card bg-muted/60 p-2", dragOver === stage.id && "ring-2 ring-primary")}
+                className={cn("flex w-72 shrink-0 flex-col gap-2 sm:w-auto rounded-card bg-muted/60 p-2", dragOver === stage.id && "ring-2 ring-primary")}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(stage.id); }}
                 onDragLeave={() => setDragOver((v) => (v === stage.id ? null : v))}
                 onDrop={(e) => {

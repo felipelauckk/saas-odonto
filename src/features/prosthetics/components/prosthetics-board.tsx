@@ -58,15 +58,16 @@ export function ProstheticsBoard({ orders, options, today, canManage }: Props) {
       </div>
       {error ? <FormMessage state={{ status: "error", message: error }} /> : null}
 
-      <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:-mx-8 sm:px-8">
-        <div className="flex gap-3">
+      {/* Celular: desliza de lado (sem barra). Do tablet para cima: colunas quebram de linha, sem rolagem. */}
+      <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-3 sm:grid sm:grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] sm:items-start">
           {boardStages.map((stage) => {
             const column = visible.filter((o) => o.stage === stage);
             return (
               <section
                 key={stage}
                 aria-label={`${stageLabels[stage]}, ${column.length} ordens`}
-                className={cn("flex w-64 shrink-0 flex-col gap-2 rounded-xl border bg-muted/30 p-2", dragOver === stage && "ring-2 ring-primary")}
+                className={cn("flex w-64 shrink-0 flex-col gap-2 sm:w-auto rounded-xl border bg-muted/30 p-2", dragOver === stage && "ring-2 ring-primary")}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(stage); }}
                 onDragLeave={() => setDragOver((v) => (v === stage ? null : v))}
                 onDrop={(e) => {

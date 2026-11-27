@@ -39,7 +39,7 @@ export function GoalsEditor({ month, scopes, goals }: { month: string; scopes: S
             <tr>
               <th scope="col" className="px-3 py-2 font-medium">Meta de</th>
               {goalMetrics.map((m) => (
-                <th key={m} scope="col" className="px-3 py-2 font-medium whitespace-nowrap">
+                <th key={m} scope="col" className="px-2 py-2 font-medium whitespace-nowrap sm:whitespace-normal">
                   {metricLabels[m]}
                   {metricKind[m] === "money" ? " (R$)" : metricKind[m] === "percent" ? " (%)" : ""}
                 </th>
@@ -53,12 +53,12 @@ export function GoalsEditor({ month, scopes, goals }: { month: string; scopes: S
                 {goalMetrics.map((m) => {
                   const key = `${s.key}|${m}`;
                   return (
-                    <td key={m} className="px-3 py-2">
+                    <td key={m} className="px-2 py-2">
                       {metricsFor(s).includes(m) ? (
                         <Input
                           aria-label={`${metricLabels[m]} · ${s.label}`}
                           inputMode="decimal"
-                          className="w-32"
+                          className="w-full min-w-20 max-w-32"
                           value={values[key] ?? ""}
                           onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}
                         />

@@ -281,6 +281,13 @@
 }
 
 @layer base {
+  /* Rolagem lateral sem barra visível (o conteúdo ainda desliza com o dedo ou o trackpad). */
+  .overflow-x-auto {
+    scrollbar-width: none;
+  }
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none;
+  }
   * {
     @apply border-border outline-ring/50;
   }
