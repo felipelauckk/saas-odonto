@@ -287,22 +287,7 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
                 className="relative min-w-0 flex-1 border-l border-border-soft"
                 style={{ height }}
               >
-                {/* Fora do expediente hachurado; expediente com uma faixa clara na cor do profissional */}
-                {col.working ? (
-                  <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(135deg,var(--color-muted),var(--color-muted)_5px,var(--color-card)_5px,var(--color-card)_10px)]">
-                    {col.working.map((w, i) => (
-                      <div
-                        key={i}
-                        className="absolute inset-x-0"
-                        style={{
-                          top: px(w.startMin - range.startMin),
-                          height: px(w.endMin - w.startMin),
-                          backgroundColor: col.color ? `color-mix(in oklab, ${col.color.value} 7%, var(--color-card))` : "var(--color-card)",
-                        }}
-                      />
-                    ))}
-                  </div>
-                ) : null}
+                {/* Fundo branco em todo o dia (pedido do usuário): sem faixa de cor nem hachurado de expediente. */}
 
                 {/* Linhas pontilhadas dos quartos de hora */}
                 {marks
