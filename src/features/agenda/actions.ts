@@ -222,18 +222,33 @@ export async function loadAppointmentPatient(patientId: string, appointmentId?: 
     supabase.from("appointments").select("id", { count: "exact", head: true }).eq("patient_id", patientId).in("status", ["arrived", "in_progress", "done"]),
     supabase
       .from("treatment_items")
-      .select("id, procedure_id, description, tooth, faces, position, procedures(duration_min), treatment_plans!inner(patient_id, status, approved_at), appointment_procedures(appointment_id, appointments(status))")
+      .select(
+        "id, procedure_id, description, tooth, faces, position, sessions_planned, procedures(duration_min), treatment_plans!inner(patient_id, status, approved_at), appointment_procedures(appointment_id, appointments(status)), plan_item_sessions(appointment_id, done_at)",
+      )
       .eq("treatment_plans.patient_id", patientId)
       .in("treatment_plans.status", ["approved", "partially_approved"])
       .eq("status", "approved"),
   ]);
   if (!patientRes.data) return null;
+  // Sessões já usadas fora desta consulta: as reservadas/feitas (P6) ou, nas consultas antigas, as que seguem de pé.
+  const used = (i: NonNullable<typeof itemsRes.data>[number]) =>
+    Math.max(
+      i.plan_item_sessions.filter((s) => s.appointment_id !== appointmentId).length,
+      i.appointment_procedures.filter((ap) => ap.appointment_id !== appointmentId && ap.appointments && !["canceled", "no_show"].includes(ap.appointments.status)).length,
+    );
   const planItems = (itemsRes.data ?? [])
-    // Já agendado em outra consulta que segue de pé: não oferece de novo.
-    .filter((i) => !i.appointment_procedures.some((ap) => ap.appointment_id !== appointmentId && ap.appointments && !["canceled", "no_show"].includes(ap.appointments.status)))
+    // Todas as sessões já agendadas ou feitas: não oferece de novo.
+    .filter((i) => used(i) < i.sessions_planned)
     .sort((a, b) => (a.treatment_plans.approved_at ?? "").localeCompare(b.treatment_plans.approved_at ?? "") || a.position - b.position)
     // Item escrito à mão (sem procedimento cadastrado) vem sem duração: a escolhida fica.
-    .map((i) => ({ id: i.id, procedureId: i.procedure_id, name: i.description, tooth: i.tooth, faces: i.faces, durationMin: i.procedures?.duration_min ?? 0 }));
+    .map((i) => ({
+      id: i.id,
+      procedureId: i.procedure_id,
+      name: i.sessions_planned > 1 ? `${i.description} (sessão ${used(i) + 1} de ${i.sessions_planned})` : i.description,
+      tooth: i.tooth,
+      faces: i.faces,
+      durationMin: i.procedures?.duration_min ?? 0,
+    }));
   return {
     phone: patientRes.data.phone,
     whatsapp: patientRes.data.whatsapp,

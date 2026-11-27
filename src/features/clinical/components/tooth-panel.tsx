@@ -10,7 +10,7 @@ import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { setItemDone } from "@/features/plans/actions";
+import { registerItemSession, setItemDone } from "@/features/plans/actions";
 import { formatDate } from "@/lib/format";
 
 import { addToothRecord } from "../actions";
@@ -25,7 +25,7 @@ import {
   type ToothCondition,
   type ToothState,
 } from "../odontogram";
-import { itemLabel, type PlanItem } from "./plan-checklist";
+import { itemLabel, sessionsLabel, type PlanItem } from "./plan-checklist";
 
 export type ToothRecord = {
   id: string;
@@ -108,13 +108,14 @@ export const ToothPanel = forwardRef<HTMLElement, Props>(function ToothPanel(
   }
 
   function markDone(item: PlanItem) {
+    const bySessions = (item.sessionsPlanned ?? 1) > 1;
     startTransition(async () => {
-      const result = await setItemDone(item.id, true);
+      const result = bySessions ? await registerItemSession(item.id) : await setItemDone(item.id, true);
       if (result.error) setMessage({ status: "error", message: result.error });
       else {
         setMessage({
           status: "success",
-          message: `${item.description} marcado como realizado.`,
+          message: bySessions ? `${item.description}: sessão registrada.` : `${item.description} marcado como realizado.`,
         });
         router.refresh();
       }
@@ -175,16 +176,19 @@ export const ToothPanel = forwardRef<HTMLElement, Props>(function ToothPanel(
             .filter((i) => i.status === "approved")
             .map((i) => (
               <li key={i.id} className="flex items-center justify-between gap-2 text-[0.8125rem]">
-                <span className="min-w-0">{itemLabel(i)}</span>
+                <span className="min-w-0">
+                  {itemLabel(i)}
+                  {sessionsLabel(i) ? <span className="block text-xs text-muted-foreground">{sessionsLabel(i)}</span> : null}
+                </span>
                 <Button
                   type="button"
                   variant="secondary"
                   size="sm"
                   disabled={pending}
                   onClick={() => markDone(i)}
-                  aria-label={`Marcar realizado: ${itemLabel(i)}`}
+                  aria-label={`${(i.sessionsPlanned ?? 1) > 1 ? "Registrar sessão" : "Marcar realizado"}: ${itemLabel(i)}`}
                 >
-                  Marcar realizado
+                  {(i.sessionsPlanned ?? 1) > 1 ? "Registrar sessão" : "Marcar realizado"}
                 </Button>
               </li>
             ))}

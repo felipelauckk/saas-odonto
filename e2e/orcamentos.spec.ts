@@ -85,3 +85,21 @@ test("recusar orçamento", async ({ page }) => {
   await page.goto("/orcamentos?status=rejected");
   await expect(page.getByRole("link", { name: /Paciente Prontuário/ })).toBeVisible();
 });
+
+test("procedimento em sessões: 1 de 2, depois realizado", async ({ page }) => {
+  await page.goto(`/orcamentos/novo?paciente=${patientId}`);
+  await selectOption(page, "Procedimento", "Clareamento de consultório");
+  await page.getByLabel("Valor (R$)").fill("800,00");
+  await page.getByRole("button", { name: "Incluir no orçamento" }).click();
+  await page.getByLabel("Sessões de Clareamento de consultório").fill("2");
+  await page.getByRole("button", { name: "Criar orçamento" }).click();
+  await page.getByRole("button", { name: "Aprovar" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Aprovar e gerar parcelas" }).click();
+  await expect(page.getByText("0 de 2 sessões")).toBeVisible();
+
+  await page.getByRole("button", { name: "Registrar sessão: Clareamento de consultório" }).click();
+  await expect(page.getByText("1 de 2 sessões")).toBeVisible();
+  await page.getByRole("button", { name: "Registrar sessão: Clareamento de consultório" }).click();
+  await expect(page.getByText("2 de 2 sessões")).toBeVisible();
+  await expect(page.getByText("Concluído")).toBeVisible();
+});

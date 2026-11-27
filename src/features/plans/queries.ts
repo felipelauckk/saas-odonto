@@ -33,7 +33,7 @@ export async function getActivePatientPlan(patientId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("treatment_plans")
-    .select("id, status, approved_at, total_cents, treatment_items(id, description, tooth, faces, status, price_cents, position, created_at)")
+    .select("id, status, approved_at, total_cents, treatment_items(id, description, tooth, faces, status, price_cents, position, created_at, sessions_planned, plan_item_sessions(done_at))")
     .eq("patient_id", patientId)
     .in("status", ["approved", "partially_approved", "completed"])
     .order("approved_at", { ascending: false, nullsFirst: false })
@@ -47,7 +47,16 @@ export async function getActivePatientPlan(patientId: string) {
     status: data.status as "approved" | "partially_approved" | "completed",
     approvedAt: data.approved_at,
     totalCents: data.total_cents,
-    items: items.map((i) => ({ id: i.id, description: i.description, tooth: i.tooth, faces: i.faces, status: i.status, priceCents: i.price_cents })),
+    items: items.map((i) => ({
+      id: i.id,
+      description: i.description,
+      tooth: i.tooth,
+      faces: i.faces,
+      status: i.status,
+      priceCents: i.price_cents,
+      sessionsPlanned: i.sessions_planned,
+      sessionsDone: i.plan_item_sessions.filter((s) => s.done_at).length,
+    })),
   };
 }
 
@@ -61,7 +70,7 @@ export async function getPlan(id: string) {
       )
       .eq("id", id)
       .maybeSingle(),
-    supabase.from("treatment_items").select("*").eq("plan_id", id).order("position").order("created_at"),
+    supabase.from("treatment_items").select("*, plan_item_sessions(done_at)").eq("plan_id", id).order("position").order("created_at"),
     supabase
       .from("receivables")
       .select("id, amount_cents, due_date, installment_number, installment_total, status")

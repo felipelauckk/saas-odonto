@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "cn";
 
+import { Maximize2, Minimize2, Printer } from "lucide-react";
+
 import { SegmentedControl } from "@/components/app/segmented-control";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/format";
 
 import {
@@ -34,7 +37,7 @@ type Props = {
   planFailed?: boolean;
 };
 
-type View = "permanent" | "deciduous" | "history";
+type View = "permanent" | "deciduous" | "mixed" | "history";
 
 /** Quadrantes do lado direito do paciente aparecem à esquerda: a mesial fica à direita. */
 function mesialOnRight(tooth: number) {
@@ -202,10 +205,43 @@ export function Odontogram({ patientId, records, canWrite, canMarkDone, startWit
     setSelectedFaces((faces) => (faces.includes(face) ? faces.filter((f) => f !== face) : [...faces, face]));
   }
 
-  const arches = view === "deciduous" ? [ARCHES.upperDeciduous, ARCHES.lowerDeciduous] : [ARCHES.upperPermanent, ARCHES.lowerPermanent];
+  // Mista: permanentes por fora, decíduos menores por dentro.
+  const arches: { teeth: readonly number[]; label: string; small?: boolean }[] =
+    view === "deciduous"
+      ? [
+          { teeth: ARCHES.upperDeciduous, label: "Arcada superior" },
+          { teeth: ARCHES.lowerDeciduous, label: "Arcada inferior" },
+        ]
+      : view === "mixed"
+        ? [
+            { teeth: ARCHES.upperPermanent, label: "Arcada superior, permanentes" },
+            { teeth: ARCHES.upperDeciduous, label: "Arcada superior, decíduos", small: true },
+            { teeth: ARCHES.lowerDeciduous, label: "Arcada inferior, decíduos", small: true },
+            { teeth: ARCHES.lowerPermanent, label: "Arcada inferior, permanentes" },
+          ]
+        : [
+            { teeth: ARCHES.upperPermanent, label: "Arcada superior" },
+            { teeth: ARCHES.lowerPermanent, label: "Arcada inferior" },
+          ];
+  const [full, setFull] = useState(false);
+
+  useEffect(() => {
+    if (!full) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setFull(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [full]);
 
   return (
-    <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:items-start">
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:items-start",
+        full && "fixed inset-0 z-50 overflow-y-auto bg-background p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_20rem] xl:items-start",
+      )}
+      role={full ? "dialog" : undefined}
+      aria-modal={full || undefined}
+      aria-label={full ? "Odontograma em tela cheia" : undefined}
+    >
       <section aria-labelledby="odontograma-titulo" className="min-w-0 space-y-5 rounded-card border bg-card p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-0.5">
@@ -216,16 +252,32 @@ export function Odontogram({ patientId, records, canWrite, canMarkDone, startWit
               {canWrite ? "Clique em um dente ou numa face para registrar" : "Clique em um dente para ver o histórico"}
             </p>
           </div>
-          <SegmentedControl<View>
-            label="Visualização"
-            value={view}
-            onChange={setView}
-            options={[
-              { value: "permanent", label: "Permanentes" },
-              { value: "deciduous", label: "Decíduos" },
-              { value: "history", label: "Histórico" },
-            ]}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <SegmentedControl<View>
+              label="Visualização"
+              value={view}
+              onChange={setView}
+              options={[
+                { value: "permanent", label: "Permanentes" },
+                { value: "deciduous", label: "Decíduos" },
+                { value: "mixed", label: "Mista" },
+                { value: "history", label: "Histórico" },
+              ]}
+            />
+            <Button type="button" variant="outline" size="sm" onClick={() => setFull((v) => !v)} aria-pressed={full}>
+              {full ? <Minimize2 aria-hidden /> : <Maximize2 aria-hidden />}
+              {full ? "Sair da tela cheia" : "Tela cheia"}
+            </Button>
+            <a
+              href={`/pacientes/${patientId}/odontograma/imprimir`}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <Printer aria-hidden />
+              Imprimir
+            </a>
+          </div>
         </div>
 
         {view === "history" ? (
@@ -257,8 +309,8 @@ export function Odontogram({ patientId, records, canWrite, canMarkDone, startWit
               <div className="relative mx-auto w-max min-w-full space-y-2">
                 <div aria-hidden className="absolute inset-y-0 left-1/2 w-px bg-border" />
                 <div aria-hidden className="absolute inset-x-0 top-1/2 h-px bg-border" />
-                {arches.map((teeth, i) => (
-                  <div key={i} role="group" aria-label={i === 0 ? "Arcada superior" : "Arcada inferior"} className="relative flex justify-center gap-0.5">
+                {arches.map(({ teeth, label, small }) => (
+                  <div key={label} role="group" aria-label={label} className="relative flex justify-center gap-0.5" style={small ? { zoom: 0.78 } : undefined}>
                     {teeth.map((tooth, j) => (
                       <div key={tooth} className={cn(j === teeth.length / 2 && "ml-2")}>
                         <Tooth

@@ -3157,6 +3157,65 @@ export type Database = {
           },
         ];
       };
+      plan_item_sessions: {
+        Row: {
+          appointment_id: string | null;
+          clinic_id: string;
+          created_at: string;
+          created_by: string | null;
+          done_at: string | null;
+          id: string;
+          notes: string | null;
+          plan_item_id: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          appointment_id?: string | null;
+          clinic_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          done_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          plan_item_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          appointment_id?: string | null;
+          clinic_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          done_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          plan_item_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "plan_item_sessions_appointment_id_clinic_id_fkey";
+            columns: ["appointment_id", "clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "appointments";
+            referencedColumns: ["id", "clinic_id"];
+          },
+          {
+            foreignKeyName: "plan_item_sessions_clinic_id_fkey";
+            columns: ["clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "clinics";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "plan_item_sessions_plan_item_id_clinic_id_fkey";
+            columns: ["plan_item_id", "clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "treatment_items";
+            referencedColumns: ["id", "clinic_id"];
+          },
+        ];
+      };
       plans: {
         Row: {
           active: boolean;
@@ -4605,6 +4664,7 @@ export type Database = {
           position: number;
           price_cents: number;
           procedure_id: string | null;
+          sessions_planned: number;
           status: Database["public"]["Enums"]["treatment_item_status"];
           tooth: number | null;
           updated_at: string;
@@ -4623,6 +4683,7 @@ export type Database = {
           position?: number;
           price_cents: number;
           procedure_id?: string | null;
+          sessions_planned?: number;
           status?: Database["public"]["Enums"]["treatment_item_status"];
           tooth?: number | null;
           updated_at?: string;
@@ -4640,6 +4701,7 @@ export type Database = {
           position?: number;
           price_cents?: number;
           procedure_id?: string | null;
+          sessions_planned?: number;
           status?: Database["public"]["Enums"]["treatment_item_status"];
           tooth?: number | null;
           updated_at?: string;

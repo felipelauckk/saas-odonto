@@ -55,6 +55,7 @@ export const CLINIC_TABLES = [
   "cost_centers",
   "finance_categories",
   "receivables",
+  "plan_item_sessions",
   "treatment_plans",
   "clinical_notes",
   "anamneses",

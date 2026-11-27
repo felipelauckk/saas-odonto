@@ -15,7 +15,7 @@ import { formatCurrency, formatDateTime } from "@/lib/format";
 
 import { faceLabel, type Face } from "@/features/clinical/odontogram";
 
-import { setItemDone, setPlanStatus } from "../actions";
+import { registerItemSession, setItemDone, setPlanStatus, undoItemSession } from "../actions";
 import { itemStatusLabels, OPEN_STATUSES, type ItemStatus, type PlanStatus } from "../labels";
 import { ApproveForm } from "./approve-form";
 import { LabCostInput } from "@/features/commissions/components/lab-cost-input";
@@ -36,12 +36,25 @@ type Props = {
     professionalName: string;
     paymentMethodName: string | null;
   };
-  items: { id: string; description: string; tooth: number | null; faces: string[]; price_cents: number; lab_cost_cents: number; status: ItemStatus; done_at: string | null }[];
+  items: {
+    id: string;
+    description: string;
+    tooth: number | null;
+    faces: string[];
+    price_cents: number;
+    lab_cost_cents: number;
+    status: ItemStatus;
+    done_at: string | null;
+    sessions_planned: number;
+    plan_item_sessions: { done_at: string | null }[];
+  }[];
   receivables: { id: string; amount_cents: number; due_date: string; installment_number: number; installment_total: number; status: string }[];
   paymentMethods: { id: string; name: string }[];
   canMarkDone: boolean;
   canEditLab?: boolean;
 };
+
+const sessionsDone = (item: { plan_item_sessions: { done_at: string | null }[] }) => item.plan_item_sessions.filter((s) => s.done_at).length;
 
 const receivableLabels: Record<string, string> = { open: "Em aberto", paid: "Pago", overdue: "Vencido", canceled: "Cancelado" };
 
@@ -123,11 +136,26 @@ export function PlanDetailView({ plan, items, receivables, paymentMethods, canMa
                       item.tooth ? `Dente ${item.tooth}${item.faces.length ? ` · ${item.faces.map((f) => faceLabel(f as Face, item.tooth!)).join(", ")}` : ""}` : null,
                       decided ? itemStatusLabels[item.status] : null,
                       done && item.done_at ? `em ${formatDateTime(item.done_at)}` : null,
+                      item.sessions_planned > 1 ? `${Math.min(sessionsDone(item), item.sessions_planned)} de ${item.sessions_planned} sessões` : null,
                     ]
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
                 </div>
+                {canMarkDone && item.sessions_planned > 1 && (item.status === "approved" || item.status === "done") ? (
+                  <div className="flex gap-1">
+                    {sessionsDone(item) > 0 ? (
+                      <Button type="button" variant="ghost" size="sm" disabled={pending} onClick={() => run(() => undoItemSession(item.id))} aria-label={`Desfazer última sessão: ${item.description}`}>
+                        Desfazer
+                      </Button>
+                    ) : null}
+                    {item.status === "approved" ? (
+                      <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => run(() => registerItemSession(item.id))} aria-label={`Registrar sessão: ${item.description}`}>
+                        Registrar sessão
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
                 {canEditLab && (item.status === "approved" || item.status === "done") ? (
                   <LabCostInput itemId={item.id} initialCents={item.lab_cost_cents} label={item.description} />
                 ) : null}

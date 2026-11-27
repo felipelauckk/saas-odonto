@@ -65,6 +65,19 @@ test("registra cárie numa face do odontograma", async ({ page }) => {
 
   await page.getByRole("radio", { name: "Decíduos" }).click();
   await expect(page.getByRole("button", { name: "Dente 55 inteiro" })).toBeVisible();
+
+  // Mista: permanentes e decíduos juntos.
+  await page.getByRole("radio", { name: "Mista" }).click();
+  await expect(page.getByRole("group", { name: "Arcada superior, decíduos" }).getByRole("button", { name: "Dente 55 inteiro" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Dente 16, face Oclusal: Cárie" })).toBeVisible();
+
+  // Tela cheia e PDF.
+  await page.getByRole("button", { name: "Tela cheia" }).click();
+  await expect(page.getByRole("dialog", { name: "Odontograma em tela cheia" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Tela cheia" })).toBeVisible();
+  const pdf = await page.request.get(`/pacientes/${patientId}/odontograma/imprimir`);
+  expect(pdf.headers()["content-type"]).toBe("application/pdf");
 });
 
 test("registra evolução e complementa, sem opção de editar", async ({ page }) => {

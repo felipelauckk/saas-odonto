@@ -37,6 +37,7 @@ export default async function Page({ params }: PageProps<"/orcamentos/[id]/edita
           description: i.description,
           tooth: i.tooth,
           faces: i.faces as Face[],
+          sessions: i.sessions_planned,
           priceCents: i.price_cents,
         }))}
         initialNotes={plan.notes ?? ""}

@@ -15,7 +15,16 @@ export type PlanItem = {
   faces: string[];
   status: "pending" | "approved" | "rejected" | "done";
   priceCents: number;
+  sessionsPlanned?: number;
+  sessionsDone?: number;
 };
+
+/** "2 de 3 sessões" quando o procedimento leva mais de uma sessão. */
+export function sessionsLabel(item: Pick<PlanItem, "sessionsPlanned" | "sessionsDone">): string | null {
+  const planned = item.sessionsPlanned ?? 1;
+  if (planned <= 1) return null;
+  return `${Math.min(item.sessionsDone ?? 0, planned)} de ${planned} sessões`;
+}
 
 export type PatientPlan = {
   id: string;
@@ -81,6 +90,7 @@ export function PlanChecklist({ plan }: { plan: PatientPlan }) {
               </span>
               <span className={cn(isDone && "text-muted-foreground")}>
                 {itemLabel(item)}
+                {sessionsLabel(item) ? <span className="block text-xs text-muted-foreground">{sessionsLabel(item)}</span> : null}
                 <span className="sr-only">{isDone ? ", realizado" : ", a fazer"}</span>
               </span>
               <span className="text-muted-foreground tabular-nums">{formatCurrency(item.priceCents)}</span>

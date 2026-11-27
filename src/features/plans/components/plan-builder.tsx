@@ -25,7 +25,7 @@ import { ProcedureCatalog } from "./procedure-catalog";
 import { uncoveredSuggestions } from "../builder-logic";
 
 type Procedure = { id: string; name: string; price_cents: number; applies_to_tooth: boolean; category: string | null };
-type Item = { key: string; procedureId: string | null; description: string; tooth: number | null; faces: Face[]; priceCents: number };
+type Item = { key: string; procedureId: string | null; description: string; tooth: number | null; faces: Face[]; priceCents: number; sessions?: number };
 export type Suggestion = { tooth: number; faces: Face[]; condition: ToothCondition };
 
 type Props = {
@@ -128,7 +128,7 @@ export function PlanBuilder(props: Props) {
         professionalId,
         notes,
         validUntil: validUntil || null,
-        items: items.map(({ procedureId: pid, description, tooth: t, faces: f, priceCents }) => ({ procedureId: pid, description, tooth: t, faces: f, priceCents })),
+        items: items.map(({ procedureId: pid, description, tooth: t, faces: f, priceCents, sessions }) => ({ procedureId: pid, description, tooth: t, faces: f, priceCents, sessionsPlanned: sessions ?? 1 })),
       });
       if (result.error) setError(result.error);
       else router.push(`/orcamentos/${result.id}`);
@@ -247,6 +247,22 @@ export function PlanBuilder(props: Props) {
                       </p>
                     ) : null}
                   </div>
+                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    Sessões
+                    <Input
+                      aria-label={`Sessões de ${item.description}`}
+                      type="number"
+                      min={1}
+                      max={50}
+                      inputMode="numeric"
+                      value={item.sessions ?? 1}
+                      onChange={(e) => {
+                        const n = Math.min(50, Math.max(1, Number(e.target.value) || 1));
+                        setItems((list) => list.map((i) => (i.key === item.key ? { ...i, sessions: n } : i)));
+                      }}
+                      className="w-16 text-right tabular-nums"
+                    />
+                  </label>
                   <Input
                     aria-label={`Valor de ${item.description}`}
                     inputMode="decimal"

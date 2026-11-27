@@ -19,7 +19,12 @@ export type PdfLetterhead = {
 export type PdfTable = { title?: string; columns: { label: string; flex?: number }[]; rows: string[][]; empty?: string };
 /** Lista de campos "rótulo: valor" em duas colunas. */
 export type PdfFields = { title: string; fields: [string, string | null | undefined][] };
-export type PdfBlock = ({ kind: "table" } & PdfTable) | ({ kind: "fields" } & PdfFields) | { kind: "image"; title?: string; data: Buffer; height: number };
+export type PdfBlock =
+  | ({ kind: "table" } & PdfTable)
+  | ({ kind: "fields" } & PdfFields)
+  | { kind: "image"; title?: string; data: Buffer; height: number }
+  /** Conteúdo próprio (ex.: desenho do odontograma). */
+  | { kind: "custom"; title?: string; node: React.ReactElement };
 
 const s = StyleSheet.create({
   page: { paddingTop: 36, paddingBottom: 48, paddingHorizontal: 36, fontSize: 9, fontFamily: "Montserrat", color: PDF_COLORS.text, lineHeight: 1.35 },
@@ -82,6 +87,14 @@ export async function renderReportPdf(opts: {
                     </View>
                   ))}
                 </View>
+              </View>
+            );
+          }
+          if (b.kind === "custom") {
+            return (
+              <View key={i} wrap={false}>
+                {b.title ? <Text style={s.h2}>{b.title}</Text> : null}
+                {b.node}
               </View>
             );
           }
