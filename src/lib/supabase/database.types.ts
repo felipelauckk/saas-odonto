@@ -2370,6 +2370,71 @@ export type Database = {
           },
         ];
       };
+      patient_credits: {
+        Row: {
+          amount_cents: number;
+          clinic_id: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          kind: string;
+          notes: string | null;
+          patient_id: string;
+          payment_id: string | null;
+          receivable_id: string | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount_cents: number;
+          clinic_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          kind: string;
+          notes?: string | null;
+          patient_id: string;
+          payment_id?: string | null;
+          receivable_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          amount_cents?: number;
+          clinic_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          kind?: string;
+          notes?: string | null;
+          patient_id?: string;
+          payment_id?: string | null;
+          receivable_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "patient_credits_clinic_id_fkey";
+            columns: ["clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "clinics";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "patient_credits_patient_id_clinic_id_fkey";
+            columns: ["patient_id", "clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "patients";
+            referencedColumns: ["id", "clinic_id"];
+          },
+          {
+            foreignKeyName: "patient_credits_receivable_id_fkey";
+            columns: ["receivable_id"];
+            isOneToOne: false;
+            referencedRelation: "receivables";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       patient_documents: {
         Row: {
           body: string;
@@ -2822,6 +2887,77 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "clinics";
             referencedColumns: ["id"];
+          },
+        ];
+      };
+      patient_subscriptions: {
+        Row: {
+          active: boolean;
+          amount_cents: number;
+          clinic_id: string;
+          created_at: string;
+          created_by: string | null;
+          description: string;
+          due_day: number;
+          ends_on: string | null;
+          id: string;
+          patient_id: string;
+          starts_on: string;
+          unit_id: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          active?: boolean;
+          amount_cents: number;
+          clinic_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          description: string;
+          due_day: number;
+          ends_on?: string | null;
+          id?: string;
+          patient_id: string;
+          starts_on: string;
+          unit_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          active?: boolean;
+          amount_cents?: number;
+          clinic_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string;
+          due_day?: number;
+          ends_on?: string | null;
+          id?: string;
+          patient_id?: string;
+          starts_on?: string;
+          unit_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "patient_subscriptions_clinic_id_fkey";
+            columns: ["clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "clinics";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "patient_subscriptions_patient_id_clinic_id_fkey";
+            columns: ["patient_id", "clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "patients";
+            referencedColumns: ["id", "clinic_id"];
+          },
+          {
+            foreignKeyName: "patient_subscriptions_unit_id_clinic_id_fkey";
+            columns: ["unit_id", "clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["id", "clinic_id"];
           },
         ];
       };
@@ -3795,6 +3931,7 @@ export type Database = {
         Row: {
           amount_cents: number;
           clinic_id: string;
+          competence: string | null;
           created_at: string;
           created_by: string | null;
           description: string;
@@ -3812,6 +3949,7 @@ export type Database = {
           professional_id: string | null;
           received_by: string | null;
           status: Database["public"]["Enums"]["receivable_status"];
+          subscription_id: string | null;
           unit_id: string;
           updated_at: string;
         };
@@ -3819,6 +3957,7 @@ export type Database = {
         Insert: {
           amount_cents: number;
           clinic_id: string;
+          competence?: string | null;
           created_at?: string;
           created_by?: string | null;
           description: string;
@@ -3836,12 +3975,14 @@ export type Database = {
           professional_id?: string | null;
           received_by?: string | null;
           status?: Database["public"]["Enums"]["receivable_status"];
+          subscription_id?: string | null;
           unit_id: string;
           updated_at?: string;
         };
         Update: {
           amount_cents?: number;
           clinic_id?: string;
+          competence?: string | null;
           created_at?: string;
           created_by?: string | null;
           description?: string;
@@ -3859,6 +4000,7 @@ export type Database = {
           professional_id?: string | null;
           received_by?: string | null;
           status?: Database["public"]["Enums"]["receivable_status"];
+          subscription_id?: string | null;
           unit_id?: string;
           updated_at?: string;
         };
@@ -3896,6 +4038,13 @@ export type Database = {
             columns: ["professional_id", "clinic_id"];
             isOneToOne: false;
             referencedRelation: "professionals";
+            referencedColumns: ["id", "clinic_id"];
+          },
+          {
+            foreignKeyName: "receivables_subscription_fk";
+            columns: ["subscription_id", "clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "patient_subscriptions";
             referencedColumns: ["id", "clinic_id"];
           },
           {
@@ -5069,6 +5218,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      add_patient_credit: {
+        Args: { _amount_cents: number; _notes: string; _patient_id: string };
+        Returns: undefined;
+      };
       appointment_has_clinical_record: {
         Args: { _appointment_id: string };
         Returns: boolean;
@@ -5152,6 +5305,14 @@ export type Database = {
       };
       dashboard_metrics: { Args: { _unit_id?: string }; Returns: Json };
       find_user_id_by_email: { Args: { _email: string }; Returns: string };
+      generate_my_subscription_receivables: {
+        Args: { _subscription_id: string };
+        Returns: number;
+      };
+      generate_subscription_receivables: {
+        Args: { _subscription_id?: string };
+        Returns: number;
+      };
       has_role: {
         Args: { _roles: Database["public"]["Enums"]["member_role"][] };
         Returns: boolean;
@@ -5175,12 +5336,27 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: number;
       };
+      move_patient_credit: {
+        Args: {
+          _amount: number;
+          _clinic_id: string;
+          _kind: string;
+          _notes: string;
+          _patient_id: string;
+          _receivable_id: string;
+        };
+        Returns: undefined;
+      };
       patient_alerts: {
         Args: { _patient_id: string };
         Returns: {
           details: string;
           label: string;
         }[];
+      };
+      patient_credit_balance: {
+        Args: { _patient_id: string };
+        Returns: number;
       };
       patient_history: {
         Args: { _patient_id: string };
@@ -5243,6 +5419,15 @@ export type Database = {
         Returns: undefined;
       };
       receive_payment: {
+        Args: {
+          _paid_amount_cents: number;
+          _paid_on: string;
+          _payment_method_id: string;
+          _receivable_id: string;
+        };
+        Returns: undefined;
+      };
+      receive_payment_with_credit: {
         Args: {
           _paid_amount_cents: number;
           _paid_on: string;
@@ -5375,6 +5560,10 @@ export type Database = {
       };
       timemultirange: { Args: Record<PropertyKey, never>; Returns: unknown };
       today_sp: { Args: Record<PropertyKey, never>; Returns: string };
+      use_patient_credit: {
+        Args: { _paid_on: string; _receivable_id: string };
+        Returns: undefined;
+      };
       user_clinic_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
     };
     Enums: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FileDown, MoreHorizontal } from "lucide-react";
@@ -8,6 +8,7 @@ import { FileDown, MoreHorizontal } from "lucide-react";
 import { FormMessage } from "@/components/forms/form-message";
 import { SimpleSelect } from "@/components/forms/simple-select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -22,7 +23,7 @@ import { issueInvoiceAction } from "@/features/invoices/actions";
 import { ChargeForm, ChargeView } from "@/features/charges/components/charge-dialog";
 import type { ChargeView as Charge } from "@/features/charges/service";
 
-import { cancelReceivable, receivePayment, reversePayment } from "../actions";
+import { cancelReceivable, loadPatientCredit, payWithCredit, receivePayment, reversePayment } from "../actions";
 import { receivableStatusLabels, type ReceivableStatus } from "../labels";
 
 export type ReceivableItem = {
@@ -52,27 +53,68 @@ type Props = {
 };
 
 /** Baixa de uma parcela (também usada no cartão da consulta). */
-export function ReceiveForm({ receivable, paymentMethods, onDone }: { receivable: Pick<ReceivableItem, "id" | "amount_cents">; paymentMethods: Props["paymentMethods"]; onDone: () => void }) {
+const CREDIT = "__credito__";
+
+export function ReceiveForm({
+  receivable,
+  patientId,
+  paymentMethods,
+  onDone,
+}: {
+  receivable: Pick<ReceivableItem, "id" | "amount_cents">;
+  /** Com o paciente, mostra o crédito dele (P7). */
+  patientId?: string;
+  paymentMethods: Props["paymentMethods"];
+  onDone: () => void;
+}) {
   const [amount, setAmount] = useState(centsToInput(receivable.amount_cents));
   const [method, setMethod] = useState(paymentMethods[0]?.id ?? "");
   const [date, setDate] = useState(todayIso());
+  const [keepCredit, setKeepCredit] = useState(true);
+  const [credit, setCredit] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const cents = parseBRLToCents(amount);
+  const usingCredit = method === CREDIT;
   const fee = paymentMethods.find((m) => m.id === method)?.fee_percent ?? 0;
-  const feeCents = cents ? Math.round((cents * fee) / 100) : 0;
+  const feeCents = cents && !usingCredit ? Math.round((cents * fee) / 100) : 0;
+  const extra = cents && !usingCredit ? cents - receivable.amount_cents : 0;
+
+  useEffect(() => {
+    if (!patientId) return;
+    let alive = true;
+    void loadPatientCredit(patientId).then((v) => {
+      if (alive) setCredit(v);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [patientId]);
 
   function submit() {
+    if (usingCredit) {
+      startTransition(async () => {
+        const result = await payWithCredit({ receivableId: receivable.id, paidOn: date });
+        if (result.error) setError(result.error);
+        else onDone();
+      });
+      return;
+    }
     if (!cents) {
       setError("Valor inválido.");
       return;
     }
     startTransition(async () => {
-      const result = await receivePayment({ receivableId: receivable.id, paidAmountCents: cents, paymentMethodId: method, paidOn: date });
+      const result = await receivePayment({ receivableId: receivable.id, paidAmountCents: cents, paymentMethodId: method, paidOn: date, keepCredit: extra > 0 && keepCredit });
       if (result.error) setError(result.error);
       else onDone();
     });
   }
+
+  const options = [
+    ...paymentMethods.map((m) => ({ value: m.id, label: m.name })),
+    ...(credit >= receivable.amount_cents ? [{ value: CREDIT, label: `Usar crédito (saldo ${formatCurrency(credit)})` }] : []),
+  ];
 
   return (
     <div className="space-y-4">
@@ -80,28 +122,34 @@ export function ReceiveForm({ receivable, paymentMethods, onDone }: { receivable
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="receive-amount">Valor recebido (R$)</Label>
-          <Input id="receive-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <Input id="receive-amount" inputMode="decimal" value={usingCredit ? centsToInput(receivable.amount_cents) : amount} disabled={usingCredit} onChange={(e) => setAmount(e.target.value)} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="receive-date">Data</Label>
           <Input id="receive-date" type="date" max={todayIso()} value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
       </div>
-      <SimpleSelect
-        id="receive-method"
-        label="Forma de pagamento"
-        value={method}
-        onChange={setMethod}
-        options={paymentMethods.map((m) => ({ value: m.id, label: m.name }))}
-      />
+      <SimpleSelect id="receive-method" label="Forma de pagamento" value={method} onChange={setMethod} options={options} />
+      {credit > 0 && credit < receivable.amount_cents ? (
+        <p className="text-sm text-muted-foreground">O paciente tem {formatCurrency(credit)} de crédito, menos que o valor desta parcela.</p>
+      ) : null}
       {feeCents ? (
         <p className="text-sm text-muted-foreground">
           Taxa de {fee.toLocaleString("pt-BR")}%: {formatCurrency(feeCents)} · líquido {formatCurrency((cents ?? 0) - feeCents)}
         </p>
       ) : null}
+      {extra > 0 ? (
+        <label className="flex items-start gap-2 rounded-xl border p-3 text-sm">
+          <Checkbox checked={keepCredit} onCheckedChange={(v) => setKeepCredit(v === true)} className="mt-0.5" />
+          <span>
+            Guardar {formatCurrency(extra)} como crédito?
+            <span className="block text-xs text-muted-foreground">O valor a mais fica de saldo para as próximas parcelas.</span>
+          </span>
+        </label>
+      ) : null}
       <DialogFooter>
         <Button onClick={submit} disabled={pending || !method}>
-          {pending ? "Registrando..." : "Confirmar recebimento"}
+          {pending ? "Registrando..." : usingCredit ? "Pagar com crédito" : "Confirmar recebimento"}
         </Button>
       </DialogFooter>
     </div>
@@ -270,7 +318,7 @@ export function ReceivablesList({ receivables, paymentMethods, canOperate, canMa
                   {receiving.patients?.full_name} · {receiving.description} · {formatCurrency(receiving.amount_cents)}
                 </DialogDescription>
               </DialogHeader>
-              <ReceiveForm receivable={receiving} paymentMethods={paymentMethods} onDone={() => setReceiving(null)} />
+              <ReceiveForm receivable={receiving} patientId={receiving.patient_id} paymentMethods={paymentMethods} onDone={() => setReceiving(null)} />
             </>
           ) : null}
         </DialogContent>

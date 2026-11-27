@@ -620,7 +620,7 @@ export type AppointmentCardData = {
   confirmedByWhatsApp: boolean;
   arrivedAt: string | null;
   /** null para quem não opera o financeiro (dentista). */
-  finance: { status: PatientFinancialStatus; paymentMethods: { id: string; name: string; fee_percent: number }[] } | null;
+  finance: { status: PatientFinancialStatus; paymentMethods: { id: string; name: string; fee_percent: number }[]; creditCents: number } | null;
   /** Gestão e sem evolução ligada. */
   canDelete: boolean;
 };
@@ -672,7 +672,7 @@ export async function loadAppointmentCard(appointmentId: string): Promise<Appoin
 }
 
 async function loadFinance(supabase: Supabase, patientId: string, today: string) {
-  const [recRes, planRes, methodsRes] = await Promise.all([
+  const [recRes, planRes, methodsRes, creditRes] = await Promise.all([
     supabase.from("receivables").select("id, description, amount_cents, due_date, status, plan_id").eq("patient_id", patientId),
     supabase
       .from("treatment_plans")
@@ -683,8 +683,9 @@ async function loadFinance(supabase: Supabase, patientId: string, today: string)
       .limit(1)
       .maybeSingle(),
     supabase.from("payment_methods").select("id, name, fee_percent").eq("active", true).order("name"),
+    supabase.rpc("patient_credit_balance", { _patient_id: patientId }),
   ]);
-  return { status: financialStatus(recRes.data ?? [], today, planRes.data?.id ?? null), paymentMethods: methodsRes.data ?? [] };
+  return { status: financialStatus(recRes.data ?? [], today, planRes.data?.id ?? null), paymentMethods: methodsRes.data ?? [], creditCents: creditRes.data ?? 0 };
 }
 
 /** Exclui a consulta (gestão; o banco recusa se houver evolução ligada). */

@@ -290,6 +290,7 @@ export function AppointmentDetails({ appointment: a, professionalName, professio
                   {fin.kind === "overdue" ? `Pagamento pendente · ${formatCurrency(fin.overdueCents)} vencido` : "Financeiro em dia"}
                 </span>
                 <span className="block text-xs text-muted-foreground">{fin.note}</span>
+                {card?.finance?.creditCents ? <span className="block text-xs font-semibold text-success">Crédito: {formatCurrency(card.finance.creditCents)}</span> : null}
               </span>
             </span>
             {fin.kind === "overdue" ? (
@@ -307,6 +308,7 @@ export function AppointmentDetails({ appointment: a, professionalName, professio
             </p>
             <ReceiveForm
               receivable={fin.oldest}
+              patientId={a.patientId}
               paymentMethods={card.finance.paymentMethods}
               onDone={() => {
                 setAsking(null);
