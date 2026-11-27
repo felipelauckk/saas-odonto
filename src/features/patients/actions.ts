@@ -123,7 +123,7 @@ export async function createPatient(_prev: ActionState, formData: FormData): Pro
   if (formData.get("stay") === "1") {
     return { status: "success", message: "Paciente cadastrado.", values: { createdId: data.id, createdName: data.full_name, createdPhone: data.whatsapp ?? data.phone ?? "" } };
   }
-  redirect(`/pacientes/${data.id}`);
+  redirect(`/pacientes/${data.id}/dados`);
 }
 
 export async function updatePatient(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -163,7 +163,7 @@ export async function updatePatient(_prev: ActionState, formData: FormData): Pro
   revalidatePath(`/pacientes/${parsed.data.id}`);
   // Editado num painel por cima de outra tela (ex.: Nova consulta): fica onde está.
   if (formData.get("stay") === "1") return { status: "success", message: "Cadastro atualizado." };
-  redirect(`/pacientes/${parsed.data.id}`);
+  redirect(`/pacientes/${parsed.data.id}/dados`);
 }
 
 export type PatientFormOptions = {

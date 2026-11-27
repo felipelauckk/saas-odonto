@@ -472,7 +472,7 @@ export function PatientForm({ patient, options: initialOptions, mode = "full", o
             Cancelar
           </Button>
         ) : (
-          <Link href={patient ? `/pacientes/${patient.id}` : "/pacientes"} className={buttonVariants({ variant: "outline" })}>
+          <Link href={patient ? `/pacientes/${patient.id}/dados` : "/pacientes"} className={buttonVariants({ variant: "outline" })}>
             Cancelar
           </Link>
         )}

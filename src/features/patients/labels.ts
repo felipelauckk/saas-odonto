@@ -13,15 +13,18 @@ export const genderLabels: Record<PatientGender, string> = {
 
 export const PAGE_SIZE = 25;
 
-/** Abas da ficha (slug vazio = Dados). */
+/** Abas da ficha (slug vazio = Resumo). */
 export const PATIENT_TABS = [
-  { slug: "", label: "Dados" },
+  { slug: "", label: "Resumo" },
+  { slug: "dados", label: "Dados" },
   { slug: "anamnese", label: "Anamnese" },
   { slug: "odontograma", label: "Odontograma" },
   { slug: "evolucoes", label: "Evoluções" },
   { slug: "fichas", label: "Fichas" },
   { slug: "orcamentos", label: "Orçamentos" },
   { slug: "financeiro", label: "Financeiro" },
+  { slug: "recibos", label: "Recibos" },
+  { slug: "exames", label: "Exames" },
   { slug: "arquivos", label: "Arquivos" },
   { slug: "documentos", label: "Documentos" },
   { slug: "agendamentos", label: "Agendamentos" },

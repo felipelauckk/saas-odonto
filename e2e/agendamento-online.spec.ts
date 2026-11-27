@@ -49,7 +49,8 @@ test("envia o portal ao paciente e ele pede remarcação", async ({ page }) => {
   const start = new Date(Date.now() + 2 * 86_400_000);
   await admin().from("appointments").insert({ clinic_id: user.clinicId, unit_id: seed.unitId, patient_id: seed.patientId, professional_id: seed.professionalId, starts_at: start.toISOString(), ends_at: new Date(start.getTime() + 1_800_000).toISOString() });
   await page.goto(`/pacientes/${seed.patientId}`);
-  await page.getByRole("button", { name: "Portal do paciente" }).click();
+  await page.getByRole("button", { name: "Mais" }).click();
+  await page.getByRole("menuitem", { name: "Link do portal" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByRole("link", { name: "Enviar pelo WhatsApp" })).toHaveAttribute("href", /wa\.me\/5511988887777/);
   const url = await dialog.getByLabel("Link do portal").inputValue();

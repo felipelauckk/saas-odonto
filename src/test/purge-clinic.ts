@@ -60,6 +60,8 @@ export const CLINIC_TABLES = [
   "anamneses",
   "tooth_records",
   "patient_files",
+  "patient_file_folders",
+  "patient_notes",
   "patient_returns",
   "waitlist",
   "appointment_tag_links",

@@ -2,6 +2,8 @@ import "server-only";
 
 import { cache } from "react";
 
+import { isOverdue } from "@/features/finance/patient-status";
+import { todayIso } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
 import { PAGE_SIZE } from "./labels";
@@ -101,7 +103,7 @@ export const getPatientSummary = cache(async (patientId: string, withBalance: bo
       .limit(1)
       .maybeSingle(),
     withBalance
-      ? supabase.from("receivables").select("amount_cents, status").eq("patient_id", patientId).in("status", ["open", "overdue"])
+      ? supabase.from("receivables").select("amount_cents, status, due_date").eq("patient_id", patientId).in("status", ["open", "overdue"])
       : Promise.resolve({ data: null, error: null }),
   ]);
   if (next.error) throw next.error;
@@ -114,7 +116,8 @@ export const getPatientSummary = cache(async (patientId: string, withBalance: bo
     balance: withBalance
       ? {
           openCents: rows.reduce((s, r) => s + r.amount_cents, 0),
-          overdueCents: rows.filter((r) => r.status === "overdue").reduce((s, r) => s + r.amount_cents, 0),
+          // Mesma regra do cartão da consulta: aberta com vencimento passado também é vencida.
+          overdueCents: rows.filter((r) => isOverdue(r, todayIso())).reduce((s, r) => s + r.amount_cents, 0),
         }
       : null,
   };
@@ -127,3 +130,56 @@ export const getPatientSources = cache(async (): Promise<PatientSourceOption[]> 
   if (error) throw error;
   return data ?? [];
 });
+
+/** Notas gerais do paciente: fixadas primeiro, depois as mais novas. */
+export async function getPatientNotes(patientId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("patient_notes")
+    .select("id, body, pinned, created_by, author_name, created_at")
+    .eq("patient_id", patientId)
+    .order("pinned", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return data;
+}
+
+export type PatientNote = Awaited<ReturnType<typeof getPatientNotes>>[number];
+
+/**
+ * Aba Resumo: próxima consulta, retorno pendente, orçamentos em aberto,
+ * anamnese e últimas evoluções. O prontuário só vem para quem pode ler (RLS);
+ * `clinical` diz se a leitura vale.
+ */
+export async function getPatientOverview(patientId: string, clinical: boolean) {
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+  const [next, ret, plans, anamnesis, evolutions] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select("id, starts_at, type, professionals(name)")
+      .eq("patient_id", patientId)
+      .gte("starts_at", now)
+      .not("status", "in", "(canceled,no_show,done)")
+      .order("starts_at")
+      .limit(1)
+      .maybeSingle(),
+    supabase.from("patient_returns").select("id, due_date, reason").eq("patient_id", patientId).eq("status", "pending").order("due_date").limit(1).maybeSingle(),
+    supabase.from("treatment_plans").select("id, status, total_cents, discount_cents, created_at").eq("patient_id", patientId).in("status", ["draft", "presented"]).order("created_at", { ascending: false }),
+    clinical
+      ? supabase.from("anamneses").select("created_at").eq("patient_id", patientId).order("created_at", { ascending: false }).limit(1).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    clinical
+      ? supabase.from("clinical_notes").select("id, body, created_at, professionals(name)").eq("patient_id", patientId).order("created_at", { ascending: false }).limit(3)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  for (const r of [next, ret, plans, anamnesis, evolutions]) if (r.error) throw r.error;
+  return {
+    next: next.data,
+    pendingReturn: ret.data,
+    openPlans: plans.data ?? [],
+    anamnesisAt: anamnesis.data?.created_at ?? null,
+    evolutions: evolutions.data ?? [],
+  };
+}

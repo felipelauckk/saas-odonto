@@ -13,10 +13,11 @@ type Props = {
   token: string;
   source: string;
   campaignId: string | null;
+  referredBy?: string | null;
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
 };
 
-export function PublicLeadForm({ token, source, campaignId, action }: Props) {
+export function PublicLeadForm({ token, source, campaignId, referredBy = null, action }: Props) {
   const [state, formAction] = useActionState(action, { status: "idle" } as ActionState);
   const [startedAt] = useState(() => Date.now());
   if (state.status === "success") {
@@ -29,6 +30,7 @@ export function PublicLeadForm({ token, source, campaignId, action }: Props) {
       <input type="hidden" name="token" value={token} />
       <input type="hidden" name="source" value={source} />
       {campaignId ? <input type="hidden" name="campaignId" value={campaignId} /> : null}
+      {referredBy ? <input type="hidden" name="referredBy" value={referredBy} /> : null}
       <input type="hidden" name="startedAt" value={startedAt} />
       {/* Campo-armadilha: pessoas não veem, robôs preenchem. */}
       <div aria-hidden className="absolute -left-[9999px] h-0 overflow-hidden">

@@ -135,9 +135,10 @@ test("edita, arquiva e reativa", async ({ page }) => {
   await expect(history.getByText("Engenheiro")).toBeVisible();
   await page.keyboard.press("Escape");
 
-  await page.getByRole("button", { name: "Arquivar" }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "Arquivar" }).click();
-  await expect(page.getByText("Arquivado", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Mais" }).click();
+  await page.getByRole("menuitem", { name: "Inativar" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Inativar" }).click();
+  await expect(page.getByText("Inativo", { exact: true })).toBeVisible();
 
   await page.goto("/pacientes");
   await expect(page.getByText("Todos os pacientes estão arquivados. Veja em Arquivados.")).toBeVisible();
@@ -145,8 +146,10 @@ test("edita, arquiva e reativa", async ({ page }) => {
   await expect(page.getByRole("link", { name: /Bruno Alves/ })).toBeVisible();
   await page.getByRole("link", { name: /Bruno Alves/ }).click();
 
-  await page.getByRole("button", { name: "Reativar paciente" }).click();
-  await expect(page.getByRole("button", { name: "Arquivar" })).toBeVisible();
+  await page.getByRole("button", { name: "Mais" }).click();
+  await page.getByRole("menuitem", { name: "Reativar" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Reativar" }).click();
+  await expect(page.getByText("Inativo", { exact: true })).toBeHidden();
 });
 
 test("origens da clínica: a nova aparece no cadastro, no filtro de Pacientes e no CRM", async ({ page }) => {
@@ -210,4 +213,37 @@ test("cadastro rápido pela Nova consulta: cadastra e já seleciona o paciente",
   await expect(sheet).toBeHidden();
   await expect(page.getByRole("dialog").getByText("Nina Rápida")).toBeVisible();
   await expect(page.getByRole("dialog").getByText("WhatsApp (11) 96666-5555")).toBeVisible();
+});
+
+test("ficha: Resumo com nota fixada, menu Mais com impressão e links, abas Recibos e Exames", async ({ page }) => {
+  await createPatient(page, { name: "Clara Resumo", phone: "11955554444" });
+  await page.getByRole("link", { name: "Resumo" }).click();
+  await expect(page.getByRole("region", { name: "Próxima consulta" }).getByText("Nenhuma consulta marcada.")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Alerta de retorno" })).toBeVisible();
+  await expect(page.getByText("Financeiro em dia")).toBeVisible();
+
+  // Nota geral fixada.
+  await page.getByRole("button", { name: "Nota", exact: true }).click();
+  await page.getByLabel("Nova nota").fill("Prefere ser chamada de Clarinha");
+  await page.getByText("Fixar no topo").click();
+  await page.getByRole("button", { name: "Salvar nota" }).click();
+  const notes = page.getByRole("list", { name: "Notas do paciente" });
+  await expect(notes.getByText("Prefere ser chamada de Clarinha")).toBeVisible();
+  await expect(notes.getByText(/Fixada/)).toBeVisible();
+
+  // Menu Mais.
+  await page.getByRole("button", { name: "Mais" }).click();
+  await expect(page.getByRole("menuitem", { name: "Imprimir dados" })).toHaveAttribute("href", /\/imprimir$/);
+  await page.getByRole("menuitem", { name: "Link de indicação" }).click();
+  await expect(page.getByRole("dialog").getByLabel("Link de indicação")).toHaveValue(/captacao\/[0-9a-f]{32}\?origem=indicacao&indicado_por=/);
+  await page.keyboard.press("Escape");
+
+  const id = page.url().match(/pacientes\/([0-9a-f-]{36})/)![1];
+  const pdf = await page.request.get(`/pacientes/${id}/imprimir`);
+  expect(pdf.headers()["content-type"]).toBe("application/pdf");
+
+  await page.getByRole("link", { name: "Recibos" }).click();
+  await expect(page.getByText("Nenhum recibo")).toBeVisible();
+  await page.getByRole("link", { name: "Exames" }).click();
+  await expect(page.getByText("Nenhum exame")).toBeVisible();
 });

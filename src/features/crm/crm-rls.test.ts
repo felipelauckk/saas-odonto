@@ -124,4 +124,20 @@ describe.skipIf(!hasSupabase)("CRM (funil e captação)", () => {
     await submitPublicLeadCore(base);
     expect((await admin.from("leads").select("id").eq("clinic_id", clinicId).eq("from_public_form", true)).data).toHaveLength(1);
   });
+
+  it("link de indicação: lead entra com quem indicou e origem Indicação; paciente de outra clínica é ignorado", async () => {
+    const { data: clinic } = await admin.from("clinics").select("lead_form_token").eq("id", clinicId).single();
+    const { data: referrer } = await admin.from("patients").insert({ clinic_id: clinicId, full_name: "Quem Indica" }).select("id").single();
+    const base = { token: clinic!.lead_form_token, name: "Amiga Indicada", phone: "(11) 94444-3333", source: "site", startedAt: String(Date.now() - 10_000) };
+    expect(await submitPublicLeadCore({ ...base, referredBy: referrer!.id })).toEqual({});
+    const { data: lead } = await admin.from("leads").select("referred_by_patient_id, patient_sources(key)").eq("clinic_id", clinicId).eq("name", "Amiga Indicada").single();
+    expect(lead).toEqual({ referred_by_patient_id: referrer!.id, patient_sources: { key: "indicacao" } });
+
+    const { data: foreign } = await admin.from("patients").select("id").neq("clinic_id", clinicId).limit(1).maybeSingle();
+    if (foreign) {
+      expect(await submitPublicLeadCore({ ...base, name: "Outra Indicada", phone: "11922223333", referredBy: foreign.id })).toEqual({});
+      const { data: lead2 } = await admin.from("leads").select("referred_by_patient_id").eq("clinic_id", clinicId).eq("name", "Outra Indicada").single();
+      expect(lead2!.referred_by_patient_id).toBeNull();
+    }
+  });
 });

@@ -6,11 +6,10 @@ import { formatIsoDate } from "@/lib/dates";
 import { formatCpfCnpj, formatPhone } from "@/lib/documents";
 import { formatDateTime } from "@/lib/format";
 
+import { formatAddress, type PatientAddress } from "../address";
 import { educationLabels, genderLabels, maritalLabels } from "../labels";
 import type { Patient } from "../queries";
 import { PatientHistoryButton } from "./patient-history";
-
-type Address = { cep?: string | null; street?: string | null; number?: string | null; complement?: string | null; district?: string | null; city?: string | null; state?: string | null };
 
 function Item({ label, value, wide = false }: { label: string; value: string | null | undefined; wide?: boolean }) {
   return (
@@ -19,14 +18,6 @@ function Item({ label, value, wide = false }: { label: string; value: string | n
       <dd className="text-sm">{value || <span className="text-muted-foreground">Não informado</span>}</dd>
     </div>
   );
-}
-
-function formatAddress(a: Address | null) {
-  if (!a) return null;
-  const line1 = [[a.street, a.number].filter(Boolean).join(", "), a.complement].filter(Boolean).join(" - ");
-  const line2 = [a.district, [a.city, a.state].filter(Boolean).join("/")].filter(Boolean).join(" · ");
-  const cep = a.cep ? `CEP ${a.cep.replace(/(\d{5})(\d{3})/, "$1-$2")}` : null;
-  return [line1, line2, cep].filter(Boolean).join(" · ") || null;
 }
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
@@ -78,7 +69,7 @@ export function PatientDetails({ patient, photo }: { patient: Patient; photo?: R
           <Item label="Falar com" value={patient.preferred_contact === "guardian" ? "Responsável" : "Paciente"} />
         </Group>
         <Group title="Endereço">
-          <Item label="Endereço" value={formatAddress(patient.address as Address | null)} wide />
+          <Item label="Endereço" value={formatAddress(patient.address as PatientAddress | null)} wide />
         </Group>
         {hasFamily ? (
           <Group title="Responsável e família">

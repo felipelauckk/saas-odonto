@@ -35,11 +35,13 @@ export async function submitPublicLeadCore(input: Record<string, unknown>, now =
   const { count } = await admin.from("leads").select("id", { count: "exact", head: true }).eq("clinic_id", clinic.id).eq("phone", d.phone!).gte("created_at", since);
   if (count) return {};
 
-  const key = d.source === "passante" ? "placa" : d.source;
-  const [{ data: stage }, { data: sources }, { data: campaign }] = await Promise.all([
+  const key = d.referredBy ? "indicacao" : d.source === "passante" ? "placa" : d.source;
+  const [{ data: stage }, { data: sources }, { data: campaign }, { data: referrer }] = await Promise.all([
     admin.from("crm_stages").select("id").eq("clinic_id", clinic.id).eq("auto_key", "new").single(),
     admin.from("patient_sources").select("id, key").eq("clinic_id", clinic.id).in("key", [key, "site"]),
     d.campaignId ? admin.from("crm_campaigns").select("id").eq("clinic_id", clinic.id).eq("id", d.campaignId).maybeSingle() : Promise.resolve({ data: null }),
+    // Só vale paciente desta clínica; id de outra clínica é ignorado.
+    d.referredBy ? admin.from("patients").select("id").eq("clinic_id", clinic.id).eq("id", d.referredBy).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   if (!stage) return { error: "Formulário indisponível." };
 
@@ -49,6 +51,7 @@ export async function submitPublicLeadCore(input: Record<string, unknown>, now =
     phone: d.phone,
     source_id: (sources ?? []).find((s) => s.key === key)?.id ?? (sources ?? []).find((s) => s.key === "site")?.id ?? null,
     campaign_id: campaign?.id ?? null,
+    referred_by_patient_id: referrer?.id ?? null,
     interest: d.interest,
     notes: d.message,
     stage_id: stage.id,

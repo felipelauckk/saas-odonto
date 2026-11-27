@@ -82,26 +82,67 @@ test("registra evolução e complementa, sem opção de editar", async ({ page }
   await expect(note).toContainText("Retorno em 6 meses.");
 });
 
-test("envia radiografia direto para o Storage e mostra na galeria", async ({ page }) => {
-  await page.goto(`/pacientes/${patientId}/arquivos`);
-  await expect(page.getByText("Nenhum arquivo")).toBeVisible();
+test("envia radiografia direto para o Storage e mostra em Exames", async ({ page }) => {
+  await page.goto(`/pacientes/${patientId}/exames`);
+  await expect(page.getByText("Nenhum exame")).toBeVisible();
 
   // PNG de 1x1 pixel.
   const png = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
     "base64",
   );
-  await page.locator("#arquivos-paciente").setInputFiles({ name: "panoramica.png", mimeType: "image/png", buffer: png });
+  await page.locator("#upload-exams").setInputFiles({ name: "panoramica.png", mimeType: "image/png", buffer: png });
   await page.getByLabel("Descrição (opcional)").fill("Panorâmica inicial");
   await page.getByRole("button", { name: "Enviar", exact: true }).click();
 
   await expect(page.getByText("Arquivo enviado.")).toBeVisible();
-  await expect(page.getByRole("img", { name: "Panorâmica inicial" })).toBeVisible();
+  const exams = page.getByRole("list", { name: "Exames" });
+  await expect(exams.getByRole("link", { name: "Radiografia panorâmica" })).toBeVisible();
+  await expect(exams.getByText(/Panorâmica inicial/)).toBeVisible();
 
-  const { data } = await admin().from("patient_files").select("storage_path, kind").eq("patient_id", patientId);
+  const { data } = await admin().from("patient_files").select("storage_path, kind, exam_type, taken_on").eq("patient_id", patientId);
   expect(data).toHaveLength(1);
   expect(data![0]!.kind).toBe("xray");
+  expect(data![0]!.exam_type).toBe("panoramica");
+  expect(data![0]!.taken_on).toBeTruthy();
   expect(data![0]!.storage_path.startsWith(`${user.clinicId}/patients/${patientId}/`)).toBe(true);
+});
+
+test("fotos em pastas: pastas sugeridas, mover e comparar antes e depois", async ({ page }) => {
+  await page.goto(`/pacientes/${patientId}/arquivos`);
+  const png = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+    "base64",
+  );
+  await page.locator("#upload-files").setInputFiles([
+    { name: "antes.png", mimeType: "image/png", buffer: png },
+    { name: "depois.png", mimeType: "image/png", buffer: png },
+  ]);
+  await page.getByRole("button", { name: "Enviar", exact: true }).click();
+  await expect(page.getByText("2 arquivos enviados.")).toBeVisible();
+  const grid = page.getByRole("list", { name: "Arquivos" });
+  await expect(grid.getByRole("checkbox")).toHaveCount(2);
+
+  await page.getByRole("button", { name: /Criar pastas sugeridas/ }).click();
+  const folders = page.getByRole("group", { name: "Pastas" });
+  await expect(folders.getByRole("button", { name: /Inicial/ })).toBeVisible();
+  await expect(folders.getByRole("button", { name: /Final/ })).toBeVisible();
+
+  for (const box of await grid.getByRole("checkbox").all()) {
+    await box.click();
+    await expect(box).toBeChecked();
+  }
+  await expect(page.getByText("2 selecionados")).toBeVisible();
+  await page.getByRole("button", { name: "Comparar" }).click();
+  await expect(page.getByRole("dialog", { name: "Antes e depois" }).getByText("Antes", { exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByLabel("Mover para a pasta").click();
+  await page.getByRole("option", { name: "Inicial" }).click();
+  await page.getByRole("button", { name: "Mover", exact: true }).click();
+  await expect(page.getByText("Arquivos movidos.")).toBeVisible();
+  await folders.getByRole("button", { name: /Inicial/ }).click();
+  await expect(grid.getByRole("listitem")).toHaveCount(2);
 });
 
 test("modelo de anamnese editável em Configurações", async ({ page }) => {

@@ -1,25 +1,31 @@
 import Link from "next/link";
-import { CalendarPlus, ChevronLeft, FileDown, FileText, MessageCircle, Phone } from "lucide-react";
+import { CalendarPlus, ChevronLeft, FileText, MessageCircle, Phone } from "lucide-react";
 
 import { StatusBadge } from "@/components/app/status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { ageFromBirthDate, formatIsoDate } from "@/lib/dates";
 import { formatPhone } from "@/lib/documents";
+import { formatCurrency } from "@/lib/format";
 import { initials } from "@/lib/initials";
 
 import type { Patient } from "../queries";
 import { MINOR_AGE } from "../schemas";
 import { patientSince } from "../summary";
-import { ArchiveButton } from "./archive-button";
+import { PatientMoreMenu } from "./patient-more-menu";
 
 type Props = {
   patient: Patient;
   canExport?: boolean;
-  portal?: React.ReactNode;
+  canPortal?: boolean;
+  photoUrl?: string | null;
+  /** Situação financeira (null = não mostrar, ex.: dentista). */
+  finance?: { overdueCents: number } | null;
+  bookingUrl?: string | null;
+  referralUrl?: string | null;
 };
 
 /** Topo da ficha: avatar, nome, dados de contato e as ações mais usadas. */
-export function PatientHeader({ patient, canExport = false, portal = null }: Props) {
+export function PatientHeader({ patient, canExport = false, canPortal = false, photoUrl = null, finance = null, bookingUrl = null, referralUrl = null }: Props) {
   const age = patient.birth_date ? ageFromBirthDate(patient.birth_date) : null;
   const contact = patient.whatsapp ?? patient.phone;
   const archived = Boolean(patient.archived_at);
@@ -35,16 +41,28 @@ export function PatientHeader({ patient, canExport = false, portal = null }: Pro
       </Link>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <span
-            aria-hidden
-            className="flex size-14 shrink-0 items-center justify-center rounded-avatar bg-accent text-xl font-black text-accent-foreground sm:size-[4.5rem] sm:text-2xl"
-          >
-            {initials(patient.full_name)}
-          </span>
+          {photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- URL assinada temporária do Storage
+            <img src={photoUrl} alt="" className="size-14 shrink-0 rounded-avatar object-cover sm:size-[4.5rem]" />
+          ) : (
+            <span
+              aria-hidden
+              className="flex size-14 shrink-0 items-center justify-center rounded-avatar bg-accent text-xl font-black text-accent-foreground sm:size-[4.5rem] sm:text-2xl"
+            >
+              {initials(patient.full_name)}
+            </span>
+          )}
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="type-display break-words">{patient.full_name}</h1>
-              {archived ? <StatusBadge tone="neutral">Arquivado</StatusBadge> : null}
+              {archived ? <StatusBadge tone="neutral">Inativo</StatusBadge> : null}
+              {finance ? (
+                finance.overdueCents > 0 ? (
+                  <StatusBadge tone="danger">{formatCurrency(finance.overdueCents)} vencido</StatusBadge>
+                ) : (
+                  <StatusBadge tone="success">Financeiro em dia</StatusBadge>
+                )
+              ) : null}
               {age !== null && age < MINOR_AGE ? <StatusBadge tone="info">Menor de idade</StatusBadge> : null}
             </div>
             <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem] text-muted-foreground">
@@ -83,20 +101,15 @@ export function PatientHeader({ patient, canExport = false, portal = null }: Pro
               Agendar
             </Link>
           )}
-          {/* Ações menos usadas: depois das principais no celular, antes delas no desktop. */}
-          <div className="flex flex-wrap gap-2 lg:-order-1">
-            {canExport ? (
-              <a
-                href={`/pacientes/${patient.id}/exportar`}
-                className={buttonVariants({ variant: "outline" })}
-                title="Todos os dados do paciente em PDF (direito de acesso da LGPD)"
-              >
-                <FileDown aria-hidden />
-                Exportar dados
-              </a>
-            ) : null}
-            {portal}
-            <ArchiveButton patientId={patient.id} archived={archived} name={patient.full_name} />
+          {/* Ações menos usadas: no menu "Mais". */}
+          <div className="lg:-order-1">
+            <PatientMoreMenu
+              patient={{ id: patient.id, name: patient.full_name, phone: contact ?? null, archived }}
+              canExport={canExport}
+              canPortal={canPortal}
+              bookingUrl={archived ? null : bookingUrl}
+              referralUrl={referralUrl}
+            />
           </div>
         </div>
       </div>

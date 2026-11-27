@@ -12,7 +12,7 @@ import { getSessionContext } from "@/features/tenancy/queries";
 import { canManageClinic } from "@/features/tenancy/roles";
 
 import { answersSchema, questionsSchema } from "./anamnesis";
-import { ALLOWED_FILE_TYPES, MAX_FILE_BYTES } from "./files";
+import { ALLOWED_FILE_TYPES, EXAM_TYPES, MAX_FILE_BYTES } from "./files";
 import { ARCHES, WHOLE_TOOTH, conditions } from "./odontogram";
 
 type Result = { error?: string };
@@ -147,6 +147,9 @@ const registerSchema = z.object({
   description: z.string().trim().max(300).optional(),
   mimeType: z.string().max(100),
   size: z.number().int().positive().max(MAX_FILE_BYTES),
+  folderId: z.uuid().nullable().optional(),
+  examType: z.enum(EXAM_TYPES).nullable().optional(),
+  takenOn: z.iso.date().nullable().optional(),
 });
 
 /** Registra no prontuário um arquivo que o navegador já enviou ao Storage. */
@@ -156,7 +159,7 @@ export async function registerPatientFile(input: z.input<typeof registerSchema>)
   const ctx = await context();
   if (!ctx) return { error: "Sessão expirada. Entre novamente." };
 
-  const { patientId, path, kind, description, mimeType, size } = parsed.data;
+  const { patientId, path, kind, description, mimeType, size, folderId, examType, takenOn } = parsed.data;
   if (!path.startsWith(`${ctx.clinicId}/patients/${patientId}/`)) return { error: "Caminho de arquivo inválido." };
 
   const { error } = await ctx.supabase.from("patient_files").insert({
@@ -168,6 +171,9 @@ export async function registerPatientFile(input: z.input<typeof registerSchema>)
     mime_type: mimeType,
     size_bytes: size,
     uploaded_by: ctx.session.user.id,
+    folder_id: folderId ?? null,
+    exam_type: kind === "xray" ? (examType ?? null) : null,
+    taken_on: kind === "xray" ? (takenOn ?? null) : null,
   });
   if (error) {
     // Sem registro, o arquivo enviado ficaria órfão: remove (o app não tem DELETE no bucket).
@@ -175,7 +181,71 @@ export async function registerPatientFile(input: z.input<typeof registerSchema>)
     return { error: error.code === "42501" ? NO_PERMISSION : subscriptionErrorMessage(error) ?? "Não foi possível salvar o arquivo." };
   }
 
-  revalidatePath(patientPath(patientId, "arquivos"));
+  revalidatePath(patientPath(patientId, kind === "xray" ? "exames" : "arquivos"));
+  return {};
+}
+
+const folderNameSchema = z.string().trim().min(1, "Dê um nome à pasta.").max(60, "No máximo 60 caracteres.");
+
+/** Pastas de fotos e arquivos do paciente (uma ou várias de uma vez). */
+export async function createFileFolders(input: { patientId: string; names: string[] }): Promise<Result> {
+  const parsed = z.object({ patientId: z.uuid(), names: z.array(folderNameSchema).min(1).max(10) }).safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Nome de pasta inválido." };
+  const ctx = await context();
+  if (!ctx) return { error: "Sessão expirada. Entre novamente." };
+  const { error } = await ctx.supabase
+    .from("patient_file_folders")
+    .upsert(parsed.data.names.map((name) => ({ clinic_id: ctx.clinicId, patient_id: parsed.data.patientId, name })), { onConflict: "patient_id,name", ignoreDuplicates: true });
+  if (error) return { error: error.code === "42501" ? NO_PERMISSION : (subscriptionErrorMessage(error) ?? "Não foi possível criar a pasta.") };
+  revalidatePath(patientPath(parsed.data.patientId, "arquivos"));
+  return {};
+}
+
+/** Apaga a pasta; os arquivos dela voltam para "Sem pasta". */
+export async function deleteFileFolder(input: { patientId: string; folderId: string }): Promise<Result> {
+  const parsed = z.object({ patientId: z.uuid(), folderId: z.uuid() }).safeParse(input);
+  if (!parsed.success) return { error: "Pasta inválida." };
+  const ctx = await context();
+  if (!ctx) return { error: "Sessão expirada. Entre novamente." };
+  const { data, error } = await ctx.supabase.from("patient_file_folders").delete().eq("id", parsed.data.folderId).select("id");
+  if (error || !data.length) return { error: subscriptionErrorMessage(error) ?? NO_PERMISSION };
+  revalidatePath(patientPath(parsed.data.patientId, "arquivos"));
+  return {};
+}
+
+/** Move arquivos para uma pasta (ou para "Sem pasta"). */
+export async function moveFilesToFolder(input: { patientId: string; fileIds: string[]; folderId: string | null }): Promise<Result> {
+  const parsed = z.object({ patientId: z.uuid(), fileIds: z.array(z.uuid()).min(1).max(200), folderId: z.uuid().nullable() }).safeParse(input);
+  if (!parsed.success) return { error: "Seleção inválida." };
+  const ctx = await context();
+  if (!ctx) return { error: "Sessão expirada. Entre novamente." };
+  const { data, error } = await ctx.supabase
+    .from("patient_files")
+    .update({ folder_id: parsed.data.folderId })
+    .in("id", parsed.data.fileIds)
+    .eq("patient_id", parsed.data.patientId)
+    .select("id");
+  if (error || !data.length) return { error: subscriptionErrorMessage(error) ?? NO_PERMISSION };
+  revalidatePath(patientPath(parsed.data.patientId, "arquivos"));
+  return {};
+}
+
+/** Corrige tipo e data de um exame. */
+export async function updateExam(input: { patientId: string; fileId: string; examType: string | null; takenOn: string | null; description: string }): Promise<Result> {
+  const parsed = z
+    .object({ patientId: z.uuid(), fileId: z.uuid(), examType: z.enum(EXAM_TYPES).nullable(), takenOn: z.iso.date().nullable(), description: z.string().trim().max(300) })
+    .safeParse(input);
+  if (!parsed.success) return { error: "Confira os dados do exame." };
+  const ctx = await context();
+  if (!ctx) return { error: "Sessão expirada. Entre novamente." };
+  const { data, error } = await ctx.supabase
+    .from("patient_files")
+    .update({ exam_type: parsed.data.examType, taken_on: parsed.data.takenOn, description: parsed.data.description || null })
+    .eq("id", parsed.data.fileId)
+    .eq("patient_id", parsed.data.patientId)
+    .select("id");
+  if (error || !data.length) return { error: subscriptionErrorMessage(error) ?? NO_PERMISSION };
+  revalidatePath(patientPath(parsed.data.patientId, "exames"));
   return {};
 }
 

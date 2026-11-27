@@ -17,11 +17,13 @@ type Props = {
   professionals: { id: string; name: string }[];
   onDone: (message?: string) => void;
   onCancel: () => void;
+  /** Paciente já escolhido (aberto pela ficha). */
+  initialPatient?: PatientOption | null;
 };
 
 /** Alerta de retorno avulso (o mesmo que aparece ao concluir a consulta), com busca do paciente. */
-export function ReturnAlertForm({ professionals, onDone, onCancel }: Props) {
-  const [patient, setPatient] = useState<PatientOption | null>(null);
+export function ReturnAlertForm({ professionals, onDone, onCancel, initialPatient = null }: Props) {
+  const [patient, setPatient] = useState<PatientOption | null>(initialPatient);
   const [patientError, setPatientError] = useState<string | undefined>();
   const [months, setMonths] = useState("6");
   const [reason, setReason] = useState("Retorno");

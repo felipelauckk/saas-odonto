@@ -62,6 +62,8 @@ export const publicLeadSchema = z.object({
   /** Chave da origem na lista (instagram, site...); desconhecida vira "site". */
   source: z.string().regex(/^[a-z_]{2,20}$/).catch("site"),
   campaignId: z.uuid().nullable().catch(null),
+  /** Paciente que indicou (link de indicação da ficha). */
+  referredBy: z.uuid().nullable().catch(null),
   website: z.string().max(0).optional(), // armadilha para robôs
   startedAt: z.coerce.number(),
 });

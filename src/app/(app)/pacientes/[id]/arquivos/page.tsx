@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 
 import { logAccess } from "@/features/audit/log";
-
 import { PatientFiles } from "@/features/clinical/components/patient-files";
 import { ClinicalRestricted } from "@/features/clinical/components/restricted";
-import { getClinicalAccess, listPatientFiles } from "@/features/clinical/queries";
+import { getClinicalAccess, listFileFolders, listPatientFiles } from "@/features/clinical/queries";
 
 export const metadata: Metadata = { title: "Arquivos" };
 
@@ -13,6 +12,6 @@ export default async function Page({ params }: PageProps<"/pacientes/[id]/arquiv
   const access = await getClinicalAccess();
   if (!access.canRead) return <ClinicalRestricted />;
   await logAccess("view", "patient_files", id);
-  const files = await listPatientFiles(id);
-  return <PatientFiles patientId={id} files={files} canWrite={access.canWrite} />;
+  const [files, folders] = await Promise.all([listPatientFiles(id), listFileFolders(id)]);
+  return <PatientFiles patientId={id} files={files} folders={folders} canWrite={access.canWrite} />;
 }

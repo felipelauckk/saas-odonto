@@ -92,22 +92,34 @@ export async function listClinicalNotes(patientId: string) {
 }
 
 /** Arquivos com links assinados de curta duração (10 minutos). */
-export async function listPatientFiles(patientId: string) {
+/** Arquivos do paciente: só exames (`exams`) ou tudo menos exames. */
+export async function listPatientFiles(patientId: string, { exams = false }: { exams?: boolean } = {}) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("patient_files")
-    .select("id, storage_path, kind, description, mime_type, size_bytes, created_at")
+    .select("id, storage_path, kind, description, mime_type, size_bytes, created_at, folder_id, exam_type, taken_on")
     .eq("patient_id", patientId)
     .order("created_at", { ascending: false });
+  query = exams ? query.eq("kind", "xray") : query.neq("kind", "xray");
+  const { data, error } = await query;
   if (error) throw error;
   if (!data.length) return [];
 
-  const { data: signed } = await supabase.storage.from("clinic").createSignedUrls(
-    data.map((f) => f.storage_path),
-    60 * 10,
-  );
+  const paths = data.map((f) => f.storage_path);
+  const [{ data: signed }, { data: downloads }] = await Promise.all([
+    supabase.storage.from("clinic").createSignedUrls(paths, 60 * 10),
+    supabase.storage.from("clinic").createSignedUrls(paths, 60 * 10, { download: true }),
+  ]);
   const urlByPath = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]));
-  return data.map((f) => ({ ...f, url: urlByPath.get(f.storage_path) ?? null }));
+  const downloadByPath = new Map((downloads ?? []).map((s) => [s.path, s.signedUrl]));
+  return data.map((f) => ({ ...f, url: urlByPath.get(f.storage_path) ?? null, downloadUrl: downloadByPath.get(f.storage_path) ?? null }));
+}
+
+export async function listFileFolders(patientId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("patient_file_folders").select("id, name").eq("patient_id", patientId).order("created_at").order("name");
+  if (error) throw error;
+  return data;
 }
 
 export async function getDefaultTemplate() {

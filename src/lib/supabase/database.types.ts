@@ -7,8 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.18";
   };
@@ -2475,17 +2473,63 @@ export type Database = {
           },
         ];
       };
+      patient_file_folders: {
+        Row: {
+          clinic_id: string;
+          created_at: string;
+          id: string;
+          name: string;
+          patient_id: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          clinic_id: string;
+          created_at?: string;
+          id?: string;
+          name: string;
+          patient_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          clinic_id?: string;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          patient_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "patient_file_folders_clinic_id_fkey";
+            columns: ["clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "clinics";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "patient_file_folders_patient_id_clinic_id_fkey";
+            columns: ["patient_id", "clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "patients";
+            referencedColumns: ["id", "clinic_id"];
+          },
+        ];
+      };
       patient_files: {
         Row: {
           clinic_id: string;
           created_at: string;
           description: string | null;
+          exam_type: string | null;
+          folder_id: string | null;
           id: string;
           kind: Database["public"]["Enums"]["patient_file_kind"];
           mime_type: string | null;
           patient_id: string;
           size_bytes: number | null;
           storage_path: string;
+          taken_on: string | null;
           updated_at: string;
           uploaded_by: string | null;
         };
@@ -2494,12 +2538,15 @@ export type Database = {
           clinic_id: string;
           created_at?: string;
           description?: string | null;
+          exam_type?: string | null;
+          folder_id?: string | null;
           id?: string;
           kind?: Database["public"]["Enums"]["patient_file_kind"];
           mime_type?: string | null;
           patient_id: string;
           size_bytes?: number | null;
           storage_path: string;
+          taken_on?: string | null;
           updated_at?: string;
           uploaded_by?: string | null;
         };
@@ -2507,12 +2554,15 @@ export type Database = {
           clinic_id?: string;
           created_at?: string;
           description?: string | null;
+          exam_type?: string | null;
+          folder_id?: string | null;
           id?: string;
           kind?: Database["public"]["Enums"]["patient_file_kind"];
           mime_type?: string | null;
           patient_id?: string;
           size_bytes?: number | null;
           storage_path?: string;
+          taken_on?: string | null;
           updated_at?: string;
           uploaded_by?: string | null;
         };
@@ -2525,7 +2575,66 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "patient_files_folder_fk";
+            columns: ["folder_id", "clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "patient_file_folders";
+            referencedColumns: ["id", "clinic_id"];
+          },
+          {
             foreignKeyName: "patient_files_patient_id_clinic_id_fkey";
+            columns: ["patient_id", "clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "patients";
+            referencedColumns: ["id", "clinic_id"];
+          },
+        ];
+      };
+      patient_notes: {
+        Row: {
+          author_name: string | null;
+          body: string;
+          clinic_id: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          patient_id: string;
+          pinned: boolean;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          author_name?: string | null;
+          body: string;
+          clinic_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          patient_id: string;
+          pinned?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          author_name?: string | null;
+          body?: string;
+          clinic_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          patient_id?: string;
+          pinned?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "patient_notes_clinic_id_fkey";
+            columns: ["clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "clinics";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "patient_notes_patient_id_clinic_id_fkey";
             columns: ["patient_id", "clinic_id"];
             isOneToOne: false;
             referencedRelation: "patients";

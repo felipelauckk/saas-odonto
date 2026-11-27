@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarDays, Plus } from "lucide-react";
+import { CalendarDays, FileSpreadsheet, Plus, Printer } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/empty-state";
 import { buttonVariants } from "@/components/ui/button";
@@ -54,7 +54,20 @@ export default async function Page({ params }: PageProps<"/pacientes/[id]/agenda
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">{goToAgenda}</div>
+      <div className="flex flex-wrap justify-end gap-2">
+        <a href={`/pacientes/${id}/agendamentos/exportar`} className={buttonVariants({ variant: "outline" })}>
+          <FileSpreadsheet aria-hidden />
+          Exportar Excel
+        </a>
+        <a href={`/pacientes/${id}/agendamentos/exportar?formato=csv`} className={buttonVariants({ variant: "ghost" })}>
+          CSV
+        </a>
+        <a href={`/pacientes/${id}/agendamentos/imprimir`} target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline" })}>
+          <Printer aria-hidden />
+          Imprimir
+        </a>
+        {goToAgenda}
+      </div>
       {upcoming.length ? (
         <section className="space-y-2" aria-labelledby="proximas">
           <h2 id="proximas" className="text-sm font-medium text-muted-foreground">

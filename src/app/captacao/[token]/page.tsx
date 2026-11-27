@@ -17,6 +17,7 @@ export default async function Page({ params, searchParams }: PageProps<"/captaca
   // ?origem=<chave da origem> (instagram, google, site...); desconhecida vira "site".
   const source = z.string().regex(/^[a-z_]{2,20}$/).catch("site").parse(query.origem);
   const campaignId = z.uuid().nullable().catch(null).parse(query.campanha ?? null);
+  const referredBy = z.uuid().nullable().catch(null).parse(query.indicado_por ?? null);
 
   return (
     <PublicShell clinicName={clinic?.name ?? null} width="sm">
@@ -26,7 +27,7 @@ export default async function Page({ params, searchParams }: PageProps<"/captaca
             <h1 className="type-title">Fale com a clínica</h1>
             <p className="text-sm text-muted-foreground">Deixe seu contato e a clínica fala com você.</p>
           </div>
-          <PublicLeadForm token={token} source={source} campaignId={campaignId} action={submitPublicLead} />
+          <PublicLeadForm token={token} source={source} campaignId={campaignId} referredBy={referredBy} action={submitPublicLead} />
         </>
       ) : (
         <PublicNotice icon={<Link2Off aria-hidden />} title="Formulário indisponível" />

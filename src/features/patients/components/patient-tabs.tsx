@@ -11,7 +11,7 @@ export function PatientTabs({ patientId }: { patientId: string }) {
   const base = `/pacientes/${patientId}`;
   const tabs = PATIENT_TABS.map(({ slug, label }) => {
     const href = slug ? `${base}/${slug}` : base;
-    const active = slug ? pathname.startsWith(href) : pathname === base || pathname === `${base}/editar`;
+    const active = slug === "dados" ? pathname.startsWith(href) || pathname === `${base}/editar` : slug ? pathname.startsWith(href) : pathname === base;
     return { href, label, active };
   });
   return <TabNav label="Ficha do paciente" tabs={tabs} />;

@@ -2,72 +2,49 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, ArchiveRestore } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { setPatientArchived } from "../actions";
 
-export function ArchiveButton({ patientId, archived, name }: { patientId: string; archived: boolean; name: string }) {
-  const [open, setOpen] = useState(false);
+type Props = { patientId: string; archived: boolean; name: string; open: boolean; onOpenChange: (open: boolean) => void };
+
+/** Inativar (arquivar) ou reativar o paciente. Nada é apagado. */
+export function ArchiveDialog({ patientId, archived, name, open, onOpenChange }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
-  function run(next: boolean) {
+  function run() {
     setError(null);
     startTransition(async () => {
-      const result = await setPatientArchived(patientId, next);
+      const result = await setPatientArchived(patientId, !archived);
       if (result.error) setError(result.error);
       else {
-        setOpen(false);
+        onOpenChange(false);
         // Garante a tela atualizada mesmo se outra navegação estava em andamento.
         router.refresh();
       }
     });
   }
 
-  if (archived) {
-    return (
-      <div className="space-y-1">
-        <Button variant="outline" disabled={pending} onClick={() => run(false)}>
-          <ArchiveRestore aria-hidden />
-          Reativar paciente
-        </Button>
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      </div>
-    );
-  }
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" />}>
-        <Archive aria-hidden />
-        Arquivar
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Arquivar {name}?</DialogTitle>
+          <DialogTitle>{archived ? `Reativar ${name}?` : `Inativar ${name}?`}</DialogTitle>
           <DialogDescription>
-            O paciente sai da lista de ativos, mas nada é apagado: ficha, prontuário e financeiro continuam guardados.
-            Dá para reativar a qualquer momento.
+            {archived
+              ? "O paciente volta para a lista de ativos e pode ser agendado de novo."
+              : "O paciente sai da lista de ativos, mas nada é apagado: ficha, prontuário e financeiro continuam guardados. Dá para reativar a qualquer momento."}
           </DialogDescription>
         </DialogHeader>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <DialogFooter>
           <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
-          <Button disabled={pending} onClick={() => run(true)}>
-            {pending ? "Arquivando..." : "Arquivar"}
+          <Button disabled={pending} onClick={run}>
+            {archived ? (pending ? "Reativando..." : "Reativar") : pending ? "Inativando..." : "Inativar"}
           </Button>
         </DialogFooter>
       </DialogContent>
