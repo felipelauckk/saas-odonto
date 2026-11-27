@@ -271,3 +271,16 @@ test("no celular, a nova consulta ocupa a tela e o rodapé fica fixo", async ({ 
   expect((await submit.boundingBox())!.y).toBe(before);
   expect(before + 44).toBeLessThanOrEqual(844);
 });
+
+test("imprime a agenda do dia em PDF, com ou sem telefones", async ({ page }) => {
+  await insertAppointment("09:00", "09:30");
+  await page.goto(`/agenda?data=${DAY}`);
+  await page.getByRole("button", { name: "Imprimir" }).click();
+  const item = page.getByRole("menuitem", { name: "Dia sem telefones" });
+  await expect(item).toHaveAttribute("href", new RegExp(`/agenda/imprimir\\?data=${DAY}&visao=dia&telefones=0`));
+  const pdf = await page.request.get(`/agenda/imprimir?data=${DAY}&visao=dia`);
+  expect(pdf.headers()["content-type"]).toBe("application/pdf");
+  expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
+  const week = await page.request.get(`/agenda/imprimir?data=${DAY}&visao=semana&telefones=0`);
+  expect(week.headers()["content-type"]).toBe("application/pdf");
+});

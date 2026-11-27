@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BellRing, CalendarClock, CalendarPlus, CalendarX2, ChevronDown, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { BellRing, CalendarClock, CalendarPlus, CalendarX2, ChevronDown, ChevronLeft, ChevronRight, Plus, Printer } from "lucide-react";
 import { cn } from "cn";
 
 import { FormMessage } from "@/components/forms/form-message";
@@ -534,6 +534,27 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
                 className="w-48 data-[size=default]:h-10 pointer-coarse:data-[size=default]:h-11"
               />
             ) : null}
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button variant="outline" />}>
+                <Printer aria-hidden />
+                Imprimir
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-56">
+                {[
+                  { phones: true, label: view === "semana" ? "Semana com telefones" : "Dia com telefones" },
+                  { phones: false, label: view === "semana" ? "Semana sem telefones" : "Dia sem telefones" },
+                ].map((o) => {
+                  const qs = new URLSearchParams({ data: date, visao: view });
+                  if (!o.phones) qs.set("telefones", "0");
+                  if (hiddenPros.length) qs.set("ocultar", hiddenPros.join(","));
+                  return (
+                    <DropdownMenuItem key={o.label} render={<a href={`/agenda/imprimir?${qs}`} target="_blank" rel="noreferrer" />}>
+                      {o.label}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="xl:hidden">{newButtons}</div>
           </div>
         </div>
