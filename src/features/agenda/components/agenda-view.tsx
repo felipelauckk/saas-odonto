@@ -442,9 +442,9 @@ export function AgendaView({ data, unitId, date, today, view, by, selectedId, is
 
   return (
     // data-agenda-wide: o layout do app solta a largura máxima nesta tela.
-    <div data-agenda-wide className="grid gap-5 xl:grid-cols-[16.5rem_minmax(0,1fr)]">
-      {/* Coluna lateral (à esquerda no computador) */}
-      <aside className="order-last flex min-w-0 flex-col gap-4 xl:order-first" aria-label="Resumo da agenda">
+    <div data-agenda-wide className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
+      {/* Coluna lateral (à direita no computador; embaixo no celular) */}
+      <aside className="order-last flex min-w-0 flex-col gap-4" aria-label="Resumo da agenda">
         <div className="hidden xl:block">{newButtons}</div>
         {calendar}
         {by === "profissional" && view === "dia" && data.professionals.length > 1 ? (
