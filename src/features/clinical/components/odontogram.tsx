@@ -57,6 +57,36 @@ function faceSlots(tooth: number): Record<Face, WheelSlot> {
   };
 }
 
+/**
+ * Encolhe o desenho para caber na largura do cartão (sem barra de rolagem).
+ * Abaixo de 55% os dentes ficariam pequenos demais para tocar: aí rola de
+ * lado, sem barra visível.
+ */
+function useFitWidth(deps: unknown[]) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const o = outer.current;
+    const i = inner.current;
+    if (!o || !i) return;
+    const measure = () => {
+      const current = Number(i.style.zoom || 1);
+      const natural = i.getBoundingClientRect().width / current;
+      const available = o.clientWidth - (parseFloat(getComputedStyle(o).paddingLeft) + parseFloat(getComputedStyle(o).paddingRight));
+      if (!natural || !available) return;
+      const next = Math.max(0.55, Math.min(1, Math.floor((available / natural) * 100) / 100));
+      setScale((s) => (Math.abs(s - next) < 0.01 ? s : next));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(o);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- remede quando a visão muda
+  }, deps);
+  return { outer, inner, scale };
+}
+
 const FACE_ORDER: Face[] = ["V", "M", "O", "D", "L"];
 
 function Tooth({
@@ -224,6 +254,7 @@ export function Odontogram({ patientId, records, canWrite, canMarkDone, startWit
             { teeth: ARCHES.lowerPermanent, label: "Arcada inferior" },
           ];
   const [full, setFull] = useState(false);
+  const { outer: fitOuter, inner: fitInner, scale: fitScale } = useFitWidth([view, full]);
 
   useEffect(() => {
     if (!full) return;
@@ -305,8 +336,8 @@ export function Odontogram({ patientId, records, canWrite, canMarkDone, startWit
           )
         ) : (
           <>
-            <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-              <div className="relative mx-auto w-max min-w-full space-y-2">
+            <div ref={fitOuter} className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+              <div ref={fitInner} className="relative mx-auto w-max space-y-2" style={fitScale < 1 ? { zoom: fitScale } : undefined}>
                 <div aria-hidden className="absolute inset-y-0 left-1/2 w-px bg-border" />
                 <div aria-hidden className="absolute inset-x-0 top-1/2 h-px bg-border" />
                 {arches.map(({ teeth, label, small }) => (
