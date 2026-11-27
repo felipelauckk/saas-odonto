@@ -22,10 +22,11 @@ type Props = {
   finance?: { overdueCents: number } | null;
   bookingUrl?: string | null;
   referralUrl?: string | null;
+  reviewUrl?: string | null;
 };
 
 /** Topo da ficha: avatar, nome, dados de contato e as ações mais usadas. */
-export function PatientHeader({ patient, canExport = false, canPortal = false, photoUrl = null, finance = null, bookingUrl = null, referralUrl = null }: Props) {
+export function PatientHeader({ patient, canExport = false, canPortal = false, photoUrl = null, finance = null, bookingUrl = null, referralUrl = null, reviewUrl = null }: Props) {
   const age = patient.birth_date ? ageFromBirthDate(patient.birth_date) : null;
   const contact = patient.whatsapp ?? patient.phone;
   const archived = Boolean(patient.archived_at);
@@ -109,6 +110,7 @@ export function PatientHeader({ patient, canExport = false, canPortal = false, p
               canPortal={canPortal}
               bookingUrl={archived ? null : bookingUrl}
               referralUrl={referralUrl}
+              reviewUrl={reviewUrl}
             />
           </div>
         </div>

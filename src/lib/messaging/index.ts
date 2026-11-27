@@ -23,6 +23,7 @@ export function getMessagingProvider(): MessagingProvider {
         return_reminder: env.WHATSAPP_TEMPLATE_RETURN || "retorno",
         payment_reminder: env.WHATSAPP_TEMPLATE_PAYMENT || "lembrete_cobranca",
         booking_code: env.WHATSAPP_TEMPLATE_CODE || "codigo_agendamento",
+        review_request: env.WHATSAPP_TEMPLATE_REVIEW || "pedido_avaliacao",
       },
     });
   }

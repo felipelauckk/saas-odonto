@@ -91,7 +91,7 @@ describe.skipIf(!hasSupabase)("mensagens (WhatsApp simulado)", () => {
 
   it("clínica nova tem os quatro modelos", async () => {
     const { data } = await admin.from("message_templates").select("kind").eq("clinic_id", clinicId);
-    expect(data?.map((t) => t.kind).sort()).toEqual(["appointment_confirmation", "appointment_reminder", "birthday", "return_reminder"]);
+    expect(data?.map((t) => t.kind).sort()).toEqual(["appointment_confirmation", "appointment_reminder", "birthday", "return_reminder", "review_request"]);
   });
 
   it("rotina diária manda o lembrete de amanhã, o parabéns e o retorno vencido (uma vez só)", async () => {

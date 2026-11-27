@@ -38,6 +38,7 @@ export const reports: readonly ReportDef[] = [
   { slug: "retornos", title: "Retornos", description: "Alertas de retorno vencidos, cumpridos e dispensados.", filters: ["period", "professional"] },
   { slug: "consumo", title: "Consumo de material", description: "Materiais baixados por procedimento e custo de material.", filters: ["period", "unit", "groupBy"], groupBy: [{ value: "procedimento", label: "Procedimento" }, { value: "produto", label: "Material" }] },
   { slug: "crc-crm", title: "CRC e CRM", description: "Contatos e recuperação da CRC; leads e conversão do CRM.", filters: ["period"] },
+  { slug: "avaliacoes-google", title: "Avaliações no Google", description: "Pedidos de avaliação enviados depois do atendimento, por profissional.", filters: ["period", "professional"] },
 ];
 
 export const reportBySlug = new Map(reports.map((r) => [r.slug, r]));
@@ -45,7 +46,7 @@ export const reportBySlug = new Map(reports.map((r) => [r.slug, r]));
 /** Relatórios agrupados pelo assunto (lista e menu lateral). */
 export const REPORT_GROUPS: readonly { title: string; slugs: readonly string[] }[] = [
   { title: "Dinheiro", slugs: ["faturamento", "despesas", "inadimplencia"] },
-  { title: "Vendas", slugs: ["orcamentos", "primeira-consulta", "crc-crm"] },
+  { title: "Vendas", slugs: ["orcamentos", "primeira-consulta", "crc-crm", "avaliacoes-google"] },
   { title: "Agenda", slugs: ["ocupacao", "faltas", "retornos"] },
   { title: "Pacientes", slugs: ["sem-visita", "pacientes", "aniversariantes"] },
   { title: "Equipe e materiais", slugs: ["producao", "comissoes", "consumo"] },

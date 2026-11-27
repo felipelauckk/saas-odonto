@@ -14,7 +14,7 @@ export async function getClinic() {
   if (!clinicId) return null;
   const { data, error } = await supabase
     .from("clinics")
-    .select("id, name, legal_name, document_cnpj_cpf, phone, email, logo_url")
+    .select("id, name, legal_name, document_cnpj_cpf, phone, email, logo_url, google_review_url, review_request_delay_hours")
     .eq("id", clinicId)
     .single();
   if (error) throw error;

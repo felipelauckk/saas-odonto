@@ -386,6 +386,7 @@ export type Database = {
           reminder_mode: string;
           reminder_sent_at: string | null;
           reschedule_requested_at: string | null;
+          review_requested_at: string | null;
           series_id: string | null;
           starts_at: string;
           status: Database["public"]["Enums"]["appointment_status"];
@@ -414,6 +415,7 @@ export type Database = {
           reminder_mode?: string;
           reminder_sent_at?: string | null;
           reschedule_requested_at?: string | null;
+          review_requested_at?: string | null;
           series_id?: string | null;
           starts_at: string;
           status?: Database["public"]["Enums"]["appointment_status"];
@@ -441,6 +443,7 @@ export type Database = {
           reminder_mode?: string;
           reminder_sent_at?: string | null;
           reschedule_requested_at?: string | null;
+          review_requested_at?: string | null;
           series_id?: string | null;
           starts_at?: string;
           status?: Database["public"]["Enums"]["appointment_status"];
@@ -1153,6 +1156,7 @@ export type Database = {
           created_at: string;
           document_cnpj_cpf: string | null;
           email: string | null;
+          google_review_url: string | null;
           id: string;
           lead_form_token: string;
           legal_name: string | null;
@@ -1164,6 +1168,7 @@ export type Database = {
           phone: string | null;
           plan_id: string | null;
           require_patient_email: boolean;
+          review_request_delay_hours: number;
           subscription_status: Database["public"]["Enums"]["subscription_status"];
           trial_ends_at: string | null;
           updated_at: string;
@@ -1179,6 +1184,7 @@ export type Database = {
           created_at?: string;
           document_cnpj_cpf?: string | null;
           email?: string | null;
+          google_review_url?: string | null;
           id?: string;
           lead_form_token?: string;
           legal_name?: string | null;
@@ -1190,6 +1196,7 @@ export type Database = {
           phone?: string | null;
           plan_id?: string | null;
           require_patient_email?: boolean;
+          review_request_delay_hours?: number;
           subscription_status?: Database["public"]["Enums"]["subscription_status"];
           trial_ends_at?: string | null;
           updated_at?: string;
@@ -1204,6 +1211,7 @@ export type Database = {
           created_at?: string;
           document_cnpj_cpf?: string | null;
           email?: string | null;
+          google_review_url?: string | null;
           id?: string;
           lead_form_token?: string;
           legal_name?: string | null;
@@ -1215,6 +1223,7 @@ export type Database = {
           phone?: string | null;
           plan_id?: string | null;
           require_patient_email?: boolean;
+          review_request_delay_hours?: number;
           subscription_status?: Database["public"]["Enums"]["subscription_status"];
           trial_ends_at?: string | null;
           updated_at?: string;
@@ -2231,6 +2240,97 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "patients";
             referencedColumns: ["id", "clinic_id"];
+          },
+        ];
+      };
+      notification_reads: {
+        Row: {
+          clinic_id: string;
+          created_at: string;
+          notification_id: string;
+          read_at: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          clinic_id: string;
+          created_at?: string;
+          notification_id: string;
+          read_at?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          clinic_id?: string;
+          created_at?: string;
+          notification_id?: string;
+          read_at?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notification_reads_clinic_id_fkey";
+            columns: ["clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "clinics";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notification_reads_notification_id_fkey";
+            columns: ["notification_id"];
+            isOneToOne: false;
+            referencedRelation: "notifications";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notifications: {
+        Row: {
+          body: string | null;
+          clinic_id: string;
+          created_at: string;
+          id: string;
+          kind: string;
+          link: string | null;
+          roles: Database["public"]["Enums"]["member_role"][] | null;
+          title: string;
+          updated_at: string;
+          user_id: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          body?: string | null;
+          clinic_id: string;
+          created_at?: string;
+          id?: string;
+          kind: string;
+          link?: string | null;
+          roles?: Database["public"]["Enums"]["member_role"][] | null;
+          title: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          body?: string | null;
+          clinic_id?: string;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          link?: string | null;
+          roles?: Database["public"]["Enums"]["member_role"][] | null;
+          title?: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_clinic_id_fkey";
+            columns: ["clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "clinics";
+            referencedColumns: ["id"];
           },
         ];
       };
@@ -3744,6 +3844,7 @@ export type Database = {
           created_at: string;
           full_name: string | null;
           id: string;
+          news_seen_at: string | null;
           phone: string | null;
           updated_at: string;
         };
@@ -3754,6 +3855,7 @@ export type Database = {
           created_at?: string;
           full_name?: string | null;
           id: string;
+          news_seen_at?: string | null;
           phone?: string | null;
           updated_at?: string;
         };
@@ -3763,6 +3865,7 @@ export type Database = {
           created_at?: string;
           full_name?: string | null;
           id?: string;
+          news_seen_at?: string | null;
           phone?: string | null;
           updated_at?: string;
         };
@@ -5332,6 +5435,10 @@ export type Database = {
         };
         Returns: undefined;
       };
+      mark_all_notifications_read: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
       mark_overdue_receivables: {
         Args: Record<PropertyKey, never>;
         Returns: number;
@@ -5347,6 +5454,24 @@ export type Database = {
         };
         Returns: undefined;
       };
+      notification_is_mine: {
+        Args: {
+          _roles: Database["public"]["Enums"]["member_role"][];
+          _user_id: string;
+        };
+        Returns: boolean;
+      };
+      notify: {
+        Args: {
+          _body: string;
+          _clinic_id: string;
+          _kind: string;
+          _link: string;
+          _roles: Database["public"]["Enums"]["member_role"][];
+          _title: string;
+        };
+        Returns: undefined;
+      };
       patient_alerts: {
         Args: { _patient_id: string };
         Returns: {
@@ -5358,6 +5483,7 @@ export type Database = {
         Args: { _patient_id: string };
         Returns: number;
       };
+      patient_display_name: { Args: { _patient_id: string }; Returns: string };
       patient_history: {
         Args: { _patient_id: string };
         Returns: {
@@ -5497,6 +5623,10 @@ export type Database = {
         Args: { _clinic_id: string };
         Returns: undefined;
       };
+      seed_review_template: {
+        Args: { _clinic_id: string };
+        Returns: undefined;
+      };
       seed_specialty_defaults: {
         Args: { _clinic_id: string };
         Returns: undefined;
@@ -5620,7 +5750,8 @@ export type Database = {
         | "birthday"
         | "return_reminder"
         | "payment_reminder"
-        | "booking_code";
+        | "booking_code"
+        | "review_request";
       message_status: "sent" | "simulated" | "failed" | "received";
       patient_file_kind: "photo" | "xray" | "document" | "other";
       patient_gender: "female" | "male" | "other" | "not_informed";
@@ -5851,6 +5982,7 @@ export const Constants = {
         "return_reminder",
         "payment_reminder",
         "booking_code",
+        "review_request",
       ],
       message_status: ["sent", "simulated", "failed", "received"],
       patient_file_kind: ["photo", "xray", "document", "other"],

@@ -45,6 +45,12 @@ export const clinicSchema = z.object({
     .transform((d) => d || null),
   phone: optionalPhone,
   email: optionalEmail,
+  /** Link de avaliação no Google (P10). */
+  googleReviewUrl: text
+    .refine((v) => v === "" || /^https:\/\/\S{8,400}$/.test(v), "Cole o link completo, começando com https://.")
+    .transform((v) => v || null)
+    .optional(),
+  reviewDelayHours: integer(1, 72, "Entre 1 e 72 horas.").optional(),
 });
 
 // Unidades --------------------------------------------------------------------------

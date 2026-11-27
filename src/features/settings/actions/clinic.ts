@@ -18,10 +18,18 @@ export async function updateClinic(_prev: ActionState, formData: FormData): Prom
   const ctx = await managerContext();
   if (!ctx.ok) return ctx.state;
 
-  const { name, legalName, document, phone, email } = parsed.data;
+  const { name, legalName, document, phone, email, googleReviewUrl, reviewDelayHours } = parsed.data;
   const { data, error } = await ctx.supabase
     .from("clinics")
-    .update({ name, legal_name: legalName, document_cnpj_cpf: document, phone, email })
+    .update({
+      name,
+      legal_name: legalName,
+      document_cnpj_cpf: document,
+      phone,
+      email,
+      ...(googleReviewUrl !== undefined ? { google_review_url: googleReviewUrl } : {}),
+      ...(reviewDelayHours !== undefined ? { review_request_delay_hours: reviewDelayHours } : {}),
+    })
     .eq("id", ctx.clinicId)
     .select("id");
   if (error) return dbErrorState(error, values);

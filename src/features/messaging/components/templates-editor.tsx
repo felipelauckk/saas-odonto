@@ -19,6 +19,10 @@ const KIND_INFO: Record<MessageKind, { title: string; description: string }> = {
   booking_code: { title: "Código do agendamento online", description: "Texto fixo com o código de confirmação." },
   payment_reminder: { title: "Régua de cobrança", description: "Textos de cada etapa ficam em Configurações > Cobrança online." },
   return_reminder: { title: "Alerta de retorno", description: "Enviado quando vence o retorno do paciente (ex.: limpeza a cada 6 meses)." },
+  review_request: {
+    title: "Pedido de avaliação no Google",
+    description: "Enviado algumas horas depois do \"Atendido\" (Configurações > Dados da clínica). Use {{link}} para o link de avaliação.",
+  },
 };
 
 const SAMPLE = { paciente: "Ana", clinica: "Clínica Sorriso", data: "segunda-feira, 16 de novembro", hora: "09:30", profissional: "Dra. Beatriz" };

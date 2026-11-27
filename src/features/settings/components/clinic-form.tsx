@@ -18,6 +18,8 @@ type ClinicFormProps = {
     document_cnpj_cpf: string | null;
     phone: string | null;
     email: string | null;
+    google_review_url?: string | null;
+    review_request_delay_hours?: number;
   };
 };
 
@@ -55,6 +57,27 @@ export function ClinicForm({ clinic }: ClinicFormProps) {
           />
           <FormField label="E-mail de contato" name="email" type="email" defaultValue={v?.email ?? clinic.email ?? ""} errors={state.fieldErrors?.email} />
         </div>
+      </FormSection>
+      <FormSection
+        id="clinica-avaliacoes"
+        title="Avaliações no Google"
+        description="Link para o paciente avaliar a clínica. O pedido automático sai depois do Atendido (ligue o modelo em Mensagens automáticas)."
+      >
+        <FormField
+          label="Link de avaliação no Google"
+          name="googleReviewUrl"
+          type="url"
+          placeholder="https://g.page/r/..."
+          defaultValue={v?.googleReviewUrl ?? clinic.google_review_url ?? ""}
+          errors={state.fieldErrors?.googleReviewUrl}
+        />
+        <FormField
+          label="Enviar quantas horas depois do Atendido"
+          name="reviewDelayHours"
+          inputMode="numeric"
+          defaultValue={v?.reviewDelayHours ?? String(clinic.review_request_delay_hours ?? 2)}
+          errors={state.fieldErrors?.reviewDelayHours}
+        />
       </FormSection>
       <FormSectionsFooter note="O endereço de cada unidade fica em Clínica › Unidades.">
         <SubmitButton pendingLabel="Salvando...">Salvar alterações</SubmitButton>

@@ -17,6 +17,7 @@ const TEMPLATE_PARAMS: Record<MessageKind, (keyof OutgoingMessage["variables"])[
   return_reminder: ["paciente", "clinica"],
   payment_reminder: ["paciente", "valor", "vencimento", "link"],
   booking_code: ["codigo"],
+  review_request: ["paciente", "clinica", "link"],
 };
 
 /**

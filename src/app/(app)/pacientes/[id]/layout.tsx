@@ -18,11 +18,12 @@ async function publicLinks(clinicId: string, patientId: string) {
   const [site, { data: booking }, { data: clinic }] = await Promise.all([
     getSiteUrl(),
     supabase.from("online_booking_settings").select("slug, enabled").eq("clinic_id", clinicId).maybeSingle(),
-    supabase.from("clinics").select("lead_form_token").eq("id", clinicId).maybeSingle(),
+    supabase.from("clinics").select("lead_form_token, google_review_url").eq("id", clinicId).maybeSingle(),
   ]);
   return {
     bookingUrl: booking?.enabled && booking.slug ? `${site}/agendar/${booking.slug}` : null,
     referralUrl: clinic?.lead_form_token ? `${site}/captacao/${clinic.lead_form_token}?origem=indicacao&indicado_por=${patientId}` : null,
+    reviewUrl: clinic?.google_review_url ?? null,
   };
 }
 
@@ -53,6 +54,7 @@ export default async function PatientLayout({ children, params }: LayoutProps<"/
         finance={balance ? { overdueCents: balance.overdueCents } : null}
         bookingUrl={links.bookingUrl}
         referralUrl={operatesFinance ? links.referralUrl : null}
+        reviewUrl={links.reviewUrl}
       />
       <PatientSummary alerts={alerts} summary={summary} />
       <PatientTabs patientId={patient.id} />

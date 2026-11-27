@@ -204,7 +204,68 @@ export async function runDailyMessages({ now = new Date(), clinicId }: { now?: D
   summary.dunning += dunning.sent;
   summary.failed += dunning.failed;
 
-  return summary;
+  const reviews = await runReviewRequests(admin, now, clinicId);
+  summary.failed += reviews.failed;
+
+  return { ...summary, reviews: reviews.sent };
+}
+
+/** Um pedido de avaliação por paciente a cada 90 dias, no máximo. */
+const REVIEW_COOLDOWN_DAYS = 90;
+/** Consultas atendidas há mais tempo que isso não recebem mais o pedido. */
+const REVIEW_MAX_AGE_DAYS = 3;
+
+/**
+ * Pedido de avaliação no Google (P10): consultas "Atendido" há pelo menos X
+ * horas (configurado pela clínica), com o modelo ligado e o link cadastrado.
+ * Roda junto da rotina diária, então o "X horas" é o mínimo, não a hora exata.
+ */
+export async function runReviewRequests(admin: Admin, now: Date = new Date(), clinicId?: string) {
+  const result = { sent: 0, failed: 0 };
+  let templatesQuery = admin.from("message_templates").select("clinic_id, body").eq("kind", "review_request").eq("active", true);
+  if (clinicId) templatesQuery = templatesQuery.eq("clinic_id", clinicId);
+  const { data: templates } = await templatesQuery;
+  for (const t of templates ?? []) {
+    const { data: clinic } = await admin.from("clinics").select("name, google_review_url, review_request_delay_hours").eq("id", t.clinic_id).single();
+    if (!clinic?.google_review_url) continue;
+    const until = new Date(now.getTime() - clinic.review_request_delay_hours * 3_600_000).toISOString();
+    const since = new Date(now.getTime() - REVIEW_MAX_AGE_DAYS * 86_400_000).toISOString();
+    const { data: appointments } = await admin
+      .from("appointments")
+      .select("id, patient_id, patients(full_name, whatsapp, phone)")
+      .eq("clinic_id", t.clinic_id)
+      .eq("status", "done")
+      .is("review_requested_at", null)
+      .lte("ends_at", until)
+      .gte("ends_at", since);
+    const handled = new Set<string>();
+    for (const a of appointments ?? []) {
+      // Marca a consulta de qualquer jeito: não volta a ser avaliada amanhã.
+      await admin.from("appointments").update({ review_requested_at: now.toISOString() }).eq("id", a.id);
+      if (handled.has(a.patient_id)) continue;
+      handled.add(a.patient_id);
+      const { count } = await admin
+        .from("messages_log")
+        .select("id", { count: "exact", head: true })
+        .eq("patient_id", a.patient_id)
+        .eq("template_kind", "review_request")
+        .neq("status", "failed")
+        .gte("sent_at", new Date(now.getTime() - REVIEW_COOLDOWN_DAYS * 86_400_000).toISOString());
+      if (count) continue;
+      const status = await deliver(admin, {
+        clinicId: t.clinic_id,
+        patientId: a.patient_id,
+        appointmentId: a.id,
+        kind: "review_request",
+        phone: a.patients?.whatsapp ?? a.patients?.phone ?? null,
+        body: t.body,
+        variables: { paciente: firstName(a.patients?.full_name ?? ""), clinica: clinic.name, link: clinic.google_review_url },
+      });
+      if (status === "failed") result.failed++;
+      else result.sent++;
+    }
+  }
+  return result;
 }
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });

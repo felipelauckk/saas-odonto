@@ -805,7 +805,65 @@ async function consumo(supabase: Supabase, f: ReportFilters): Promise<ReportResu
   };
 }
 
+/**
+ * Avaliações no Google (P10, sem a API): consultas atendidas e pedidos de
+ * avaliação enviados por profissional. Nota média, total e avaliações novas
+ * dependem da API do Google Business Profile (pendente).
+ */
+async function avaliacoesGoogle(supabase: Supabase, f: ReportFilters): Promise<ReportResult> {
+  const { start, end } = rangeOf(f);
+  const [appts, logs] = await Promise.all([
+    fetchAll((a, b) => {
+      let q = supabase.from("appointments").select("id, professionals(name)").eq("status", "done").gte("starts_at", start).lt("starts_at", end).order("id");
+      if (f.professionalId) q = q.eq("professional_id", f.professionalId);
+      return q.range(a, b);
+    }),
+    fetchAll((a, b) =>
+      supabase
+        .from("messages_log")
+        .select("id, status, appointments(professional_id, professionals(name))")
+        .eq("template_kind", "review_request")
+        .neq("status", "failed")
+        .gte("sent_at", start)
+        .lt("sent_at", end)
+        .order("id")
+        .range(a, b),
+    ),
+  ]);
+  const groups = new Map<string, Row>();
+  for (const a of appts) {
+    const key = a.professionals?.name ?? "Profissional";
+    const row = groupRows(groups, key, () => ({ group: key, attended: 0, requests: 0 }));
+    row.attended = Number(row.attended) + 1;
+  }
+  for (const l of logs) {
+    if (f.professionalId && l.appointments?.professional_id !== f.professionalId) continue;
+    const key = l.appointments?.professionals?.name ?? "Profissional";
+    const row = groupRows(groups, key, () => ({ group: key, attended: 0, requests: 0 }));
+    row.requests = Number(row.requests) + 1;
+  }
+  const rows = [...groups.values()].map((r): Row => ({ ...r, rate: ratio(Number(r.requests), Number(r.attended)) }));
+  const attended = sum(rows, "attended");
+  const requests = sum(rows, "requests");
+  return {
+    columns: [
+      { key: "group", label: "Profissional", type: "text" },
+      { key: "attended", label: "Atendidos", type: "int" },
+      { key: "requests", label: "Pedidos de avaliação", type: "int" },
+      { key: "rate", label: "Pedidos por atendido", type: "percent" },
+    ],
+    rows,
+    total: { group: "Total", attended, requests, rate: ratio(requests, attended) },
+    summary: [
+      { label: "Pedidos de avaliação", value: requests, type: "int" },
+      { label: "Atendidos", value: attended, type: "int" },
+    ],
+    note: "Pedidos enviados pelo WhatsApp depois do Atendido (ligue o modelo em Mensagens automáticas e cadastre o link em Dados da clínica). Para pedir na hora, use Mais > Pedir avaliação no Google na ficha do paciente. Nota média, total e avaliações novas virão com a integração com o Google Business Profile, que depende de aprovação do Google.",
+  };
+}
+
 const runners: Record<string, (supabase: Supabase, f: ReportFilters) => Promise<ReportResult>> = {
+  "avaliacoes-google": avaliacoesGoogle,
   consumo,
   faturamento,
   producao,

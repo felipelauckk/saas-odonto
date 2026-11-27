@@ -15,9 +15,9 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Mensagens" };
 
-const order: MessageKind[] = ["appointment_reminder", "appointment_confirmation", "return_reminder", "birthday"];
+const order: MessageKind[] = ["appointment_reminder", "appointment_confirmation", "return_reminder", "birthday", "review_request"];
 const statusLabel = { sent: "Enviada", simulated: "Simulada", failed: "Falhou", received: "Recebida" } as const;
-const kindLabel: Record<MessageKind, string> = { appointment_reminder: "Lembrete", appointment_confirmation: "Confirmação", birthday: "Aniversário", return_reminder: "Retorno", payment_reminder: "Cobrança", booking_code: "Código de agendamento" };
+const kindLabel: Record<MessageKind, string> = { appointment_reminder: "Lembrete", appointment_confirmation: "Confirmação", birthday: "Aniversário", return_reminder: "Retorno", payment_reminder: "Cobrança", booking_code: "Código de agendamento", review_request: "Avaliação no Google" };
 
 export default async function Page() {
   await requireManager();
