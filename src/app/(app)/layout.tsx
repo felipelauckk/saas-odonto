@@ -38,7 +38,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           canManage={canManage}
         />
         {/* A agenda usa a largura toda (sem margens vazias dos lados). */}
-        <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 lg:py-10 has-[[data-agenda-wide]]:max-w-none has-[[data-agenda-wide]]:py-5 sm:has-[[data-agenda-wide]]:px-5 lg:has-[[data-agenda-wide]]:py-5">{children}</div>
+        <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 lg:py-10 has-[[data-agenda-wide]]:max-w-none lg:has-[[data-agenda-wide]]:py-6">{children}</div>
       </main>
     </div>
   );

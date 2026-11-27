@@ -211,7 +211,7 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
       <div className="relative w-full" ref={gridRef}>
         {/* Cabeçalho */}
         <div className="sticky top-0 z-20 flex border-b bg-card">
-          <div className="w-12 shrink-0 bg-card" />
+          <div className="w-16 shrink-0 border-r border-border-soft bg-card" />
           {columns.map((col) => (
             <div
               key={col.key}
@@ -255,16 +255,22 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
           ))}
         </div>
 
-        <div className="flex">
+        {/* Folga no topo: o primeiro horário também fica centralizado na sua linha. */}
+        <div className="flex pt-3">
           {/* Horas */}
-          <div className="relative w-12 shrink-0 bg-card" style={{ height }}>
+          <div className="relative w-16 shrink-0 border-r border-border-soft bg-card" style={{ height }}>
+            {/* Cada horário centralizado na sua linha. */}
             {marks.map((m) => (
               <div
                 key={m}
-                className={cn("absolute right-1.5 text-[0.6875rem] tabular-nums", m % 60 === 0 ? "font-semibold text-foreground" : "text-muted-foreground")}
-                style={{ top: px(m - range.startMin) + 1 }}
+                className={cn(
+                  "absolute right-3 text-xs leading-none tabular-nums",
+                  "-translate-y-1/2",
+                  m % 60 === 0 ? "font-semibold text-foreground" : "text-muted-foreground",
+                )}
+                style={{ top: px(m - range.startMin) }}
               >
-                {minutesToTime(m).replace(/^0/, "")}
+                {minutesToTime(m)}
               </div>
             ))}
             {columns.some((c) => c.isToday) && now !== null && now >= range.startMin && now <= range.endMin ? (
@@ -293,7 +299,7 @@ export function AgendaGrid({ columns, range, colorFor, tagColors, onSlotClick, o
                 {marks
                   .filter((m) => m % 30 !== 0)
                   .map((m) => (
-                    <div key={`q${m}`} aria-hidden className="pointer-events-none absolute inset-x-0 border-t border-dotted border-border-soft/60" style={{ top: px(m - range.startMin) }} />
+                    <div key={`q${m}`} aria-hidden className="pointer-events-none absolute inset-x-0 border-t border-border-soft/50" style={{ top: px(m - range.startMin) }} />
                   ))}
 
                 {/* Linhas e horários livres clicáveis */}
